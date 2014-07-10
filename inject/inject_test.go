@@ -1,10 +1,26 @@
+// Copyright 2013 Martini Authors
+// Copyright 2014 Unknown
+//
+// Licensed under the Apache License, Version 2.0 (the "License"): you may
+// not use this file except in compliance with the License. You may obtain
+// a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+// License for the specific language governing permissions and limitations
+// under the License.
+
 package inject_test
 
 import (
 	"fmt"
-	"github.com/codegangsta/inject"
 	"reflect"
 	"testing"
+
+	"github.com/Unknwon/macaron/inject"
 )
 
 type SpecialString interface {
@@ -51,7 +67,7 @@ func Test_InjectorInvoke(t *testing.T) {
 	typSend := reflect.ChanOf(reflect.SendDir, reflect.TypeOf(dep4).Elem())
 	injector.Set(typRecv, reflect.ValueOf(dep3))
 	injector.Set(typSend, reflect.ValueOf(dep4))
-	
+
 	_, err := injector.Invoke(func(d1 string, d2 SpecialString, d3 <-chan *SpecialString, d4 chan<- *SpecialString) {
 		expect(t, d1, dep)
 		expect(t, d2, dep2)
@@ -113,31 +129,30 @@ func Test_InterfaceOf(t *testing.T) {
 
 func Test_InjectorSet(t *testing.T) {
 	injector := inject.New()
-	typ      := reflect.TypeOf("string")
-	typSend  := reflect.ChanOf(reflect.SendDir, typ)
-	typRecv  := reflect.ChanOf(reflect.RecvDir, typ)
-	
+	typ := reflect.TypeOf("string")
+	typSend := reflect.ChanOf(reflect.SendDir, typ)
+	typRecv := reflect.ChanOf(reflect.RecvDir, typ)
+
 	// instantiating unidirectional channels is not possible using reflect
 	// http://golang.org/src/pkg/reflect/value.go?s=60463:60504#L2064
 	chanRecv := reflect.MakeChan(reflect.ChanOf(reflect.BothDir, typ), 0)
 	chanSend := reflect.MakeChan(reflect.ChanOf(reflect.BothDir, typ), 0)
-	
+
 	injector.Set(typSend, chanSend)
 	injector.Set(typRecv, chanRecv)
 
-	expect(t, injector.Get(typSend).IsValid(), true)
-	expect(t, injector.Get(typRecv).IsValid(), true)
-	expect(t, injector.Get(chanSend.Type()).IsValid(), false)
+	expect(t, injector.GetVal(typSend).IsValid(), true)
+	expect(t, injector.GetVal(typRecv).IsValid(), true)
+	expect(t, injector.GetVal(chanSend.Type()).IsValid(), false)
 }
-
 
 func Test_InjectorGet(t *testing.T) {
 	injector := inject.New()
 
 	injector.Map("some dependency")
 
-	expect(t, injector.Get(reflect.TypeOf("string")).IsValid(), true)
-	expect(t, injector.Get(reflect.TypeOf(11)).IsValid(), false)
+	expect(t, injector.GetVal(reflect.TypeOf("string")).IsValid(), true)
+	expect(t, injector.GetVal(reflect.TypeOf(11)).IsValid(), false)
 }
 
 func Test_InjectorSetParent(t *testing.T) {
@@ -147,7 +162,7 @@ func Test_InjectorSetParent(t *testing.T) {
 	injector2 := inject.New()
 	injector2.SetParent(injector)
 
-	expect(t, injector2.Get(inject.InterfaceOf((*SpecialString)(nil))).IsValid(), true)
+	expect(t, injector2.GetVal(inject.InterfaceOf((*SpecialString)(nil))).IsValid(), true)
 }
 
 func TestInjectImplementors(t *testing.T) {
@@ -155,5 +170,5 @@ func TestInjectImplementors(t *testing.T) {
 	g := &Greeter{"Jeremy"}
 	injector.Map(g)
 
-	expect(t, injector.Get(inject.InterfaceOf((*fmt.Stringer)(nil))).IsValid(), true)
+	expect(t, injector.GetVal(inject.InterfaceOf((*fmt.Stringer)(nil))).IsValid(), true)
 }
