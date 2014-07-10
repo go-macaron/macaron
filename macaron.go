@@ -223,7 +223,7 @@ func (r *Router) addRoute(method string, pattern string, handlers []Handler) {
 	r.router.Handle(method, pattern, func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		c := r.m.createContext(resp, req)
 		c.params = params
-		c.handlers = handlers
+		c.handlers = append(r.m.handlers, handlers...)
 		c.run()
 	})
 }
