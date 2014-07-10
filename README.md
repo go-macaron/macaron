@@ -13,7 +13,7 @@ To install Macaron:
 	
 The very basic usage of Macaron:
 
-```
+```go
 package main
 
 import "github.com/Unknwon/macaron"
@@ -33,7 +33,9 @@ func main() {
 
 ## Features
 
+- Unlimited nested group routers.
 - Easy to plugin/unplugin features with modular design.
+- Integrated most frequently used middlewares with less reflection.
 - Very simple steps to turn Martini middlewares to Macaron.
 - Handy dependency injection powered by [inject](https://github.com/codegangsta/inject).
 - Extreamly fast radix tree-based HTTP request router powered by [HttpRouter](https://github.com/julienschmidt/httprouter).

@@ -46,11 +46,13 @@ func validateHandler(handler Handler) {
 
 type Context struct {
 	inject.Injector
-	params   httprouter.Params
 	handlers []Handler
 	action   Handler
 	rw       ResponseWriter
 	index    int
+
+	*Render
+	params httprouter.Params
 }
 
 // Params return value of given param name.
@@ -104,8 +106,8 @@ type Macaron struct {
 	inject.Injector
 	handlers []Handler
 	action   Handler
-	router   *httprouter.Router
-	logger   *log.Logger
+	*Router
+	logger *log.Logger
 }
 
 // New creates a bare bones Macaron instance.
@@ -114,9 +116,12 @@ func New() *Macaron {
 	m := &Macaron{
 		Injector: inject.New(),
 		action:   func() {},
-		router:   httprouter.New(),
-		logger:   log.New(os.Stdout, "[Macaron] ", 0),
+		Router: &Router{
+			router: httprouter.New(),
+		},
+		logger: log.New(os.Stdout, "[Macaron] ", 0),
 	}
+	m.Router.m = m
 	m.Map(m.logger)
 	m.Map(defaultReturnHandler())
 	return m
@@ -201,47 +206,78 @@ func (m *Macaron) Run() {
 //  |____|_  /\____/|____/ |__|  \___  >__|
 //         \/                        \/
 
-func (m *Macaron) addRoute(method string, pattern string, handlers []Handler) {
-	m.router.Handle(method, pattern, func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		c := m.createContext(resp, req)
+func (r *Router) addRoute(method string, pattern string, handlers []Handler) {
+	if len(r.groups) > 0 {
+		groupPattern := ""
+		h := make([]Handler, 0)
+		for _, g := range r.groups {
+			groupPattern += g.pattern
+			h = append(h, g.handlers...)
+		}
+
+		pattern = groupPattern + pattern
+		h = append(h, handlers...)
+		handlers = h
+	}
+
+	r.router.Handle(method, pattern, func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
+		c := r.m.createContext(resp, req)
 		c.params = params
-		c.handlers = append(m.handlers, handlers...)
+		c.handlers = handlers
 		c.run()
 	})
 }
 
-func (m *Macaron) Get(pattern string, h ...Handler) {
-	m.addRoute("GET", pattern, h)
+type Router struct {
+	m      *Macaron
+	router *httprouter.Router
+	prefx  string
+	groups []group
 }
 
-func (m *Macaron) Patch(pattern string, h ...Handler) {
-	m.addRoute("PATCH", pattern, h)
+type group struct {
+	pattern  string
+	handlers []Handler
 }
 
-func (m *Macaron) Post(pattern string, h ...Handler) {
-	m.addRoute("POST", pattern, h)
+func (r *Router) Group(pattern string, fn func(*Router), h ...Handler) {
+	r.groups = append(r.groups, group{pattern, h})
+	fn(r)
+	r.groups = r.groups[:len(r.groups)-1]
 }
 
-func (m *Macaron) Put(pattern string, h ...Handler) {
-	m.addRoute("PUT", pattern, h)
+func (r *Router) Get(pattern string, h ...Handler) {
+	r.addRoute("GET", pattern, h)
 }
 
-func (m *Macaron) Delete(pattern string, h ...Handler) {
-	m.addRoute("DELETE", pattern, h)
+func (r *Router) Patch(pattern string, h ...Handler) {
+	r.addRoute("PATCH", pattern, h)
 }
 
-func (m *Macaron) Options(pattern string, h ...Handler) {
-	m.addRoute("OPTIONS", pattern, h)
+func (r *Router) Post(pattern string, h ...Handler) {
+	r.addRoute("POST", pattern, h)
 }
 
-func (m *Macaron) Head(pattern string, h ...Handler) {
-	m.addRoute("HEAD", pattern, h)
+func (r *Router) Put(pattern string, h ...Handler) {
+	r.addRoute("PUT", pattern, h)
 }
 
-func (m *Macaron) NotFound(handlers ...Handler) {
-	m.router.NotFound = func(resp http.ResponseWriter, req *http.Request) {
-		c := m.createContext(resp, req)
-		c.handlers = append(m.handlers, handlers...)
+func (r *Router) Delete(pattern string, h ...Handler) {
+	r.addRoute("DELETE", pattern, h)
+}
+
+func (r *Router) Options(pattern string, h ...Handler) {
+	r.addRoute("OPTIONS", pattern, h)
+}
+
+func (r *Router) Head(pattern string, h ...Handler) {
+	r.addRoute("HEAD", pattern, h)
+}
+
+func (r *Router) NotFound(handlers ...Handler) {
+	r.router.NotFound = func(resp http.ResponseWriter, req *http.Request) {
+		c := r.m.createContext(resp, req)
+		c.handlers = append(r.m.handlers, handlers...)
 		c.run()
 	}
 }

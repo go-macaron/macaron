@@ -27,6 +27,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/oxtoacart/bpool"
 )
@@ -53,29 +54,6 @@ var helperFuncs = template.FuncMap{
 	"current": func() (string, error) {
 		return "", nil
 	},
-}
-
-// Render is a service that can be injected into a Macaron handler. Render provides functions for easily writing JSON and
-// HTML templates out to a http Response.
-type Render interface {
-	// JSON writes the given status and JSON serialized version of the given value to the http.ResponseWriter.
-	JSON(status int, v interface{})
-	// HTML renders a html template specified by the name and writes the result and given status to the http.ResponseWriter.
-	HTML(status int, name string, v interface{}, htmlOpt ...HTMLOptions)
-	// XML writes the given status and XML serialized version of the given value to the http.ResponseWriter.
-	XML(status int, v interface{})
-	// Data writes the raw byte array to the http.ResponseWriter.
-	Data(status int, v []byte)
-	// Error is a convenience function that writes an http status to the http.ResponseWriter.
-	Error(status int)
-	// Status is an alias for Error (writes an http status to the http.ResponseWriter)
-	Status(status int)
-	// Redirect is a convienience function that sends an HTTP redirect. If status is omitted, uses 302 (Found)
-	Redirect(location string, status ...int)
-	// Template returns the internal *template.Template used to render the HTML
-	Template() *template.Template
-	// Header exposes the header struct from http.ResponseWriter.
-	Header() http.Header
 }
 
 // Delims represents a set of Left and Right delimiters for HTML template rendering
@@ -138,7 +116,17 @@ func Renderer(options ...Options) Handler {
 			// use a clone of the initial template
 			tc, _ = t.Clone()
 		}
-		c.MapTo(&renderer{res, req, tc, opt, cs}, (*Render)(nil))
+		r := &Render{
+			ResponseWriter:  res,
+			req:             req,
+			t:               tc,
+			opt:             opt,
+			compiledCharset: cs,
+			Data:            make(map[string]interface{}),
+			startTime:       time.Now(),
+		}
+		c.Render = r
+		c.Map(r)
 	}
 }
 
@@ -220,15 +208,18 @@ func getExt(s string) string {
 	return "." + strings.Join(strings.Split(s, ".")[1:], ".")
 }
 
-type renderer struct {
+type Render struct {
 	http.ResponseWriter
 	req             *http.Request
 	t               *template.Template
 	opt             Options
 	compiledCharset string
+
+	Data      map[string]interface{}
+	startTime time.Time
 }
 
-func (r *renderer) JSON(status int, v interface{}) {
+func (r *Render) JSON(status int, v interface{}) {
 	var result []byte
 	var err error
 	if r.opt.IndentJSON {
@@ -250,28 +241,67 @@ func (r *renderer) JSON(status int, v interface{}) {
 	r.Write(result)
 }
 
-func (r *renderer) HTML(status int, name string, binding interface{}, htmlOpt ...HTMLOptions) {
+func (r *Render) JSONString(v interface{}) (string, error) {
+	var result []byte
+	var err error
+	if r.opt.IndentJSON {
+		result, err = json.MarshalIndent(v, "", "  ")
+	} else {
+		result, err = json.Marshal(v)
+	}
+	if err != nil {
+		return "", err
+	}
+	return string(result), nil
+}
+
+func (r *Render) RawData(status int, v []byte) {
+	if r.Header().Get(ContentType) == "" {
+		r.Header().Set(ContentType, ContentBinary)
+	}
+	r.WriteHeader(status)
+	r.Write(v)
+}
+
+func (r *Render) renderBytes(name string, binding interface{}, htmlOpt ...HTMLOptions) (*bytes.Buffer, error) {
 	opt := r.prepareHTMLOptions(htmlOpt)
-	// assign a layout if there is one
+
 	if len(opt.Layout) > 0 {
 		r.addYield(name, binding)
 		name = opt.Layout
 	}
 
-	buf, err := r.execute(name, binding)
+	out, err := r.execute(name, binding)
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
+func (r *Render) HTML(status int, name string, binding interface{}, htmlOpt ...HTMLOptions) {
+	r.startTime = time.Now()
+
+	out, err := r.renderBytes(name, binding, htmlOpt...)
 	if err != nil {
 		http.Error(r, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// template rendered fine, write out the result
 	r.Header().Set(ContentType, r.opt.HTMLContentType+r.compiledCharset)
 	r.WriteHeader(status)
-	io.Copy(r, buf)
-	bufpool.Put(buf)
+	io.Copy(r, out)
 }
 
-func (r *renderer) XML(status int, v interface{}) {
+func (r *Render) HTMLString(name string, binding interface{}, htmlOpt ...HTMLOptions) (string, error) {
+	if out, err := r.renderBytes(name, binding, htmlOpt...); err != nil {
+		return "", err
+	} else {
+		return out.String(), nil
+	}
+}
+
+func (r *Render) XML(status int, v interface{}) {
 	var result []byte
 	var err error
 	if r.opt.IndentXML {
@@ -293,24 +323,16 @@ func (r *renderer) XML(status int, v interface{}) {
 	r.Write(result)
 }
 
-func (r *renderer) Data(status int, v []byte) {
-	if r.Header().Get(ContentType) == "" {
-		r.Header().Set(ContentType, ContentBinary)
-	}
-	r.WriteHeader(status)
-	r.Write(v)
-}
-
 // Error writes the given HTTP status to the current ResponseWriter
-func (r *renderer) Error(status int) {
+func (r *Render) Error(status int) {
 	r.WriteHeader(status)
 }
 
-func (r *renderer) Status(status int) {
+func (r *Render) Status(status int) {
 	r.WriteHeader(status)
 }
 
-func (r *renderer) Redirect(location string, status ...int) {
+func (r *Render) Redirect(location string, status ...int) {
 	code := http.StatusFound
 	if len(status) == 1 {
 		code = status[0]
@@ -319,16 +341,16 @@ func (r *renderer) Redirect(location string, status ...int) {
 	http.Redirect(r, r.req, location, code)
 }
 
-func (r *renderer) Template() *template.Template {
+func (r *Render) Template() *template.Template {
 	return r.t
 }
 
-func (r *renderer) execute(name string, binding interface{}) (*bytes.Buffer, error) {
+func (r *Render) execute(name string, binding interface{}) (*bytes.Buffer, error) {
 	buf := bufpool.Get()
 	return buf, r.t.ExecuteTemplate(buf, name, binding)
 }
 
-func (r *renderer) addYield(name string, binding interface{}) {
+func (r *Render) addYield(name string, binding interface{}) {
 	funcs := template.FuncMap{
 		"yield": func() (template.HTML, error) {
 			buf, err := r.execute(name, binding)
@@ -342,7 +364,7 @@ func (r *renderer) addYield(name string, binding interface{}) {
 	r.t.Funcs(funcs)
 }
 
-func (r *renderer) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {
+func (r *Render) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {
 	if len(htmlOpt) > 0 {
 		return htmlOpt[0]
 	}

@@ -22,6 +22,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 )
 
 type Greeting struct {
@@ -42,7 +43,7 @@ func Test_Render_JSON(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.JSON(300, Greeting{"hello", "world"})
 	})
 
@@ -64,7 +65,7 @@ func Test_Render_JSON_Prefix(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.JSON(300, Greeting{"hello", "world"})
 	})
 
@@ -85,7 +86,7 @@ func Test_Render_Indented_JSON(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.JSON(300, Greeting{"hello", "world"})
 	})
 
@@ -109,7 +110,7 @@ func Test_Render_XML(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.XML(300, GreetingXML{One: "hello", Two: "world"})
 	})
 
@@ -131,7 +132,7 @@ func Test_Render_XML_Prefix(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.XML(300, GreetingXML{One: "hello", Two: "world"})
 	})
 
@@ -152,7 +153,7 @@ func Test_Render_Indented_XML(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.XML(300, GreetingXML{One: "hello", Two: "world"})
 	})
 
@@ -173,7 +174,7 @@ func Test_Render_Bad_HTML(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.HTML(200, "nope", nil)
 	})
 
@@ -193,7 +194,7 @@ func Test_Render_HTML(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.HTML(200, "hello", "jeremy")
 	})
 
@@ -214,7 +215,7 @@ func Test_Render_XHTML(t *testing.T) {
 		HTMLContentType: ContentXHTML,
 	}))
 
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.HTML(200, "hello", "jeremy")
 	})
 
@@ -236,7 +237,7 @@ func Test_Render_Extensions(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.HTML(200, "hypertext", nil)
 	})
 
@@ -265,7 +266,7 @@ func Test_Render_Funcs(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.HTML(200, "index", "jeremy")
 	})
 
@@ -285,7 +286,7 @@ func Test_Render_Layout(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.HTML(200, "content", "jeremy")
 	})
 
@@ -305,7 +306,7 @@ func Test_Render_Layout_Current(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.HTML(200, "content", "jeremy")
 	})
 
@@ -324,7 +325,7 @@ func Test_Render_Nested_HTML(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.HTML(200, "admin/index", "jeremy")
 	})
 
@@ -346,7 +347,7 @@ func Test_Render_Delimiters(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.HTML(200, "delims", "jeremy")
 	})
 
@@ -367,8 +368,8 @@ func Test_Render_BinaryData(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
-		r.Data(200, []byte("hello there"))
+	m.Get("/foobar", func(r *Render) {
+		r.RawData(200, []byte("hello there"))
 	})
 
 	res := httptest.NewRecorder()
@@ -388,9 +389,9 @@ func Test_Render_BinaryData_CustomMimeType(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.Header().Set(ContentType, "image/jpeg")
-		r.Data(200, []byte("..jpeg data.."))
+		r.RawData(200, []byte("..jpeg data.."))
 	})
 
 	res := httptest.NewRecorder()
@@ -405,21 +406,21 @@ func Test_Render_BinaryData_CustomMimeType(t *testing.T) {
 
 func Test_Render_Status204(t *testing.T) {
 	res := httptest.NewRecorder()
-	r := renderer{res, nil, nil, Options{}, ""}
+	r := Render{res, nil, nil, Options{}, "", nil, time.Now()}
 	r.Status(204)
 	expect(t, res.Code, 204)
 }
 
 func Test_Render_Error404(t *testing.T) {
 	res := httptest.NewRecorder()
-	r := renderer{res, nil, nil, Options{}, ""}
+	r := Render{res, nil, nil, Options{}, "", nil, time.Now()}
 	r.Error(404)
 	expect(t, res.Code, 404)
 }
 
 func Test_Render_Error500(t *testing.T) {
 	res := httptest.NewRecorder()
-	r := renderer{res, nil, nil, Options{}, ""}
+	r := Render{res, nil, nil, Options{}, "", nil, time.Now()}
 	r.Error(500)
 	expect(t, res.Code, 500)
 }
@@ -432,7 +433,7 @@ func Test_Render_Redirect_Default(t *testing.T) {
 	}
 	res := httptest.NewRecorder()
 
-	r := renderer{res, &req, nil, Options{}, ""}
+	r := Render{res, &req, nil, Options{}, "", nil, time.Now()}
 	r.Redirect("two")
 
 	expect(t, res.Code, 302)
@@ -447,7 +448,7 @@ func Test_Render_Redirect_Code(t *testing.T) {
 	}
 	res := httptest.NewRecorder()
 
-	r := renderer{res, &req, nil, Options{}, ""}
+	r := Render{res, &req, nil, Options{}, "", nil, time.Now()}
 	r.Redirect("two", 307)
 
 	expect(t, res.Code, 307)
@@ -461,7 +462,7 @@ func Test_Render_Charset_JSON(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.JSON(300, Greeting{"hello", "world"})
 	})
 
@@ -482,7 +483,7 @@ func Test_Render_Default_Charset_HTML(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.HTML(200, "hello", "jeremy")
 	})
 
@@ -506,7 +507,7 @@ func Test_Render_Override_Layout(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.HTML(200, "content", "jeremy", HTMLOptions{
 			Layout: "another_layout",
 		})
@@ -530,7 +531,7 @@ func Test_Render_NoRace(t *testing.T) {
 	}))
 
 	// routing
-	m.Get("/foobar", func(r Render) {
+	m.Get("/foobar", func(r *Render) {
 		r.HTML(200, "hello", "world")
 	})
 
