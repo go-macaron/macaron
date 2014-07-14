@@ -3,7 +3,7 @@ Macaron [![wercker status](https://app.wercker.com/status/282aa746d272d0eaa703a8
 
 Package macaron is a high productive and modular design web framework in Go.
 
-##### Current version: 0.0.3
+##### Current version: 0.0.4
 
 Anyone who uses [Martini](https://github.com/go-martini/martini) and familiar with dependency injection like me, should be very comfortable about how to use Macaron.
 
@@ -54,6 +54,8 @@ func main() {
 	- [Serving Static Files](#serving-static-files)
 - [Middleware Handlers](#middleware-handlers)
 	- [Next()](#next)
+	- [Render](#render)
+	- [Cookie](#cookie)
 - [Macaron Env](#macaron-env)
 - [FAQ](#faq)
 
@@ -305,6 +307,31 @@ m.Use(func(ctx macaron.Context, log *log.Logger){
   log.Println("after a request")
 })
 ```
+
+### Render
+
+The [*macaron.Render](https://gowalker.org/github.com/Unknwon/macaron#Render) has been integrated into [*macaron.Context](https://gowalker.org/github.com/Unknwon/macaron#Context). To use it, you have to register the render middleware first.
+
+```go
+m.Use(macaron.Renderer(macaron.RenderOptions{}))
+```
+
+Note that [macaron.RenderOptions{}](https://gowalker.org/github.com/Unknwon/macaron#RenderOptions) is optional. After that, you can directly call render methods by [*macaron.Context](https://gowalker.org/github.com/Unknwon/macaron#Context), and use `ctx.Data` to store template variables.
+
+```go
+func Home(ctx *macaron.Context) {
+	ctx.Data["title"] = "my home page"
+	ctx.HTML(200, "home", ctx.Data)
+}
+```
+
+### Cookie
+
+The very basic usage of cookie is just [ctx.SetCookie](https://gowalker.org/github.com/Unknwon/macaron#Context_SetCookie) and [ctx.GetCookie](https://gowalker.org/github.com/Unknwon/macaron#Context_GetCookie).
+
+And there are more secure cookie support. First, you need to call [macaron.SetDefaultCookieSecret](https://gowalker.org/github.com/Unknwon/macaron#Macaron_SetDefaultCookieSecret), then use it by calling [ctx.SetSecureCookie](https://gowalker.org/github.com/Unknwon/macaron#Context_SetSecureCookie) and [ctx.GetSecureCookie](https://gowalker.org/github.com/Unknwon/macaron#Context_GetSecureCookie). These two methods uses default secret string you set globally to encode and decode values.
+
+For people who wants even more secure cookies that change secret string every time, just use [ctx.SetSuperSecureCookie](https://gowalker.org/github.com/Unknwon/macaron#Context_SetSuperSecureCookie) and [ctx.GetSuperSecureCookie](https://gowalker.org/github.com/Unknwon/macaron#Context_GetSuperSecureCookie).
 
 ## Macaron Env
 

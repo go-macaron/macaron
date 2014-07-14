@@ -151,13 +151,6 @@ func (ctx *Context) SetCookie(name string, value string, others ...interface{}) 
 	ctx.Resp.Header().Add("Set-Cookie", cookie.String())
 }
 
-var defaultCookieSecret string
-
-// SetDefaultCookieSecret sets global default secure cookie secret.
-func (m *Macaron) SetDefaultCookieSecret(secret string) {
-	defaultCookieSecret = secret
-}
-
 // GetCookie returns given cookie value from request header.
 func (ctx *Context) GetCookie(name string) string {
 	cookie, err := ctx.Req.Cookie(name)
@@ -165,6 +158,13 @@ func (ctx *Context) GetCookie(name string) string {
 		return ""
 	}
 	return cookie.Value
+}
+
+var defaultCookieSecret string
+
+// SetDefaultCookieSecret sets global default secure cookie secret.
+func (m *Macaron) SetDefaultCookieSecret(secret string) {
+	defaultCookieSecret = secret
 }
 
 // SetSecureCookie sets given cookie value to response header with default secret string.
