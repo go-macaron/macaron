@@ -64,8 +64,8 @@ type Delims struct {
 	Right string
 }
 
-// Options is a struct for specifying configuration options for the render.Renderer middleware
-type Options struct {
+// RenderOptions represents a struct for specifying configuration options for the Render middleware.
+type RenderOptions struct {
 	// Directory to load templates. Default is "templates"
 	Directory string
 	// Layout template name. Will not render a layout if "". Defaults to "".
@@ -96,50 +96,8 @@ type HTMLOptions struct {
 	Layout string
 }
 
-// Renderer is a Middleware that maps a render.Render service into the Macaron handler chain. An single variadic render.Options
-// struct can be optionally provided to configure HTML rendering. The default directory for templates is "templates" and the default
-// file extension is ".tmpl".
-//
-// If MACARON_ENV is set to "" or "development" then templates will be recompiled on every request. For more performance, set the
-// MACARON_ENV environment variable to "production"
-func Renderer(options ...Options) Handler {
-	opt := prepareOptions(options)
-	cs := prepareCharset(opt.Charset)
-	t := compile(opt)
-	bufpool = bpool.NewBufferPool(64)
-	return func(res http.ResponseWriter, req *http.Request, c *Context) {
-		var tc *template.Template
-		if Env == DEV {
-			// recompile for easy development
-			tc = compile(opt)
-		} else {
-			// use a clone of the initial template
-			tc, _ = t.Clone()
-		}
-		r := &Render{
-			ResponseWriter:  res,
-			req:             req,
-			t:               tc,
-			opt:             opt,
-			compiledCharset: cs,
-			Data:            make(map[string]interface{}),
-			startTime:       time.Now(),
-		}
-		c.Render = r
-		c.Map(r)
-	}
-}
-
-func prepareCharset(charset string) string {
-	if len(charset) != 0 {
-		return "; charset=" + charset
-	}
-
-	return "; charset=" + defaultCharset
-}
-
-func prepareOptions(options []Options) Options {
-	var opt Options
+func prepareOptions(options []RenderOptions) RenderOptions {
+	var opt RenderOptions
 	if len(options) > 0 {
 		opt = options[0]
 	}
@@ -158,7 +116,49 @@ func prepareOptions(options []Options) Options {
 	return opt
 }
 
-func compile(options Options) *template.Template {
+func prepareCharset(charset string) string {
+	if len(charset) != 0 {
+		return "; charset=" + charset
+	}
+
+	return "; charset=" + defaultCharset
+}
+
+// Renderer is a Middleware that maps a render.Render service into the Macaron handler chain. An single variadic render.Options
+// struct can be optionally provided to configure HTML rendering. The default directory for templates is "templates" and the default
+// file extension is ".tmpl".
+//
+// If MACARON_ENV is set to "" or "development" then templates will be recompiled on every request. For more performance, set the
+// MACARON_ENV environment variable to "production"
+func Renderer(options ...RenderOptions) Handler {
+	opt := prepareOptions(options)
+	cs := prepareCharset(opt.Charset)
+	t := compile(opt)
+	bufpool = bpool.NewBufferPool(64)
+	return func(resp http.ResponseWriter, req *http.Request, c *Context) {
+		var tc *template.Template
+		if Env == DEV {
+			// recompile for easy development
+			tc = compile(opt)
+		} else {
+			// use a clone of the initial template
+			tc, _ = t.Clone()
+		}
+		r := &Render{
+			ResponseWriter:  resp,
+			req:             req,
+			t:               tc,
+			opt:             opt,
+			compiledCharset: cs,
+			Data:            make(map[string]interface{}),
+			startTime:       time.Now(),
+		}
+		c.Render = r
+		c.Map(r)
+	}
+}
+
+func compile(options RenderOptions) *template.Template {
 	dir := options.Directory
 	t := template.New(dir)
 	t.Delims(options.Delims.Left, options.Delims.Right)
@@ -212,7 +212,7 @@ type Render struct {
 	http.ResponseWriter
 	req             *http.Request
 	t               *template.Template
-	opt             Options
+	opt             RenderOptions
 	compiledCharset string
 
 	Data      map[string]interface{}

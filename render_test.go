@@ -38,7 +38,7 @@ type GreetingXML struct {
 
 func Test_Render_JSON(t *testing.T) {
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 	// nothing here to configure
 	}))
 
@@ -60,7 +60,7 @@ func Test_Render_JSON(t *testing.T) {
 func Test_Render_JSON_Prefix(t *testing.T) {
 	m := Classic()
 	prefix := ")]}',\n"
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 		PrefixJSON: []byte(prefix),
 	}))
 
@@ -81,7 +81,7 @@ func Test_Render_JSON_Prefix(t *testing.T) {
 
 func Test_Render_Indented_JSON(t *testing.T) {
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 		IndentJSON: true,
 	}))
 
@@ -105,7 +105,7 @@ func Test_Render_Indented_JSON(t *testing.T) {
 
 func Test_Render_XML(t *testing.T) {
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 	// nothing here to configure
 	}))
 
@@ -127,7 +127,7 @@ func Test_Render_XML(t *testing.T) {
 func Test_Render_XML_Prefix(t *testing.T) {
 	m := Classic()
 	prefix := ")]}',\n"
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 		PrefixXML: []byte(prefix),
 	}))
 
@@ -148,7 +148,7 @@ func Test_Render_XML_Prefix(t *testing.T) {
 
 func Test_Render_Indented_XML(t *testing.T) {
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 		IndentXML: true,
 	}))
 
@@ -169,7 +169,7 @@ func Test_Render_Indented_XML(t *testing.T) {
 
 func Test_Render_Bad_HTML(t *testing.T) {
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 		Directory: "fixtures/basic",
 	}))
 
@@ -189,7 +189,7 @@ func Test_Render_Bad_HTML(t *testing.T) {
 
 func Test_Render_HTML(t *testing.T) {
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 		Directory: "fixtures/basic",
 	}))
 
@@ -210,7 +210,7 @@ func Test_Render_HTML(t *testing.T) {
 
 func Test_Render_XHTML(t *testing.T) {
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 		Directory:       "fixtures/basic",
 		HTMLContentType: ContentXHTML,
 	}))
@@ -231,7 +231,7 @@ func Test_Render_XHTML(t *testing.T) {
 
 func Test_Render_Extensions(t *testing.T) {
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 		Directory:  "fixtures/basic",
 		Extensions: []string{".tmpl", ".html"},
 	}))
@@ -254,7 +254,7 @@ func Test_Render_Extensions(t *testing.T) {
 func Test_Render_Funcs(t *testing.T) {
 
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 		Directory: "fixtures/custom_funcs",
 		Funcs: []template.FuncMap{
 			{
@@ -280,7 +280,7 @@ func Test_Render_Funcs(t *testing.T) {
 
 func Test_Render_Layout(t *testing.T) {
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 		Directory: "fixtures/basic",
 		Layout:    "layout",
 	}))
@@ -300,7 +300,7 @@ func Test_Render_Layout(t *testing.T) {
 
 func Test_Render_Layout_Current(t *testing.T) {
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 		Directory: "fixtures/basic",
 		Layout:    "current_layout",
 	}))
@@ -320,7 +320,7 @@ func Test_Render_Layout_Current(t *testing.T) {
 
 func Test_Render_Nested_HTML(t *testing.T) {
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 		Directory: "fixtures/basic",
 	}))
 
@@ -341,7 +341,7 @@ func Test_Render_Nested_HTML(t *testing.T) {
 
 func Test_Render_Delimiters(t *testing.T) {
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 		Delims:    Delims{"{[{", "}]}"},
 		Directory: "fixtures/basic",
 	}))
@@ -363,7 +363,7 @@ func Test_Render_Delimiters(t *testing.T) {
 
 func Test_Render_BinaryData(t *testing.T) {
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 	// nothing here to configure
 	}))
 
@@ -384,7 +384,7 @@ func Test_Render_BinaryData(t *testing.T) {
 
 func Test_Render_BinaryData_CustomMimeType(t *testing.T) {
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 	// nothing here to configure
 	}))
 
@@ -406,21 +406,21 @@ func Test_Render_BinaryData_CustomMimeType(t *testing.T) {
 
 func Test_Render_Status204(t *testing.T) {
 	res := httptest.NewRecorder()
-	r := Render{res, nil, nil, Options{}, "", nil, time.Now()}
+	r := Render{res, nil, nil, RenderOptions{}, "", nil, time.Now()}
 	r.Status(204)
 	expect(t, res.Code, 204)
 }
 
 func Test_Render_Error404(t *testing.T) {
 	res := httptest.NewRecorder()
-	r := Render{res, nil, nil, Options{}, "", nil, time.Now()}
+	r := Render{res, nil, nil, RenderOptions{}, "", nil, time.Now()}
 	r.Error(404)
 	expect(t, res.Code, 404)
 }
 
 func Test_Render_Error500(t *testing.T) {
 	res := httptest.NewRecorder()
-	r := Render{res, nil, nil, Options{}, "", nil, time.Now()}
+	r := Render{res, nil, nil, RenderOptions{}, "", nil, time.Now()}
 	r.Error(500)
 	expect(t, res.Code, 500)
 }
@@ -433,7 +433,7 @@ func Test_Render_Redirect_Default(t *testing.T) {
 	}
 	res := httptest.NewRecorder()
 
-	r := Render{res, &req, nil, Options{}, "", nil, time.Now()}
+	r := Render{res, &req, nil, RenderOptions{}, "", nil, time.Now()}
 	r.Redirect("two")
 
 	expect(t, res.Code, 302)
@@ -448,7 +448,7 @@ func Test_Render_Redirect_Code(t *testing.T) {
 	}
 	res := httptest.NewRecorder()
 
-	r := Render{res, &req, nil, Options{}, "", nil, time.Now()}
+	r := Render{res, &req, nil, RenderOptions{}, "", nil, time.Now()}
 	r.Redirect("two", 307)
 
 	expect(t, res.Code, 307)
@@ -457,7 +457,7 @@ func Test_Render_Redirect_Code(t *testing.T) {
 
 func Test_Render_Charset_JSON(t *testing.T) {
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 		Charset: "foobar",
 	}))
 
@@ -478,7 +478,7 @@ func Test_Render_Charset_JSON(t *testing.T) {
 
 func Test_Render_Default_Charset_HTML(t *testing.T) {
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 		Directory: "fixtures/basic",
 	}))
 
@@ -501,7 +501,7 @@ func Test_Render_Default_Charset_HTML(t *testing.T) {
 
 func Test_Render_Override_Layout(t *testing.T) {
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 		Directory: "fixtures/basic",
 		Layout:    "layout",
 	}))
@@ -526,7 +526,7 @@ func Test_Render_Override_Layout(t *testing.T) {
 func Test_Render_NoRace(t *testing.T) {
 	// This test used to fail if run with -race
 	m := Classic()
-	m.Use(Renderer(Options{
+	m.Use(Renderer(RenderOptions{
 		Directory: "fixtures/basic",
 	}))
 

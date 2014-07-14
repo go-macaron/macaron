@@ -28,7 +28,7 @@ import (
 )
 
 func Version() string {
-	return "0.0.2.0712"
+	return "0.0.3.0713"
 }
 
 // Handler can be any callable function.
@@ -51,13 +51,85 @@ type Context struct {
 	rw       ResponseWriter
 	index    int
 
-	*Render // Not nil only if you use macaran.Render middleware.
+	Req     *http.Request
+	Resp    http.ResponseWriter
 	params  httprouter.Params
+	*Render // Not nil only if you use macaran.Render middleware.
+}
+
+// Query querys form parameter.
+func (ctx *Context) Query(name string) string {
+	ctx.Req.ParseForm()
+	return ctx.Req.Form.Get(name)
 }
 
 // Params return value of given param name.
-func (c *Context) Params(name string) string {
-	return c.params.ByName(name)
+func (ctx *Context) Params(name string) string {
+	return ctx.params.ByName(name)
+}
+
+// SetCookie sets given cookie value to response header.
+func (ctx *Context) SetCookie(name string, value string, others ...interface{}) {
+	cookie := http.Cookie{}
+	cookie.Name = name
+	cookie.Value = value
+
+	if len(others) > 0 {
+		switch v := others[0].(type) {
+		case int:
+			cookie.MaxAge = v
+		case int64:
+			cookie.MaxAge = int(v)
+		case int32:
+			cookie.MaxAge = int(v)
+		}
+	}
+
+	// default "/"
+	if len(others) > 1 {
+		if v, ok := others[1].(string); ok && len(v) > 0 {
+			cookie.Path = v
+		}
+	} else {
+		cookie.Path = "/"
+	}
+
+	// default empty
+	if len(others) > 2 {
+		if v, ok := others[2].(string); ok && len(v) > 0 {
+			cookie.Domain = v
+		}
+	}
+
+	// default empty
+	if len(others) > 3 {
+		switch v := others[3].(type) {
+		case bool:
+			cookie.Secure = v
+		default:
+			if others[3] != nil {
+				cookie.Secure = true
+			}
+		}
+	}
+
+	// default false. for session cookie default true
+	if len(others) > 4 {
+		if v, ok := others[4].(bool); ok && v {
+			cookie.HttpOnly = true
+		}
+	}
+
+	ctx.Resp.Header().Add("Set-Cookie", cookie.String())
+}
+
+// GetCookie returns given cookie value from request header.
+func (ctx *Context) GetCookie(name string) string {
+	cookie, err := ctx.Req.Cookie(name)
+	if err != nil {
+		return ""
+	}
+	return cookie.Value
 }
 
 func (c *Context) handler() Handler {
@@ -126,8 +198,8 @@ func New() *Macaron {
 	m.Map(defaultReturnHandler())
 	m.router.NotFound = func(resp http.ResponseWriter, req *http.Request) {
 		c := m.createContext(resp, req)
-		c.handlers = append(m.handlers, func(resp http.ResponseWriter) {
-			resp.WriteHeader(http.StatusNotFound)
+		c.handlers = append(m.handlers, func(resp http.ResponseWriter) (int, string) {
+			return 404, "404 Not Found"
 		})
 		c.run()
 	}
@@ -169,13 +241,15 @@ func (m *Macaron) Use(handler Handler) {
 	m.handlers = append(m.handlers, handler)
 }
 
-func (m *Macaron) createContext(res http.ResponseWriter, req *http.Request) *Context {
+func (m *Macaron) createContext(resp http.ResponseWriter, req *http.Request) *Context {
 	c := &Context{
 		Injector: inject.New(),
 		handlers: m.handlers,
 		action:   m.action,
-		rw:       NewResponseWriter(res),
+		rw:       NewResponseWriter(resp),
 		index:    0,
+		Req:      req,
+		Resp:     resp,
 	}
 	c.SetParent(m)
 	c.Map(c)

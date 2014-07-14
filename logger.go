@@ -16,10 +16,18 @@
 package macaron
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"runtime"
 	"time"
 )
+
+var isWindows bool
+
+func init() {
+	isWindows = runtime.GOOS == "windows"
+}
 
 // Logger returns a middleware handler that logs the request as it goes in and the response as it goes out.
 func Logger() Handler {
@@ -38,6 +46,19 @@ func Logger() Handler {
 		rw := res.(ResponseWriter)
 		c.Next()
 
-		log.Printf("Completed %v %s in %v\n", rw.Status(), http.StatusText(rw.Status()), time.Since(start))
+		content := fmt.Sprintf("Completed %v %s in %v", rw.Status(), http.StatusText(rw.Status()), time.Since(start))
+		if !isWindows {
+			switch rw.Status() {
+			case 200:
+				content = fmt.Sprintf("\033[1;32m%s\033[0m", content)
+			case 304:
+				content = fmt.Sprintf("\033[1;33m%s\033[0m", content)
+			case 404:
+				content = fmt.Sprintf("\033[1;31m%s\033[0m", content)
+			case 500:
+				content = fmt.Sprintf("\033[1;36m%s\033[0m", content)
+			}
+		}
+		log.Println(content)
 	}
 }
