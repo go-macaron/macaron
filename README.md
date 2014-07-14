@@ -347,7 +347,7 @@ To have more flexibility over port and host, use the `http.ListenAndServe` funct
 
 ### What's the idea behind this other than Martini?
 
-- Integrate frequently used middlewares with less reflection.
+- Integrate frequently used middlewares and helper methods with less reflection.
 - Make a deep source study against Martini.
 
 ### Live code reload?

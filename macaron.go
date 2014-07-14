@@ -28,7 +28,7 @@ import (
 )
 
 func Version() string {
-	return "0.0.3.0713"
+	return "0.0.4.0714"
 }
 
 // Handler can be any callable function.
@@ -41,134 +41,6 @@ type Handler interface{}
 func validateHandler(handler Handler) {
 	if reflect.TypeOf(handler).Kind() != reflect.Func {
 		panic("mocaron handler must be a callable function")
-	}
-}
-
-type Context struct {
-	inject.Injector
-	handlers []Handler
-	action   Handler
-	rw       ResponseWriter
-	index    int
-
-	Req     *http.Request
-	Resp    http.ResponseWriter
-	params  httprouter.Params
-	*Render // Not nil only if you use macaran.Render middleware.
-}
-
-// Query querys form parameter.
-func (ctx *Context) Query(name string) string {
-	ctx.Req.ParseForm()
-	return ctx.Req.Form.Get(name)
-}
-
-// Params return value of given param name.
-func (ctx *Context) Params(name string) string {
-	return ctx.params.ByName(name)
-}
-
-// SetCookie sets given cookie value to response header.
-func (ctx *Context) SetCookie(name string, value string, others ...interface{}) {
-	cookie := http.Cookie{}
-	cookie.Name = name
-	cookie.Value = value
-
-	if len(others) > 0 {
-		switch v := others[0].(type) {
-		case int:
-			cookie.MaxAge = v
-		case int64:
-			cookie.MaxAge = int(v)
-		case int32:
-			cookie.MaxAge = int(v)
-		}
-	}
-
-	// default "/"
-	if len(others) > 1 {
-		if v, ok := others[1].(string); ok && len(v) > 0 {
-			cookie.Path = v
-		}
-	} else {
-		cookie.Path = "/"
-	}
-
-	// default empty
-	if len(others) > 2 {
-		if v, ok := others[2].(string); ok && len(v) > 0 {
-			cookie.Domain = v
-		}
-	}
-
-	// default empty
-	if len(others) > 3 {
-		switch v := others[3].(type) {
-		case bool:
-			cookie.Secure = v
-		default:
-			if others[3] != nil {
-				cookie.Secure = true
-			}
-		}
-	}
-
-	// default false. for session cookie default true
-	if len(others) > 4 {
-		if v, ok := others[4].(bool); ok && v {
-			cookie.HttpOnly = true
-		}
-	}
-
-	ctx.Resp.Header().Add("Set-Cookie", cookie.String())
-}
-
-// GetCookie returns given cookie value from request header.
-func (ctx *Context) GetCookie(name string) string {
-	cookie, err := ctx.Req.Cookie(name)
-	if err != nil {
-		return ""
-	}
-	return cookie.Value
-}
-
-func (c *Context) handler() Handler {
-	if c.index < len(c.handlers) {
-		return c.handlers[c.index]
-	}
-	if c.index == len(c.handlers) {
-		return c.action
-	}
-	panic("invalid index for context handler")
-}
-
-func (c *Context) Next() {
-	c.index += 1
-	c.run()
-}
-
-func (c *Context) Written() bool {
-	return c.rw.Written()
-}
-
-func (c *Context) run() {
-	for c.index <= len(c.handlers) {
-		vals, err := c.Invoke(c.handler())
-		if err != nil {
-			panic(err)
-		}
-		c.index += 1
-
-		// if the handler returned something, write it to the http response
-		if len(vals) > 0 {
-			ev := c.GetVal(reflect.TypeOf(ReturnHandler(nil)))
-			handleReturn := ev.Interface().(ReturnHandler)
-			handleReturn(c, vals)
-		}
-
-		if c.Written() {
-			return
-		}
 	}
 }
 
