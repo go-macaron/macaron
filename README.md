@@ -54,6 +54,7 @@ func main() {
 	- [Serving Static Files](#serving-static-files)
 - [Middleware Handlers](#middleware-handlers)
 	- [Next()](#next)
+	- [Gzip](#gzip)
 	- [Render](#render)
 	- [Cookie](#cookie)
 - [Macaron Env](#macaron-env)
@@ -299,13 +300,21 @@ m.Use(func(res http.ResponseWriter, req *http.Request) {
 
 ```go
 // log before and after a request
-m.Use(func(ctx macaron.Context, log *log.Logger){
+m.Use(func(ctx *macaron.Context, log *log.Logger){
   log.Println("before a request")
 
   ctx.Next()
 
   log.Println("after a request")
 })
+```
+
+### Gzip
+
+Register middleware Gzip before all the other middlewares that have response.
+
+```go
+m.Use(macaron.Gzip())
 ```
 
 ### Render
@@ -338,6 +347,14 @@ For people who wants even more secure cookies that change secret string every ti
 Some Macaron handlers make use of the `macaron.Env` global variable to provide special functionality for development environments vs production environments. It is recommended that the `MACARON_ENV=production` environment variable to be set when deploying a Martini server into a production environment.
 
 ## FAQ
+
+### Where do I find middleware X?
+
+Start by looking in the [macaron-contrib](https://github.com/macaron-contrib) projects. If it is not there feel free to contact a [macaron-contrib](https://github.com/macaron-contrib) team member about adding a new repo to the organization.
+
+- [i18n](https://github.com/macaron-contrib/i18n) - Internationalization and Localization
+- [cache](https://github.com/macaron-contrib/cache) - Cache manager
+- [session](https://github.com/macaron-contrib/session) - Session manager
 
 ### How do I integrate with existing servers?
 

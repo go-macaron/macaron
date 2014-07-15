@@ -70,7 +70,7 @@ type RenderOptions struct {
 	Directory string
 	// Layout template name. Will not render a layout if "". Defaults to "".
 	Layout string
-	// Extensions to parse template files from. Defaults to [".tmpl"]
+	// Extensions to parse template files from. Defaults to [".tmpl", ".html"]
 	Extensions []string
 	// Funcs is a slice of FuncMaps to apply to the template upon compilation. This is useful for helper functions. Defaults to [].
 	Funcs []template.FuncMap
@@ -107,7 +107,7 @@ func prepareOptions(options []RenderOptions) RenderOptions {
 		opt.Directory = "templates"
 	}
 	if len(opt.Extensions) == 0 {
-		opt.Extensions = []string{".tmpl"}
+		opt.Extensions = []string{".tmpl", ".html"}
 	}
 	if len(opt.HTMLContentType) == 0 {
 		opt.HTMLContentType = ContentHTML
@@ -124,18 +124,19 @@ func prepareCharset(charset string) string {
 	return "; charset=" + defaultCharset
 }
 
-// Renderer is a Middleware that maps a render.Render service into the Macaron handler chain. An single variadic render.Options
-// struct can be optionally provided to configure HTML rendering. The default directory for templates is "templates" and the default
+// Renderer is a Middleware that maps a *macaron.Render service into the Macaron handler chain.
+// An single variadic macaron.RenderOptions struct can be optionally provided to configure
+// HTML rendering. The default directory for templates is "templates" and the default
 // file extension is ".tmpl".
 //
 // If MACARON_ENV is set to "" or "development" then templates will be recompiled on every request. For more performance, set the
-// MACARON_ENV environment variable to "production"
+// MACARON_ENV environment variable to "production".
 func Renderer(options ...RenderOptions) Handler {
 	opt := prepareOptions(options)
 	cs := prepareCharset(opt.Charset)
 	t := compile(opt)
 	bufpool = bpool.NewBufferPool(64)
-	return func(resp http.ResponseWriter, req *http.Request, c *Context) {
+	return func(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 		var tc *template.Template
 		if Env == DEV {
 			// recompile for easy development
@@ -153,8 +154,8 @@ func Renderer(options ...RenderOptions) Handler {
 			Data:            make(map[string]interface{}),
 			startTime:       time.Now(),
 		}
-		c.Render = r
-		c.Map(r)
+		ctx.Render = r
+		ctx.Map(r)
 	}
 }
 
