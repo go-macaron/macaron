@@ -160,6 +160,16 @@ func (r *Router) Any(pattern string, h ...Handler) {
 	r.Handle("*", pattern, h)
 }
 
+// Route is a shortcut for same handlers but different HTTP methods.
+//
+// Example:
+// 		m.Route("/", "GET,POST", h)
+func (r *Router) Route(pattern, methods string, h ...Handler) {
+	for _, m := range strings.Split(methods, ",") {
+		r.Handle(strings.TrimSpace(m), pattern, h)
+	}
+}
+
 // Configurable http.HandlerFunc which is called when no matching route is
 // found. If it is not set, http.NotFound is used.
 // Be sure to set 404 response code in your handler.
