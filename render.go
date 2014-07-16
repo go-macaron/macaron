@@ -127,7 +127,7 @@ func prepareCharset(charset string) string {
 // Renderer is a Middleware that maps a *macaron.Render service into the Macaron handler chain.
 // An single variadic macaron.RenderOptions struct can be optionally provided to configure
 // HTML rendering. The default directory for templates is "templates" and the default
-// file extension is ".tmpl".
+// file extension is ".tmpl" and ".html".
 //
 // If MACARON_ENV is set to "" or "development" then templates will be recompiled on every request. For more performance, set the
 // MACARON_ENV environment variable to "production".
@@ -151,7 +151,6 @@ func Renderer(options ...RenderOptions) Handler {
 			t:               tc,
 			opt:             opt,
 			compiledCharset: cs,
-			Data:            make(map[string]interface{}),
 			startTime:       time.Now(),
 		}
 		ctx.Render = r
@@ -216,7 +215,6 @@ type Render struct {
 	opt             RenderOptions
 	compiledCharset string
 
-	Data      map[string]interface{}
 	startTime time.Time
 }
 

@@ -43,6 +43,7 @@ type Context struct {
 	Resp    http.ResponseWriter
 	params  httprouter.Params
 	*Render // Not nil only if you use macaran.Render middleware.
+	Data    map[string]interface{}
 }
 
 func (c *Context) handler() Handler {
