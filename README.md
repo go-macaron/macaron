@@ -401,6 +401,7 @@ To have more flexibility over port and host, use the `http.ListenAndServe` funct
 ## Credits
 
 - Basic design of [Martini](https://github.com/go-martini/martini).
+- Router layer of [beego](https://github.com/astaxie/beego).
 
 ## License
 

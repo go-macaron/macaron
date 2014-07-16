@@ -37,6 +37,7 @@ type Context struct {
 	rw       ResponseWriter
 	index    int
 
+	*Router
 	Req     *http.Request
 	Resp    http.ResponseWriter
 	params  Params

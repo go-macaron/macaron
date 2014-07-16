@@ -114,6 +114,7 @@ func (m *Macaron) createContext(resp http.ResponseWriter, req *http.Request) *Co
 		action:   m.action,
 		rw:       NewResponseWriter(resp),
 		index:    0,
+		Router:   m.Router,
 		Req:      req,
 		Resp:     resp,
 		Data:     make(map[string]interface{}),
