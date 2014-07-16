@@ -22,13 +22,11 @@ import (
 	"path/filepath"
 	"reflect"
 
-	"github.com/julienschmidt/httprouter"
-
 	"github.com/Unknwon/macaron/inject"
 )
 
 func Version() string {
-	return "0.0.5.0716"
+	return "0.1.0.0716"
 }
 
 // Handler can be any callable function.
@@ -60,19 +58,15 @@ func New() *Macaron {
 	m := &Macaron{
 		Injector: inject.New(),
 		action:   func() {},
-		Router: &Router{
-			router: httprouter.New(),
-		},
-		logger: log.New(os.Stdout, "[Macaron] ", 0),
+		Router:   NewRouter(),
+		logger:   log.New(os.Stdout, "[Macaron] ", 0),
 	}
 	m.Router.m = m
 	m.Map(m.logger)
 	m.Map(defaultReturnHandler())
-	m.router.NotFound = func(resp http.ResponseWriter, req *http.Request) {
+	m.notFound = func(resp http.ResponseWriter, req *http.Request) {
 		c := m.createContext(resp, req)
-		c.handlers = append(m.handlers, func(resp http.ResponseWriter) (int, string) {
-			return 404, "404 Not Found"
-		})
+		c.handlers = append(c.handlers, http.NotFound)
 		c.run()
 	}
 	return m
@@ -135,7 +129,7 @@ func (m *Macaron) createContext(resp http.ResponseWriter, req *http.Request) *Co
 // Useful if you want to control your own HTTP server.
 // Be aware that none of middleware will run without registering any router.
 func (m *Macaron) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	m.router.ServeHTTP(resp, req)
+	m.Router.ServeHTTP(resp, req)
 }
 
 // getDefaultListenAddr returns default server listen address of Macaron.
@@ -155,101 +149,6 @@ func (m *Macaron) Run() {
 	logger := m.Injector.GetVal(reflect.TypeOf(m.logger)).Interface().(*log.Logger)
 	logger.Printf("listening on %s (%s)\n", addr, Env)
 	logger.Fatalln(http.ListenAndServe(addr, m))
-}
-
-// __________               __
-// \______   \ ____  __ ___/  |_  ___________
-//  |       _//  _ \|  |  \   __\/ __ \_  __ \
-//  |    |   (  <_> )  |  /|  | \  ___/|  | \/
-//  |____|_  /\____/|____/ |__|  \___  >__|
-//         \/                        \/
-
-// Router represents a Macaron router layer.
-type Router struct {
-	m      *Macaron
-	router *httprouter.Router
-	prefx  string
-	groups []group
-}
-
-type group struct {
-	pattern  string
-	handlers []Handler
-}
-
-// Handle registers a new request handle with the given pattern, method and handlers.
-func (r *Router) Handle(method string, pattern string, handlers []Handler) {
-	if len(r.groups) > 0 {
-		groupPattern := ""
-		h := make([]Handler, 0)
-		for _, g := range r.groups {
-			groupPattern += g.pattern
-			h = append(h, g.handlers...)
-		}
-
-		pattern = groupPattern + pattern
-		h = append(h, handlers...)
-		handlers = h
-	}
-
-	r.router.Handle(method, pattern, func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		c := r.m.createContext(resp, req)
-		c.params = params
-		c.handlers = append(r.m.handlers, handlers...)
-		c.run()
-	})
-}
-
-func (r *Router) Group(pattern string, fn func(*Router), h ...Handler) {
-	r.groups = append(r.groups, group{pattern, h})
-	fn(r)
-	r.groups = r.groups[:len(r.groups)-1]
-}
-
-// Get is a shortcut for r.Handle("GET", pattern, handlers)
-func (r *Router) Get(pattern string, h ...Handler) {
-	r.Handle("GET", pattern, h)
-}
-
-// Patch is a shortcut for r.Handle("PATCH", pattern, handlers)
-func (r *Router) Patch(pattern string, h ...Handler) {
-	r.Handle("PATCH", pattern, h)
-}
-
-// Post is a shortcut for r.Handle("POST", pattern, handlers)
-func (r *Router) Post(pattern string, h ...Handler) {
-	r.Handle("POST", pattern, h)
-}
-
-// Put is a shortcut for r.Handle("PUT", pattern, handlers)
-func (r *Router) Put(pattern string, h ...Handler) {
-	r.Handle("PUT", pattern, h)
-}
-
-// Delete is a shortcut for r.Handle("DELETE", pattern, handlers)
-func (r *Router) Delete(pattern string, h ...Handler) {
-	r.Handle("DELETE", pattern, h)
-}
-
-// Options is a shortcut for r.Handle("OPTIONS", pattern, handlers)
-func (r *Router) Options(pattern string, h ...Handler) {
-	r.Handle("OPTIONS", pattern, h)
-}
-
-// Head is a shortcut for r.Handle("HEAD", pattern, handlers)
-func (r *Router) Head(pattern string, h ...Handler) {
-	r.Handle("HEAD", pattern, h)
-}
-
-// Configurable http.HandlerFunc which is called when no matching route is
-// found. If it is not set, http.NotFound is used.
-// Be sure to set 404 response code in your handler.
-func (r *Router) NotFound(handlers ...Handler) {
-	r.router.NotFound = func(resp http.ResponseWriter, req *http.Request) {
-		c := r.m.createContext(resp, req)
-		c.handlers = append(r.m.handlers, handlers...)
-		c.run()
-	}
 }
 
 // \_   _____/ _______  __
