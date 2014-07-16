@@ -3,7 +3,7 @@ Macaron [![wercker status](https://app.wercker.com/status/282aa746d272d0eaa703a8
 
 Package macaron is a high productive and modular design web framework in Go.
 
-##### Current version: 0.0.5
+##### Current version: 0.1.0
 
 Anyone who uses [Martini](https://github.com/go-martini/martini) and familiar with dependency injection like me, should be very comfortable about how to use Macaron.
 
@@ -35,13 +35,13 @@ func main() {
 
 ## Features
 
+- Powerful routing.
 - Serve multiple sites in one program.
 - Unlimited nested group routers.
 - Easy to plugin/unplugin features with modular design.
 - Integrated most frequently used middlewares with less reflection.
 - Very simple steps to turn Martini middlewares to Macaron.
 - Handy dependency injection powered by [inject](https://github.com/codegangsta/inject).
-- Extreamly fast radix tree-based HTTP request router powered by [HttpRouter](https://github.com/julienschmidt/httprouter).
 
 ----------
 

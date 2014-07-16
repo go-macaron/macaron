@@ -25,8 +25,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
-
 	"github.com/Unknwon/macaron/inject"
 )
 
@@ -41,7 +39,7 @@ type Context struct {
 
 	Req     *http.Request
 	Resp    http.ResponseWriter
-	params  httprouter.Params
+	params  Params
 	*Render // Not nil only if you use macaran.Render middleware.
 	Data    map[string]interface{}
 }
@@ -94,7 +92,7 @@ func (ctx *Context) Query(name string) string {
 
 // Params return value of given param name.
 func (ctx *Context) Params(name string) string {
-	return ctx.params.ByName(name)
+	return ctx.params[name]
 }
 
 // SetCookie sets given cookie value to response header.
