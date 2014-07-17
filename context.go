@@ -38,11 +38,11 @@ type Context struct {
 	index    int
 
 	*Router
-	Req     *http.Request
-	Resp    http.ResponseWriter
-	params  Params
-	*Render // Not nil only if you use macaran.Render middleware.
-	Data    map[string]interface{}
+	Req    *http.Request
+	Resp   http.ResponseWriter
+	params Params
+	Render // Not nil only if you use macaran.Render middleware.
+	Data   map[string]interface{}
 }
 
 func (c *Context) handler() Handler {

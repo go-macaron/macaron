@@ -29,7 +29,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oxtoacart/bpool"
+	"github.com/Unknwon/macaron/bpool"
 )
 
 const (
@@ -96,6 +96,20 @@ type HTMLOptions struct {
 	Layout string
 }
 
+type Render interface {
+	http.ResponseWriter
+
+	JSON(int, interface{})
+	JSONString(interface{}) (string, error)
+	RawData(int, []byte)
+	HTML(int, string, interface{}, ...HTMLOptions)
+	HTMLString(string, interface{}, ...HTMLOptions) (string, error)
+	XML(int, interface{})
+	Error(int)
+	Status(int)
+	Redirect(string, ...int)
+}
+
 func prepareOptions(options []RenderOptions) RenderOptions {
 	var opt RenderOptions
 	if len(options) > 0 {
@@ -124,38 +138,11 @@ func prepareCharset(charset string) string {
 	return "; charset=" + defaultCharset
 }
 
-// Renderer is a Middleware that maps a *macaron.Render service into the Macaron handler chain.
-// An single variadic macaron.RenderOptions struct can be optionally provided to configure
-// HTML rendering. The default directory for templates is "templates" and the default
-// file extension is ".tmpl" and ".html".
-//
-// If MACARON_ENV is set to "" or "development" then templates will be recompiled on every request. For more performance, set the
-// MACARON_ENV environment variable to "production".
-func Renderer(options ...RenderOptions) Handler {
-	opt := prepareOptions(options)
-	cs := prepareCharset(opt.Charset)
-	t := compile(opt)
-	bufpool = bpool.NewBufferPool(64)
-	return func(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-		var tc *template.Template
-		if Env == DEV {
-			// recompile for easy development
-			tc = compile(opt)
-		} else {
-			// use a clone of the initial template
-			tc, _ = t.Clone()
-		}
-		r := &Render{
-			ResponseWriter:  resp,
-			req:             req,
-			t:               tc,
-			opt:             opt,
-			compiledCharset: cs,
-			startTime:       time.Now(),
-		}
-		ctx.Render = r
-		ctx.Map(r)
+func getExt(s string) string {
+	if strings.Index(s, ".") == -1 {
+		return ""
 	}
+	return "." + strings.Join(strings.Split(s, ".")[1:], ".")
 }
 
 func compile(options RenderOptions) *template.Template {
@@ -201,14 +188,40 @@ func compile(options RenderOptions) *template.Template {
 	return t
 }
 
-func getExt(s string) string {
-	if strings.Index(s, ".") == -1 {
-		return ""
+// Renderer is a Middleware that maps a macaron.Render service into the Macaron handler chain.
+// An single variadic macaron.RenderOptions struct can be optionally provided to configure
+// HTML rendering. The default directory for templates is "templates" and the default
+// file extension is ".tmpl" and ".html".
+//
+// If MACARON_ENV is set to "" or "development" then templates will be recompiled on every request. For more performance, set the
+// MACARON_ENV environment variable to "production".
+func Renderer(options ...RenderOptions) Handler {
+	opt := prepareOptions(options)
+	cs := prepareCharset(opt.Charset)
+	t := compile(opt)
+	bufpool = bpool.NewBufferPool(64)
+	return func(ctx *Context, rw http.ResponseWriter, req *http.Request) {
+		var tc *template.Template
+		if Env == DEV {
+			// recompile for easy development
+			tc = compile(opt)
+		} else {
+			// use a clone of the initial template
+			tc, _ = t.Clone()
+		}
+		r := &TplRender{
+			ResponseWriter:  rw,
+			req:             req,
+			t:               tc,
+			opt:             opt,
+			compiledCharset: cs,
+		}
+		ctx.Render = r
+		ctx.MapTo(r, (*Render)(nil))
 	}
-	return "." + strings.Join(strings.Split(s, ".")[1:], ".")
 }
 
-type Render struct {
+type TplRender struct {
 	http.ResponseWriter
 	req             *http.Request
 	t               *template.Template
@@ -218,7 +231,7 @@ type Render struct {
 	startTime time.Time
 }
 
-func (r *Render) JSON(status int, v interface{}) {
+func (r *TplRender) JSON(status int, v interface{}) {
 	var result []byte
 	var err error
 	if r.opt.IndentJSON {
@@ -240,7 +253,7 @@ func (r *Render) JSON(status int, v interface{}) {
 	r.Write(result)
 }
 
-func (r *Render) JSONString(v interface{}) (string, error) {
+func (r *TplRender) JSONString(v interface{}) (string, error) {
 	var result []byte
 	var err error
 	if r.opt.IndentJSON {
@@ -254,7 +267,7 @@ func (r *Render) JSONString(v interface{}) (string, error) {
 	return string(result), nil
 }
 
-func (r *Render) RawData(status int, v []byte) {
+func (r *TplRender) RawData(status int, v []byte) {
 	if r.Header().Get(ContentType) == "" {
 		r.Header().Set(ContentType, ContentBinary)
 	}
@@ -262,7 +275,7 @@ func (r *Render) RawData(status int, v []byte) {
 	r.Write(v)
 }
 
-func (r *Render) renderBytes(name string, binding interface{}, htmlOpt ...HTMLOptions) (*bytes.Buffer, error) {
+func (r *TplRender) renderBytes(name string, binding interface{}, htmlOpt ...HTMLOptions) (*bytes.Buffer, error) {
 	opt := r.prepareHTMLOptions(htmlOpt)
 
 	if len(opt.Layout) > 0 {
@@ -278,7 +291,7 @@ func (r *Render) renderBytes(name string, binding interface{}, htmlOpt ...HTMLOp
 	return out, nil
 }
 
-func (r *Render) HTML(status int, name string, binding interface{}, htmlOpt ...HTMLOptions) {
+func (r *TplRender) HTML(status int, name string, binding interface{}, htmlOpt ...HTMLOptions) {
 	r.startTime = time.Now()
 
 	out, err := r.renderBytes(name, binding, htmlOpt...)
@@ -290,9 +303,10 @@ func (r *Render) HTML(status int, name string, binding interface{}, htmlOpt ...H
 	r.Header().Set(ContentType, r.opt.HTMLContentType+r.compiledCharset)
 	r.WriteHeader(status)
 	io.Copy(r, out)
+	bufpool.Put(out)
 }
 
-func (r *Render) HTMLString(name string, binding interface{}, htmlOpt ...HTMLOptions) (string, error) {
+func (r *TplRender) HTMLString(name string, binding interface{}, htmlOpt ...HTMLOptions) (string, error) {
 	if out, err := r.renderBytes(name, binding, htmlOpt...); err != nil {
 		return "", err
 	} else {
@@ -300,7 +314,7 @@ func (r *Render) HTMLString(name string, binding interface{}, htmlOpt ...HTMLOpt
 	}
 }
 
-func (r *Render) XML(status int, v interface{}) {
+func (r *TplRender) XML(status int, v interface{}) {
 	var result []byte
 	var err error
 	if r.opt.IndentXML {
@@ -323,15 +337,15 @@ func (r *Render) XML(status int, v interface{}) {
 }
 
 // Error writes the given HTTP status to the current ResponseWriter
-func (r *Render) Error(status int) {
+func (r *TplRender) Error(status int) {
 	r.WriteHeader(status)
 }
 
-func (r *Render) Status(status int) {
+func (r *TplRender) Status(status int) {
 	r.WriteHeader(status)
 }
 
-func (r *Render) Redirect(location string, status ...int) {
+func (r *TplRender) Redirect(location string, status ...int) {
 	code := http.StatusFound
 	if len(status) == 1 {
 		code = status[0]
@@ -340,16 +354,12 @@ func (r *Render) Redirect(location string, status ...int) {
 	http.Redirect(r, r.req, location, code)
 }
 
-func (r *Render) Template() *template.Template {
-	return r.t
-}
-
-func (r *Render) execute(name string, binding interface{}) (*bytes.Buffer, error) {
+func (r *TplRender) execute(name string, binding interface{}) (*bytes.Buffer, error) {
 	buf := bufpool.Get()
 	return buf, r.t.ExecuteTemplate(buf, name, binding)
 }
 
-func (r *Render) addYield(name string, binding interface{}) {
+func (r *TplRender) addYield(name string, binding interface{}) {
 	funcs := template.FuncMap{
 		"yield": func() (template.HTML, error) {
 			buf, err := r.execute(name, binding)
@@ -363,7 +373,7 @@ func (r *Render) addYield(name string, binding interface{}) {
 	r.t.Funcs(funcs)
 }
 
-func (r *Render) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {
+func (r *TplRender) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {
 	if len(htmlOpt) > 0 {
 		return htmlOpt[0]
 	}

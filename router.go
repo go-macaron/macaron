@@ -17,6 +17,7 @@ package macaron
 import (
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/Unknwon/com"
 )
@@ -34,6 +35,39 @@ var (
 	}
 )
 
+// routeMap represents a thread-safe map for route tree.
+type routeMap struct {
+	lock   sync.RWMutex
+	routes map[string]map[string]bool
+}
+
+// NewRouteMap initializes and returns a new routeMap.
+func NewRouteMap() *routeMap {
+	rm := &routeMap{
+		routes: make(map[string]map[string]bool),
+	}
+	for m := range _HTTP_METHODS {
+		rm.routes[m] = make(map[string]bool)
+	}
+	return rm
+}
+
+// isExist returns true if a route has been registered.
+func (rm *routeMap) isExist(method, pattern string) bool {
+	rm.lock.RLock()
+	defer rm.lock.RUnlock()
+
+	return rm.routes[method][pattern]
+}
+
+// add adds new route to route tree map.
+func (rm *routeMap) add(method, pattern string) {
+	rm.lock.Lock()
+	defer rm.lock.Unlock()
+
+	rm.routes[method][pattern] = true
+}
+
 type group struct {
 	pattern  string
 	handlers []Handler
@@ -41,8 +75,10 @@ type group struct {
 
 // Router represents a Macaron router layer.
 type Router struct {
-	m        *Macaron
-	routers  map[string]*Tree
+	m       *Macaron
+	routers map[string]*Tree
+	*routeMap
+
 	prefx    string
 	groups   []group
 	notFound http.HandlerFunc
@@ -50,7 +86,8 @@ type Router struct {
 
 func NewRouter() *Router {
 	return &Router{
-		routers: make(map[string]*Tree),
+		routers:  make(map[string]*Tree),
+		routeMap: NewRouteMap(),
 	}
 }
 
@@ -63,6 +100,11 @@ type Handle func(http.ResponseWriter, *http.Request, Params)
 // handle adds new route to the router tree.
 func (r *Router) handle(method, pattern string, handle Handle) {
 	method = strings.ToUpper(method)
+
+	// Prevent duplicate routes.
+	if r.isExist(method, pattern) {
+		return
+	}
 
 	// Validate HTTP methods.
 	if !_HTTP_METHODS[method] && method != "*" {
@@ -88,6 +130,7 @@ func (r *Router) handle(method, pattern string, handle Handle) {
 			t.AddRouter(pattern, handle)
 			r.routers[m] = t
 		}
+		r.add(m, pattern)
 	}
 }
 
