@@ -177,8 +177,6 @@ m.Get("/hello/*name", func(ctx *macaron.Context) string {
 })
 ```
 
-Regular expressions are currently **NOT SUPPORTED**.
-
 Route handlers can be stacked on top of each other, which is useful for things like authentication and authorization:
 
 ```go
@@ -319,7 +317,7 @@ m.Use(macaron.Gzip())
 
 ### Render
 
-The [*macaron.Render](https://gowalker.org/github.com/Unknwon/macaron#Render) has been integrated into [*macaron.Context](https://gowalker.org/github.com/Unknwon/macaron#Context). To use it, you have to register the render middleware first.
+The [macaron.Render](https://gowalker.org/github.com/Unknwon/macaron#Render) has been integrated into [*macaron.Context](https://gowalker.org/github.com/Unknwon/macaron#Context). To use it, you have to register the render middleware first.
 
 ```go
 m.Use(macaron.Renderer(macaron.RenderOptions{}))
