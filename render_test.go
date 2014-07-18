@@ -476,29 +476,6 @@ func Test_Render_Charset_JSON(t *testing.T) {
 	expect(t, res.Body.String(), `{"one":"hello","two":"world"}`)
 }
 
-func Test_Render_Default_Charset_HTML(t *testing.T) {
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-		Directory: "fixtures/basic",
-	}))
-
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.HTML(200, "hello", "jeremy")
-	})
-
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
-
-	m.ServeHTTP(res, req)
-
-	expect(t, res.Code, 200)
-	expect(t, res.Header().Get(ContentType), ContentHTML+"; charset=UTF-8")
-	// ContentLength should be deferred to the ResponseWriter and not Render
-	expect(t, res.Header().Get(ContentLength), "")
-	expect(t, res.Body.String(), "<h1>Hello jeremy</h1>\n")
-}
-
 func Test_Render_Override_Layout(t *testing.T) {
 	m := Classic()
 	m.Use(Renderer(RenderOptions{

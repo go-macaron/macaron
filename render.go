@@ -98,6 +98,7 @@ type HTMLOptions struct {
 
 type Render interface {
 	http.ResponseWriter
+	RW() http.ResponseWriter
 
 	JSON(int, interface{})
 	JSONString(interface{}) (string, error)
@@ -213,8 +214,8 @@ func Renderer(options ...RenderOptions) Handler {
 			ResponseWriter:  rw,
 			req:             req,
 			t:               tc,
-			opt:             opt,
-			compiledCharset: cs,
+			Opt:             opt,
+			CompiledCharset: cs,
 		}
 		ctx.Render = r
 		ctx.MapTo(r, (*Render)(nil))
@@ -225,16 +226,20 @@ type TplRender struct {
 	http.ResponseWriter
 	req             *http.Request
 	t               *template.Template
-	opt             RenderOptions
-	compiledCharset string
+	Opt             RenderOptions
+	CompiledCharset string
 
 	startTime time.Time
+}
+
+func (r *TplRender) RW() http.ResponseWriter {
+	return r.ResponseWriter
 }
 
 func (r *TplRender) JSON(status int, v interface{}) {
 	var result []byte
 	var err error
-	if r.opt.IndentJSON {
+	if r.Opt.IndentJSON {
 		result, err = json.MarshalIndent(v, "", "  ")
 	} else {
 		result, err = json.Marshal(v)
@@ -245,10 +250,10 @@ func (r *TplRender) JSON(status int, v interface{}) {
 	}
 
 	// json rendered fine, write out the result
-	r.Header().Set(ContentType, ContentJSON+r.compiledCharset)
+	r.Header().Set(ContentType, ContentJSON+r.CompiledCharset)
 	r.WriteHeader(status)
-	if len(r.opt.PrefixJSON) > 0 {
-		r.Write(r.opt.PrefixJSON)
+	if len(r.Opt.PrefixJSON) > 0 {
+		r.Write(r.Opt.PrefixJSON)
 	}
 	r.Write(result)
 }
@@ -256,7 +261,7 @@ func (r *TplRender) JSON(status int, v interface{}) {
 func (r *TplRender) JSONString(v interface{}) (string, error) {
 	var result []byte
 	var err error
-	if r.opt.IndentJSON {
+	if r.Opt.IndentJSON {
 		result, err = json.MarshalIndent(v, "", "  ")
 	} else {
 		result, err = json.Marshal(v)
@@ -300,7 +305,7 @@ func (r *TplRender) HTML(status int, name string, binding interface{}, htmlOpt .
 		return
 	}
 
-	r.Header().Set(ContentType, r.opt.HTMLContentType+r.compiledCharset)
+	r.Header().Set(ContentType, r.Opt.HTMLContentType+r.CompiledCharset)
 	r.WriteHeader(status)
 	io.Copy(r, out)
 	bufpool.Put(out)
@@ -317,7 +322,7 @@ func (r *TplRender) HTMLString(name string, binding interface{}, htmlOpt ...HTML
 func (r *TplRender) XML(status int, v interface{}) {
 	var result []byte
 	var err error
-	if r.opt.IndentXML {
+	if r.Opt.IndentXML {
 		result, err = xml.MarshalIndent(v, "", "  ")
 	} else {
 		result, err = xml.Marshal(v)
@@ -328,10 +333,10 @@ func (r *TplRender) XML(status int, v interface{}) {
 	}
 
 	// XML rendered fine, write out the result
-	r.Header().Set(ContentType, ContentXML+r.compiledCharset)
+	r.Header().Set(ContentType, ContentXML+r.CompiledCharset)
 	r.WriteHeader(status)
-	if len(r.opt.PrefixXML) > 0 {
-		r.Write(r.opt.PrefixXML)
+	if len(r.Opt.PrefixXML) > 0 {
+		r.Write(r.Opt.PrefixXML)
 	}
 	r.Write(result)
 }
@@ -379,6 +384,6 @@ func (r *TplRender) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {
 	}
 
 	return HTMLOptions{
-		Layout: r.opt.Layout,
+		Layout: r.Opt.Layout,
 	}
 }
