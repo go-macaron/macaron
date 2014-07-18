@@ -217,6 +217,13 @@ func Renderer(options ...RenderOptions) Handler {
 			Opt:             opt,
 			CompiledCharset: cs,
 		}
+		ctx.Data["TmplLoadTimes"] = func() string {
+			if r.startTime.IsZero() {
+				return ""
+			}
+			return fmt.Sprint(time.Since(r.startTime).Nanoseconds()/1e6) + "ms"
+		}
+
 		ctx.Render = r
 		ctx.MapTo(r, (*Render)(nil))
 	}
