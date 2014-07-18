@@ -353,6 +353,7 @@ Start by looking in the [macaron-contrib](https://github.com/macaron-contrib) pr
 - [i18n](https://github.com/macaron-contrib/i18n) - Internationalization and Localization
 - [cache](https://github.com/macaron-contrib/cache) - Cache manager
 - [session](https://github.com/macaron-contrib/session) - Session manager
+- [pongo2](https://github.com/macaron-contrib/pongo2) - Pongo2 template engine support
 
 ### How do I integrate with existing servers?
 

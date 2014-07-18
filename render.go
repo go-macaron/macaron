@@ -106,7 +106,7 @@ type Render interface {
 	HTML(int, string, interface{}, ...HTMLOptions)
 	HTMLString(string, interface{}, ...HTMLOptions) (string, error)
 	XML(int, interface{})
-	Error(int)
+	Error(int, ...string)
 	Status(int)
 	Redirect(string, ...int)
 }
@@ -342,8 +342,11 @@ func (r *TplRender) XML(status int, v interface{}) {
 }
 
 // Error writes the given HTTP status to the current ResponseWriter
-func (r *TplRender) Error(status int) {
+func (r *TplRender) Error(status int, message ...string) {
 	r.WriteHeader(status)
+	if len(message) > 0 {
+		r.Write([]byte(message[0]))
+	}
 }
 
 func (r *TplRender) Status(status int) {
