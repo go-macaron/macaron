@@ -94,6 +94,9 @@ func (leaf *leafInfo) match(wildcardValues []string) (ok bool, params Params) {
 				}
 				return true, params
 			}
+			if j >= len(wildcardValues) {
+				return false, nil
+			}
 			params[v] = wildcardValues[j]
 			j += 1
 		}

@@ -112,13 +112,13 @@ func (r *Router) handle(method, pattern string, handle Handle) {
 	}
 
 	// Generate methods need register.
-	methods := map[string]bool{
-		method: true, // Register explicit one.
-	}
+	methods := make(map[string]bool)
 	if method == "*" {
 		for m := range _HTTP_METHODS {
 			methods[m] = true
 		}
+	} else {
+		methods[method] = true
 	}
 
 	// Add to router tree.
