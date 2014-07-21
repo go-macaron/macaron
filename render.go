@@ -212,7 +212,7 @@ func Renderer(options ...RenderOptions) Handler {
 		}
 		r := &TplRender{
 			ResponseWriter:  rw,
-			req:             req,
+			Req:             req,
 			t:               tc,
 			Opt:             opt,
 			CompiledCharset: cs,
@@ -231,7 +231,7 @@ func Renderer(options ...RenderOptions) Handler {
 
 type TplRender struct {
 	http.ResponseWriter
-	req             *http.Request
+	Req             *http.Request
 	t               *template.Template
 	Opt             RenderOptions
 	CompiledCharset string
@@ -366,7 +366,7 @@ func (r *TplRender) Redirect(location string, status ...int) {
 		code = status[0]
 	}
 
-	http.Redirect(r, r.req, location, code)
+	http.Redirect(r, r.Req, location, code)
 }
 
 func (r *TplRender) execute(name string, binding interface{}) (*bytes.Buffer, error) {
