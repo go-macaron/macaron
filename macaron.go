@@ -107,21 +107,20 @@ func (m *Macaron) Use(handler Handler) {
 	m.handlers = append(m.handlers, handler)
 }
 
-func (m *Macaron) createContext(resp http.ResponseWriter, req *http.Request) *Context {
+func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Context {
 	c := &Context{
 		Injector: inject.New(),
 		handlers: m.handlers,
 		action:   m.action,
-		rw:       NewResponseWriter(resp),
 		index:    0,
 		Router:   m.Router,
 		Req:      req,
-		Resp:     resp,
+		Resp:     NewResponseWriter(rw),
 		Data:     make(map[string]interface{}),
 	}
 	c.SetParent(m)
 	c.Map(c)
-	c.MapTo(c.rw, (*http.ResponseWriter)(nil))
+	c.MapTo(c.Resp, (*http.ResponseWriter)(nil))
 	c.Map(req)
 	return c
 }

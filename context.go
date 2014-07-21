@@ -34,12 +34,11 @@ type Context struct {
 	inject.Injector
 	handlers []Handler
 	action   Handler
-	rw       ResponseWriter
 	index    int
 
 	*Router
 	Req    *http.Request
-	Resp   http.ResponseWriter
+	Resp   ResponseWriter
 	params Params
 	Render // Not nil only if you use macaran.Render middleware.
 	Data   map[string]interface{}
@@ -61,7 +60,7 @@ func (c *Context) Next() {
 }
 
 func (c *Context) Written() bool {
-	return c.rw.Written()
+	return c.Resp.Written()
 }
 
 func (c *Context) run() {
