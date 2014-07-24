@@ -163,7 +163,7 @@ m.Get("/secret", authorize, func() {
 })
 ```
 
-Route groups can be added too using the Group method.
+Route groups can be added too using the Group method:
 
 ```go
 m.Group("/books", func(r *macaron.Router) {
@@ -181,7 +181,7 @@ m.Group("/books", func(r *macaron.Router) {
 })
 ```
 
-Just like you can pass middlewares to a handler you can pass middlewares to groups.
+Just like you can pass middlewares to a handler you can pass middlewares to groups:
 
 ```go
 m.Group("/books", func(r martini.Router) {
