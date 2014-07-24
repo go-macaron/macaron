@@ -329,7 +329,7 @@ func Home(ctx *macaron.Context) {
 
 ## 多站点支持
 
-如果您想要运行 2 或 2 个以上的示例在一个程序里，[HostSwitcher](https://gowalker.org/github.com/Unknwon/macaron#HostSwitcher) 就是您需要的特性：
+如果您想要运行 2 或 2 个以上的实例在一个程序里，[HostSwitcher](https://gowalker.org/github.com/Unknwon/macaron#HostSwitcher) 就是您需要的特性：
 
 ```go
 func main() {
