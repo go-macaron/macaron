@@ -3,7 +3,7 @@ Macaron [![wercker status](https://app.wercker.com/status/282aa746d272d0eaa703a8
 
 Package macaron is a high productive and modular design web framework in Go.
 
-##### Current version: 0.1.1
+##### Current version: 0.1.2
 
 Anyone who uses [Martini](https://github.com/go-martini/martini) and familiar with dependency injection like me, should be very comfortable about how to use Macaron.
 
@@ -55,6 +55,8 @@ Start by looking in the [macaron-contrib](https://github.com/macaron-contrib) pr
 - [i18n](https://github.com/macaron-contrib/i18n) - Internationalization and Localization
 - [cache](https://github.com/macaron-contrib/cache) - Cache manager
 - [session](https://github.com/macaron-contrib/session) - Session manager
+- [csrf](https://github.com/macaron-contrib/csrf) - Generates and validates csrf tokens
+- [captcha](https://github.com/macaron-contrib/captcha) - Captcha service
 - [pongo2](https://github.com/macaron-contrib/pongo2) - Pongo2 template engine support
 
 ### How do I integrate with existing servers?
