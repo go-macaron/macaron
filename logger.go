@@ -46,7 +46,7 @@ func Logger() Handler {
 		rw := res.(ResponseWriter)
 		c.Next()
 
-		content := fmt.Sprintf("Completed %v %s in %v", rw.Status(), http.StatusText(rw.Status()), time.Since(start))
+		content := fmt.Sprintf("Completed %s %v %s in %v", req.URL.Path, rw.Status(), http.StatusText(rw.Status()), time.Since(start))
 		if !isWindows {
 			switch rw.Status() {
 			case 200:

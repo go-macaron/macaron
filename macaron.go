@@ -1,4 +1,4 @@
-// Copyright 2014 Unknown
+// Copyright 2014 Unknwon
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -26,7 +26,7 @@ import (
 )
 
 func Version() string {
-	return "0.1.1.0721"
+	return "0.1.2.0731"
 }
 
 // Handler can be any callable function.
