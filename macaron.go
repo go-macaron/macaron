@@ -19,14 +19,13 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 	"reflect"
 
 	"github.com/Unknwon/macaron/inject"
 )
 
 func Version() string {
-	return "0.1.2.0731"
+	return "0.1.2.0801"
 }
 
 // Handler can be any callable function.
@@ -176,9 +175,9 @@ func setENV(e string) {
 
 func init() {
 	setENV(os.Getenv("MACARON_ENV"))
-	path, err := filepath.Abs(os.Args[0])
+	var err error
+	Root, err = os.Getwd()
 	if err != nil {
 		panic(err)
 	}
-	Root = filepath.Dir(path)
 }
