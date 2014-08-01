@@ -61,7 +61,6 @@ func Static(directory string, staticOpt ...StaticOptions) Handler {
 	if !filepath.IsAbs(directory) {
 		directory = filepath.Join(Root, directory)
 	}
-
 	dir := http.Dir(directory)
 	opt := prepareStaticOptions(staticOpt)
 

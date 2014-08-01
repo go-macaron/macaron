@@ -1,5 +1,5 @@
 // Copyright 2013 Martini Authors
-// Copyright 2014 Unknown
+// Copyright 2014 Unknwon
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -117,7 +117,7 @@ func prepareOptions(options []RenderOptions) RenderOptions {
 		opt = options[0]
 	}
 
-	// Defaults
+	// Defaults.
 	if len(opt.Directory) == 0 {
 		opt.Directory = "templates"
 	}
