@@ -138,6 +138,9 @@ func getDefaultListenAddr() string {
 		port = "4000"
 	}
 	host := os.Getenv("HOST")
+	if len(host) == 0 {
+		host = "0.0.0.0"
+	}
 	return host + ":" + port
 }
 

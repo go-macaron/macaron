@@ -84,6 +84,23 @@ func (c *Context) run() {
 	}
 }
 
+// HTML calls Render.HTML but allows less arguments.
+func (ctx *Context) HTML(status int, name string, binding ...interface{}) {
+	if len(binding) == 0 {
+		ctx.Render.HTML(status, name, ctx.Data)
+	} else {
+		ctx.Render.HTML(status, name, binding[0])
+		if len(binding) > 1 {
+			ctx.Render.HTML(status, name, binding[1].(HTMLOptions))
+		}
+	}
+}
+
+// SHTML calls Context.HTML but always uses 200 as response code.
+func (ctx *Context) SHTML(name string, binding ...interface{}) {
+	ctx.HTML(200, name, binding...)
+}
+
 // Query querys form parameter.
 func (ctx *Context) Query(name string) string {
 	ctx.Req.ParseForm()
