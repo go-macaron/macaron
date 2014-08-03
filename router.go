@@ -148,6 +148,10 @@ func (r *Router) Handle(method string, pattern string, handlers []Handler) {
 		h = append(h, handlers...)
 		handlers = h
 	}
+	// verify handlers by cnphpbb at 20140803 23:51
+	for _, handler := range r.handlers {
+		validateHandler(handler)
+	}
 
 	r.handle(method, pattern, func(resp http.ResponseWriter, req *http.Request, params Params) {
 		c := r.m.createContext(resp, req)
