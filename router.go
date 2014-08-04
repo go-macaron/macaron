@@ -1,4 +1,4 @@
-// Copyright 2014 Unknown
+// Copyright 2014 Unknwon
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -149,7 +149,7 @@ func (r *Router) Handle(method string, pattern string, handlers []Handler) {
 		handlers = h
 	}
 	// verify handlers by cnphpbb at 20140803 23:51
-	for _, handler := range r.handlers {
+	for _, handler := range handlers {
 		validateHandler(handler)
 	}
 
