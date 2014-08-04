@@ -39,6 +39,12 @@ func main() {
 - Very simple steps to turn Martini middlewares to Macaron.
 - Handy dependency injection powered by [inject](https://github.com/codegangsta/inject).
 
+## Use Cases
+
+- [Gogs](https://github.com/gogits/gogs): Go Git Service
+- [Gogs Web](https://github.com/gogits/gogsweb): Gogs official website
+- [NvMingXing](http://nvmingxing.net): Beauty women pictures
+
 ## Getting Help
 
 - Visit [Go Walker](https://gowalker.org/github.com/Unknwon/macaron) for API documentation.
