@@ -96,11 +96,6 @@ func (ctx *Context) HTML(status int, name string, binding ...interface{}) {
 	}
 }
 
-// SHTML calls Context.HTML but always uses 200 as response code.
-func (ctx *Context) SHTML(name string, binding ...interface{}) {
-	ctx.HTML(200, name, binding...)
-}
-
 // Query querys form parameter.
 func (ctx *Context) Query(name string) string {
 	ctx.Req.ParseForm()
