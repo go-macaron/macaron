@@ -1,5 +1,5 @@
 // Copyright 2013 Martini Authors
-// Copyright 2014 Unknown
+// Copyright 2014 Unknwon
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -45,6 +45,11 @@ func Test_New(t *testing.T) {
 func Test_Macaron_Run(t *testing.T) {
 	// just test that Run doesn't bomb
 	go New().Run()
+}
+
+func Test_Macaron_RunOnAddr(t *testing.T) {
+	// just test that RunOnAddr doesn't bomb
+	go New().RunOnAddr("0.0.0.0:4001")
 }
 
 func Test_Macaron_ServeHTTP(t *testing.T) {

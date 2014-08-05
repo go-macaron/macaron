@@ -25,7 +25,7 @@ import (
 )
 
 func Version() string {
-	return "0.1.2.0801"
+	return "0.1.3.0805"
 }
 
 // Handler can be any callable function.
@@ -144,13 +144,16 @@ func getDefaultListenAddr() string {
 	return host + ":" + port
 }
 
-// Run the http server. Listening on os.GetEnv("PORT") or 4000 by default.
-func (m *Macaron) Run() {
-	addr := getDefaultListenAddr()
-
+// RunOnAddr runs server in given address and port.
+func (m *Macaron) RunOnAddr(addr string) {
 	logger := m.Injector.GetVal(reflect.TypeOf(m.logger)).Interface().(*log.Logger)
 	logger.Printf("listening on %s (%s)\n", addr, Env)
 	logger.Fatalln(http.ListenAndServe(addr, m))
+}
+
+// Run the http server. Listening on os.GetEnv("PORT") or 4000 by default.
+func (m *Macaron) Run() {
+	m.RunOnAddr(getDefaultListenAddr())
 }
 
 // \_   _____/ _______  __
