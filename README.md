@@ -64,6 +64,7 @@ Start by looking in the [macaron-contrib](https://github.com/macaron-contrib) pr
 - [csrf](https://github.com/macaron-contrib/csrf) - Generates and validates csrf tokens
 - [captcha](https://github.com/macaron-contrib/captcha) - Captcha service
 - [pongo2](https://github.com/macaron-contrib/pongo2) - Pongo2 template engine support
+- [toolbox](https://github.com/macaron-contrib/toolbox) - Health check, pprof, profile and statistic services
 
 ### How do I integrate with existing servers?
 
