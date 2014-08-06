@@ -103,6 +103,7 @@ type Render interface {
 	JSON(int, interface{})
 	JSONString(interface{}) (string, error)
 	RawData(int, []byte)
+	RenderData(int, []byte)
 	HTML(int, string, interface{}, ...HTMLOptions)
 	HTMLString(string, interface{}, ...HTMLOptions) (string, error)
 	XML(int, interface{})
@@ -279,12 +280,20 @@ func (r *TplRender) JSONString(v interface{}) (string, error) {
 	return string(result), nil
 }
 
-func (r *TplRender) RawData(status int, v []byte) {
+func (r *TplRender) data(status int, contentType string, v []byte) {
 	if r.Header().Get(ContentType) == "" {
-		r.Header().Set(ContentType, ContentBinary)
+		r.Header().Set(ContentType, contentType)
 	}
 	r.WriteHeader(status)
 	r.Write(v)
+}
+
+func (r *TplRender) RawData(status int, v []byte) {
+	r.data(status, ContentBinary, v)
+}
+
+func (r *TplRender) RenderData(status int, v []byte) {
+	r.data(status, ContentHTML, v)
 }
 
 func (r *TplRender) renderBytes(name string, binding interface{}, htmlOpt ...HTMLOptions) (*bytes.Buffer, error) {
