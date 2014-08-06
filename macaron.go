@@ -16,6 +16,7 @@
 package macaron
 
 import (
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -25,7 +26,7 @@ import (
 )
 
 func Version() string {
-	return "0.1.3.0805"
+	return "0.1.4.0805"
 }
 
 // Handler can be any callable function.
@@ -51,14 +52,15 @@ type Macaron struct {
 	logger *log.Logger
 }
 
-// New creates a bare bones Macaron instance.
+// NewWithLogger creates a bare bones Macaron instance.
 // Use this method if you want to have full control over the middleware that is used.
-func New() *Macaron {
+// You can specify logger output writer with this function.
+func NewWithLogger(out io.Writer) *Macaron {
 	m := &Macaron{
 		Injector: inject.New(),
 		action:   func() {},
 		Router:   NewRouter(),
-		logger:   log.New(os.Stdout, "[Macaron] ", 0),
+		logger:   log.New(out, "[Macaron] ", 0),
 	}
 	m.Router.m = m
 	m.Map(m.logger)
@@ -69,6 +71,12 @@ func New() *Macaron {
 		c.run()
 	}
 	return m
+}
+
+// New creates a bare bones Macaron instance.
+// Use this method if you want to have full control over the middleware that is used.
+func New() *Macaron {
+	return NewWithLogger(os.Stdout)
 }
 
 // Classic creates a classic Macaron with some basic default middleware:

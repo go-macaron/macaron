@@ -1,4 +1,5 @@
 // Copyright 2013 Martini Authors
+// Copyright 2014 Unknwon
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -65,11 +66,11 @@ func Static(directory string, staticOpt ...StaticOptions) Handler {
 	dir := http.Dir(directory)
 	opt := prepareStaticOptions(staticOpt)
 
-	return func(res http.ResponseWriter, req *http.Request, log *log.Logger) {
-		if req.Method != "GET" && req.Method != "HEAD" {
+	return func(ctx *Context, log *log.Logger) {
+		if ctx.Req.Method != "GET" && ctx.Req.Method != "HEAD" {
 			return
 		}
-		file := req.URL.Path
+		file := ctx.Req.URL.Path
 		// if we have a prefix, filter requests by stripping the prefix
 		if opt.Prefix != "" {
 			if !strings.HasPrefix(file, opt.Prefix) {
@@ -95,8 +96,8 @@ func Static(directory string, staticOpt ...StaticOptions) Handler {
 		// try to serve index file
 		if fi.IsDir() {
 			// redirect if missing trailing slash
-			if !strings.HasSuffix(req.URL.Path, "/") {
-				http.Redirect(res, req, req.URL.Path+"/", http.StatusFound)
+			if !strings.HasSuffix(ctx.Req.URL.Path, "/") {
+				http.Redirect(ctx.Resp, ctx.Req, ctx.Req.URL.Path+"/", http.StatusFound)
 				return
 			}
 
@@ -119,9 +120,9 @@ func Static(directory string, staticOpt ...StaticOptions) Handler {
 
 		// Add an Expires header to the static content
 		if opt.Expires != nil {
-			res.Header().Set("Expires", opt.Expires())
+			ctx.Resp.Header().Set("Expires", opt.Expires())
 		}
 
-		http.ServeContent(res, req, file, fi.ModTime(), f)
+		http.ServeContent(ctx.Resp, ctx.Req, file, fi.ModTime(), f)
 	}
 }
