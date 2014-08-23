@@ -79,7 +79,6 @@ type Router struct {
 	routers map[string]*Tree
 	*routeMap
 
-	prefx    string
 	groups   []group
 	notFound http.HandlerFunc
 }
