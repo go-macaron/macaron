@@ -16,7 +16,10 @@
 package macaron
 
 import (
+	"bufio"
 	"compress/gzip"
+	"fmt"
+	"net"
 	"net/http"
 	"strings"
 )
@@ -68,4 +71,12 @@ func (grw gzipResponseWriter) Write(p []byte) (int, error) {
 	}
 
 	return grw.w.Write(p)
+}
+
+func (grw gzipResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	hijacker, ok := grw.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("the ResponseWriter doesn't support the Hijacker interface")
+	}
+	return hijacker.Hijack()
 }
