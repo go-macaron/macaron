@@ -32,32 +32,30 @@ const (
 	HeaderVary            = "Vary"
 )
 
-var serveGzip = func(w http.ResponseWriter, r *http.Request, c *Context) {
-	if !strings.Contains(r.Header.Get(HeaderAcceptEncoding), "gzip") {
-		return
-	}
-
-	headers := w.Header()
-	headers.Set(HeaderContentEncoding, "gzip")
-	headers.Set(HeaderVary, HeaderAcceptEncoding)
-
-	gz := gzip.NewWriter(w)
-	defer gz.Close()
-
-	gzw := gzipResponseWriter{gz, w.(ResponseWriter)}
-	c.MapTo(gzw, (*http.ResponseWriter)(nil))
-
-	c.Next()
-
-	// delete content length after we know we have been written to
-	gzw.Header().Del("Content-Length")
-}
-
 // All returns a Handler that adds gzip compression to all requests.
 // Make sure to include the Gzip middleware above other middleware
 // that alter the response body (like the render middleware).
 func Gzip() Handler {
-	return serveGzip
+	return func(w http.ResponseWriter, r *http.Request, c *Context) {
+		if !strings.Contains(r.Header.Get(HeaderAcceptEncoding), "gzip") {
+			return
+		}
+
+		headers := w.Header()
+		headers.Set(HeaderContentEncoding, "gzip")
+		headers.Set(HeaderVary, HeaderAcceptEncoding)
+
+		gz := gzip.NewWriter(w)
+		defer gz.Close()
+
+		gzw := gzipResponseWriter{gz, w.(ResponseWriter)}
+		c.MapTo(gzw, (*http.ResponseWriter)(nil))
+
+		c.Next()
+
+		// delete content length after we know we have been written to
+		gzw.Header().Del("Content-Length")
+	}
 }
 
 type gzipResponseWriter struct {

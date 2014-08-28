@@ -1,4 +1,4 @@
-// Copyright 2014 Unknown
+// Copyright 2014 Unknwon
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -51,7 +51,12 @@ func (hs *HostSwitcher) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// RunOnAddr runs server in given address and port.
+func (hs *HostSwitcher) RunOnAddr(addr string) {
+	log.Fatalln(http.ListenAndServe(addr, hs))
+}
+
 // Run the http server. Listening on os.GetEnv("PORT") or 4000 by default.
 func (hs *HostSwitcher) Run() {
-	log.Fatalln(http.ListenAndServe(getDefaultListenAddr(), hs))
+	hs.RunOnAddr(getDefaultListenAddr())
 }
