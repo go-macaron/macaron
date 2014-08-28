@@ -183,6 +183,11 @@ func (ctx *Context) SetSecureCookie(name, value string, others ...interface{}) {
 	ctx.SetSuperSecureCookie(defaultCookieSecret, name, value, others...)
 }
 
+// GetSecureCookie returns given cookie value from request header with default secret string.
+func (ctx *Context) GetSecureCookie(key string) (string, bool) {
+	return ctx.GetSuperSecureCookie(defaultCookieSecret, key)
+}
+
 // SetSuperSecureCookie sets given cookie value to response header with secret string.
 func (ctx *Context) SetSuperSecureCookie(Secret, name, value string, others ...interface{}) {
 	vs := base64.URLEncoding.EncodeToString([]byte(value))
@@ -192,11 +197,6 @@ func (ctx *Context) SetSuperSecureCookie(Secret, name, value string, others ...i
 	sig := fmt.Sprintf("%02x", h.Sum(nil))
 	cookie := strings.Join([]string{vs, timestamp, sig}, "|")
 	ctx.SetCookie(name, cookie, others...)
-}
-
-// GetSecureCookie returns given cookie value from request header with default secret string.
-func (ctx *Context) GetSecureCookie(key string) (string, bool) {
-	return ctx.GetSuperSecureCookie(defaultCookieSecret, key)
 }
 
 // GetSuperSecureCookie returns given cookie value from request header with secret string.

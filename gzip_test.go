@@ -20,56 +20,46 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
-func Test_GzipAll(t *testing.T) {
-	// Set up
-	recorder := httptest.NewRecorder()
-	before := false
+func TestGzip(t *testing.T) {
+	Convey("Gzip response content", t, func() {
+		before := false
 
-	m := New()
-	m.Use(Gzip())
-	m.Use(func(r http.ResponseWriter) {
-		r.(ResponseWriter).Before(func(rw ResponseWriter) {
-			before = true
+		m := New()
+		m.Use(Gzip())
+		m.Use(func(r http.ResponseWriter) {
+			r.(ResponseWriter).Before(func(rw ResponseWriter) {
+				before = true
+			})
 		})
+		m.Get("/", func() {})
+
+		// Not yet gzip.
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		_, ok := resp.HeaderMap[HeaderContentEncoding]
+		So(ok, ShouldBeFalse)
+
+		ce := resp.Header().Get(HeaderContentEncoding)
+		So(strings.EqualFold(ce, "gzip"), ShouldBeFalse)
+
+		// Gzip now.
+		resp = httptest.NewRecorder()
+		req.Header.Set(HeaderAcceptEncoding, "gzip")
+		m.ServeHTTP(resp, req)
+
+		_, ok = resp.HeaderMap[HeaderContentEncoding]
+		So(ok, ShouldBeTrue)
+
+		ce = resp.Header().Get(HeaderContentEncoding)
+		So(strings.EqualFold(ce, "gzip"), ShouldBeTrue)
+
+		So(before, ShouldBeTrue)
 	})
-	m.Get("/", func() {})
-
-	r, err := http.NewRequest("GET", "/", nil)
-	if err != nil {
-		t.Error(err)
-	}
-
-	m.ServeHTTP(recorder, r)
-
-	// Make our assertions
-	_, ok := recorder.HeaderMap[HeaderContentEncoding]
-	if ok {
-		t.Error(HeaderContentEncoding + " present")
-	}
-
-	ce := recorder.Header().Get(HeaderContentEncoding)
-	if strings.EqualFold(ce, "gzip") {
-		t.Error(HeaderContentEncoding + " is 'gzip'")
-	}
-
-	recorder = httptest.NewRecorder()
-	r.Header.Set(HeaderAcceptEncoding, "gzip")
-	m.ServeHTTP(recorder, r)
-
-	// Make our assertions
-	_, ok = recorder.HeaderMap[HeaderContentEncoding]
-	if !ok {
-		t.Error(HeaderContentEncoding + " not present")
-	}
-
-	ce = recorder.Header().Get(HeaderContentEncoding)
-	if !strings.EqualFold(ce, "gzip") {
-		t.Error(HeaderContentEncoding + " is not 'gzip'")
-	}
-
-	if before == false {
-		t.Error("Before hook was not called")
-	}
 }
