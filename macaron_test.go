@@ -18,179 +18,173 @@ package macaron
 import (
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
-/* Test Helpers */
-func expect(t *testing.T, a interface{}, b interface{}) {
-	if a != b {
-		t.Errorf("Expected %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
-	}
-}
-
-func refute(t *testing.T, a interface{}, b interface{}) {
-	if a == b {
-		t.Errorf("Did not expect %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
-	}
-}
-
 func Test_New(t *testing.T) {
-	m := New()
-	if m == nil {
-		t.Error("martini.New() cannot return nil")
-	}
-}
+	Convey("Initialize a new instance", t, func() {
+		So(New(), ShouldNotBeNil)
+	})
 
-func Test_Macaron_Run(t *testing.T) {
-	// just test that Run doesn't bomb
-	go New().Run()
-}
+	Convey("Just test that Run doesn't bomb", t, func() {
+		go New().Run()
+	})
 
-func Test_Macaron_RunOnAddr(t *testing.T) {
-	// just test that RunOnAddr doesn't bomb
-	go New().RunOnAddr("0.0.0.0:4001")
+	Convey("Just test that RunOnAddr doesn't bomb", t, func() {
+		go New().RunOnAddr("0.0.0.0:4001")
+	})
 }
 
 func Test_Macaron_ServeHTTP(t *testing.T) {
-	result := ""
-	response := httptest.NewRecorder()
+	Convey("Serve HTTP requests", t, func() {
+		result := ""
+		m := New()
+		m.Use(func(c *Context) {
+			result += "foo"
+			c.Next()
+			result += "ban"
+		})
+		m.Use(func(c *Context) {
+			result += "bar"
+			c.Next()
+			result += "baz"
+		})
+		m.Get("/", func() {})
+		m.Action(func(res http.ResponseWriter, req *http.Request) {
+			result += "bat"
+			res.WriteHeader(http.StatusBadRequest)
+		})
 
-	m := New()
-	m.Use(func(c *Context) {
-		result += "foo"
-		c.Next()
-		result += "ban"
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+		So(result, ShouldEqual, "foobarbatbazban")
+		So(resp.Code, ShouldEqual, http.StatusBadRequest)
 	})
-	m.Use(func(c *Context) {
-		result += "bar"
-		c.Next()
-		result += "baz"
-	})
-	m.Get("/", func() {})
-	m.Action(func(res http.ResponseWriter, req *http.Request) {
-		result += "bat"
-		res.WriteHeader(http.StatusBadRequest)
-	})
-
-	req, err := http.NewRequest("GET", "/", nil)
-	if err != nil {
-		t.Error(err)
-	}
-
-	m.ServeHTTP(response, req)
-
-	expect(t, result, "foobarbatbazban")
-	expect(t, response.Code, http.StatusBadRequest)
 }
 
 func Test_Macaron_Handlers(t *testing.T) {
-	result := ""
-	response := httptest.NewRecorder()
+	Convey("Add custom handlers", t, func() {
+		result := ""
+		batman := func(c *Context) {
+			result += "batman!"
+		}
 
-	batman := func(c *Context) {
-		result += "batman!"
-	}
+		m := New()
+		m.Use(func(c *Context) {
+			result += "foo"
+			c.Next()
+			result += "ban"
+		})
+		m.Handlers(
+			batman,
+			batman,
+			batman,
+		)
 
-	m := New()
-	m.Use(func(c *Context) {
-		result += "foo"
-		c.Next()
-		result += "ban"
+		Convey("Add not callable function", func() {
+			defer func() {
+				So(recover(), ShouldNotBeNil)
+			}()
+			m.Use("shit")
+		})
+
+		m.Get("/", func() {})
+		m.Action(func(res http.ResponseWriter, req *http.Request) {
+			result += "bat"
+			res.WriteHeader(http.StatusBadRequest)
+		})
+
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+		So(result, ShouldEqual, "batman!batman!batman!bat")
+		So(resp.Code, ShouldEqual, http.StatusBadRequest)
 	})
-	m.Handlers(
-		batman,
-		batman,
-		batman,
-	)
-	m.Get("/", func() {})
-	m.Action(func(res http.ResponseWriter, req *http.Request) {
-		result += "bat"
-		res.WriteHeader(http.StatusBadRequest)
-	})
-
-	req, err := http.NewRequest("GET", "/", nil)
-	if err != nil {
-		t.Error(err)
-	}
-
-	m.ServeHTTP(response, req)
-
-	expect(t, result, "batman!batman!batman!bat")
-	expect(t, response.Code, http.StatusBadRequest)
 }
 
 func Test_Macaron_EarlyWrite(t *testing.T) {
-	result := ""
-	response := httptest.NewRecorder()
+	Convey("Write early content to response", t, func() {
+		result := ""
+		m := New()
+		m.Use(func(res http.ResponseWriter) {
+			result += "foobar"
+			res.Write([]byte("Hello world"))
+		})
+		m.Use(func() {
+			result += "bat"
+		})
+		m.Get("/", func() {})
+		m.Action(func(res http.ResponseWriter) {
+			result += "baz"
+			res.WriteHeader(http.StatusBadRequest)
+		})
 
-	m := New()
-	m.Use(func(res http.ResponseWriter) {
-		result += "foobar"
-		res.Write([]byte("Hello world"))
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+		So(result, ShouldEqual, "foobar")
+		So(resp.Code, ShouldEqual, http.StatusOK)
 	})
-	m.Use(func() {
-		result += "bat"
-	})
-	m.Get("/", func() {})
-	m.Action(func(res http.ResponseWriter) {
-		result += "baz"
-		res.WriteHeader(http.StatusBadRequest)
-	})
-
-	req, err := http.NewRequest("GET", "/", nil)
-	if err != nil {
-		t.Error(err)
-	}
-
-	m.ServeHTTP(response, req)
-
-	expect(t, result, "foobar")
-	expect(t, response.Code, http.StatusOK)
 }
 
 func Test_Macaron_Written(t *testing.T) {
-	response := httptest.NewRecorder()
+	Convey("Written sign", t, func() {
+		resp := httptest.NewRecorder()
+		m := New()
+		m.Handlers(func(res http.ResponseWriter) {
+			res.WriteHeader(http.StatusOK)
+		})
 
-	m := New()
-	m.Handlers(func(res http.ResponseWriter) {
-		res.WriteHeader(http.StatusOK)
+		ctx := m.createContext(resp, &http.Request{Method: "GET"})
+		So(ctx.Written(), ShouldBeFalse)
+
+		ctx.run()
+		So(ctx.Written(), ShouldBeTrue)
 	})
-
-	ctx := m.createContext(response, &http.Request{Method: "GET"})
-	expect(t, ctx.Written(), false)
-
-	ctx.run()
-	expect(t, ctx.Written(), true)
 }
 
 func Test_Macaron_Basic_NoRace(t *testing.T) {
-	m := New()
-	handlers := []Handler{func() {}, func() {}}
-	// Ensure append will not realloc to trigger the race condition
-	m.handlers = handlers[:1]
-	req, _ := http.NewRequest("GET", "/", nil)
-	for i := 0; i < 2; i++ {
-		go func() {
-			response := httptest.NewRecorder()
-			m.ServeHTTP(response, req)
-		}()
-	}
+	Convey("Make sure no race between requests", t, func() {
+		m := New()
+		handlers := []Handler{func() {}, func() {}}
+		// Ensure append will not realloc to trigger the race condition
+		m.handlers = handlers[:1]
+		req, err := http.NewRequest("GET", "/", nil)
+		So(err, ShouldBeNil)
+		for i := 0; i < 2; i++ {
+			go func() {
+				resp := httptest.NewRecorder()
+				m.ServeHTTP(resp, req)
+			}()
+		}
+	})
 }
 
 func Test_SetENV(t *testing.T) {
-	tests := []struct {
-		in  string
-		out string
-	}{
-		{"", "development"},
-		{"not_development", "not_development"},
-	}
-
-	for _, test := range tests {
-		setENV(test.in)
-		if Env != test.out {
-			expect(t, Env, test.out)
+	Convey("Get and save environment variable", t, func() {
+		tests := []struct {
+			in  string
+			out string
+		}{
+			{"", "development"},
+			{"not_development", "not_development"},
 		}
-	}
+
+		for _, test := range tests {
+			setENV(test.in)
+			So(Env, ShouldEqual, test.out)
+		}
+	})
+}
+
+func Test_Version(t *testing.T) {
+	Convey("Get version", t, func() {
+		Version()
+	})
 }
