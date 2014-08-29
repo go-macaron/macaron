@@ -1,5 +1,5 @@
 // Copyright 2013 Martini Authors
-// Copyright 2014 Unknown
+// Copyright 2014 Unknwon
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -21,59 +21,56 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func Test_Recovery(t *testing.T) {
-	buff := bytes.NewBufferString("")
-	recorder := httptest.NewRecorder()
+	Convey("Recovery from panic", t, func() {
+		buf := bytes.NewBufferString("")
+		setENV(DEV)
 
-	setENV(DEV)
-	m := New()
-	// replace log for testing
-	m.Map(log.New(buff, "[Macaron] ", 0))
-	m.Use(func(res http.ResponseWriter, req *http.Request) {
-		res.Header().Set("Content-Type", "unpredictable")
+		m := New()
+		m.Map(log.New(buf, "[Macaron] ", 0))
+		m.Use(func(res http.ResponseWriter, req *http.Request) {
+			res.Header().Set("Content-Type", "unpredictable")
+		})
+		m.Use(Recovery())
+		m.Use(func(res http.ResponseWriter, req *http.Request) {
+			panic("here is a panic!")
+		})
+		m.Get("/", func() {})
+
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+		So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+		So(resp.HeaderMap.Get("Content-Type"), ShouldEqual, "text/html")
+		So(buf.String(), ShouldNotBeEmpty)
 	})
-	m.Use(Recovery())
-	m.Use(func(res http.ResponseWriter, req *http.Request) {
-		panic("here is a panic!")
-	})
-	m.Get("/", func() {})
-
-	req, err := http.NewRequest("GET", "/", nil)
-	if err != nil {
-		t.Error(err)
-	}
-
-	m.ServeHTTP(recorder, req)
-
-	expect(t, recorder.Code, http.StatusInternalServerError)
-	expect(t, recorder.HeaderMap.Get("Content-Type"), "text/html")
-	refute(t, recorder.Body.Len(), 0)
-	refute(t, len(buff.String()), 0)
 }
 
 func Test_Recovery_ResponseWriter(t *testing.T) {
-	recorder := httptest.NewRecorder()
-	recorder2 := httptest.NewRecorder()
+	Convey("Revocery panic to another response writer", t, func() {
+		resp := httptest.NewRecorder()
+		resp2 := httptest.NewRecorder()
+		setENV(DEV)
 
-	setENV(DEV)
-	m := New()
-	m.Use(Recovery())
-	m.Use(func(c *Context) {
-		c.MapTo(recorder2, (*http.ResponseWriter)(nil))
-		panic("here is a panic!")
+		m := New()
+		m.Use(Recovery())
+		m.Use(func(c *Context) {
+			c.MapTo(resp2, (*http.ResponseWriter)(nil))
+			panic("here is a panic!")
+		})
+		m.Get("/", func() {})
+
+		req, err := http.NewRequest("GET", "/", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp2.Code, ShouldEqual, http.StatusInternalServerError)
+		So(resp2.HeaderMap.Get("Content-Type"), ShouldEqual, "text/html")
+		So(resp2.Body.Len(), ShouldBeGreaterThan, 0)
 	})
-	m.Get("/", func() {})
-
-	req, err := http.NewRequest("GET", "/", nil)
-	if err != nil {
-		t.Error(err)
-	}
-
-	m.ServeHTTP(recorder, req)
-
-	expect(t, recorder2.Code, http.StatusInternalServerError)
-	expect(t, recorder2.HeaderMap.Get("Content-Type"), "text/html")
-	refute(t, recorder2.Body.Len(), 0)
 }

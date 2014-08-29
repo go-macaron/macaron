@@ -24,7 +24,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestGzip(t *testing.T) {
+func Test_Gzip(t *testing.T) {
 	Convey("Gzip response content", t, func() {
 		before := false
 

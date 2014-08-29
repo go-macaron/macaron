@@ -23,7 +23,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestContext(t *testing.T) {
+func Test_Context(t *testing.T) {
 	Convey("Do advanced encapsulation operations", t, func() {
 		m := Classic()
 		m.Use(Renderer(RenderOptions{

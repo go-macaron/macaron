@@ -22,7 +22,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestHostSwitcher(t *testing.T) {
+func Test_HostSwitcher(t *testing.T) {
 	Convey("Hosting multiple instances", t, func() {
 		hs := NewHostSwitcher()
 

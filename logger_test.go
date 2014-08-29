@@ -25,7 +25,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestLogger(t *testing.T) {
+func Test_Logger(t *testing.T) {
 	Convey("Global logger", t, func() {
 		buf := bytes.NewBufferString("")
 		m := New()
