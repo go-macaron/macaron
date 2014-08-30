@@ -280,6 +280,28 @@ func (r *TplRender) JSONString(v interface{}) (string, error) {
 	return string(result), nil
 }
 
+func (r *TplRender) XML(status int, v interface{}) {
+	var result []byte
+	var err error
+	if r.Opt.IndentXML {
+		result, err = xml.MarshalIndent(v, "", "  ")
+	} else {
+		result, err = xml.Marshal(v)
+	}
+	if err != nil {
+		http.Error(r, err.Error(), 500)
+		return
+	}
+
+	// XML rendered fine, write out the result
+	r.Header().Set(ContentType, ContentXML+r.CompiledCharset)
+	r.WriteHeader(status)
+	if len(r.Opt.PrefixXML) > 0 {
+		r.Write(r.Opt.PrefixXML)
+	}
+	r.Write(result)
+}
+
 func (r *TplRender) data(status int, contentType string, v []byte) {
 	if r.Header().Get(ContentType) == "" {
 		r.Header().Set(ContentType, contentType)
@@ -333,28 +355,6 @@ func (r *TplRender) HTMLString(name string, binding interface{}, htmlOpt ...HTML
 	} else {
 		return out.String(), nil
 	}
-}
-
-func (r *TplRender) XML(status int, v interface{}) {
-	var result []byte
-	var err error
-	if r.Opt.IndentXML {
-		result, err = xml.MarshalIndent(v, "", "  ")
-	} else {
-		result, err = xml.Marshal(v)
-	}
-	if err != nil {
-		http.Error(r, err.Error(), 500)
-		return
-	}
-
-	// XML rendered fine, write out the result
-	r.Header().Set(ContentType, ContentXML+r.CompiledCharset)
-	r.WriteHeader(status)
-	if len(r.Opt.PrefixXML) > 0 {
-		r.Write(r.Opt.PrefixXML)
-	}
-	r.Write(result)
 }
 
 // Error writes the given HTTP status to the current ResponseWriter
