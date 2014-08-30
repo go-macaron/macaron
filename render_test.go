@@ -21,23 +21,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"reflect"
 	"testing"
 	"time"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
-
-/* Test Helpers */
-func expect(t *testing.T, a interface{}, b interface{}) {
-	if a != b {
-		t.Errorf("Expected %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
-	}
-}
-
-func refute(t *testing.T, a interface{}, b interface{}) {
-	if a == b {
-		t.Errorf("Did not expect %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
-	}
-}
 
 type Greeting struct {
 	One string `json:"one"`
@@ -51,198 +39,218 @@ type GreetingXML struct {
 }
 
 func Test_Render_JSON(t *testing.T) {
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-	// nothing here to configure
-	}))
+	Convey("Render JSON", t, func() {
+		m := Classic()
+		m.Use(Renderer())
+		m.Get("/foobar", func(r Render) {
+			r.JSON(300, Greeting{"hello", "world"})
+		})
 
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.JSON(300, Greeting{"hello", "world"})
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Code, ShouldEqual, http.StatusMultipleChoices)
+		So(resp.Header().Get(ContentType), ShouldEqual, ContentJSON+"; charset=UTF-8")
+		So(resp.Body.String(), ShouldEqual, `{"one":"hello","two":"world"}`)
 	})
 
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
+	Convey("Render JSON with prefix", t, func() {
+		m := Classic()
+		prefix := ")]}',\n"
+		m.Use(Renderer(RenderOptions{
+			PrefixJSON: []byte(prefix),
+		}))
+		m.Get("/foobar", func(r Render) {
+			r.JSON(300, Greeting{"hello", "world"})
+		})
 
-	m.ServeHTTP(res, req)
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
 
-	expect(t, res.Code, 300)
-	expect(t, res.Header().Get(ContentType), ContentJSON+"; charset=UTF-8")
-	expect(t, res.Body.String(), `{"one":"hello","two":"world"}`)
-}
-
-func Test_Render_JSON_Prefix(t *testing.T) {
-	m := Classic()
-	prefix := ")]}',\n"
-	m.Use(Renderer(RenderOptions{
-		PrefixJSON: []byte(prefix),
-	}))
-
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.JSON(300, Greeting{"hello", "world"})
+		So(resp.Code, ShouldEqual, http.StatusMultipleChoices)
+		So(resp.Header().Get(ContentType), ShouldEqual, ContentJSON+"; charset=UTF-8")
+		So(resp.Body.String(), ShouldEqual, prefix+`{"one":"hello","two":"world"}`)
 	})
 
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
+	Convey("Render Indented JSON", t, func() {
+		m := Classic()
+		m.Use(Renderer(RenderOptions{
+			IndentJSON: true,
+		}))
+		m.Get("/foobar", func(r Render) {
+			r.JSON(300, Greeting{"hello", "world"})
+		})
 
-	m.ServeHTTP(res, req)
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
 
-	expect(t, res.Code, 300)
-	expect(t, res.Header().Get(ContentType), ContentJSON+"; charset=UTF-8")
-	expect(t, res.Body.String(), prefix+`{"one":"hello","two":"world"}`)
-}
-
-func Test_Render_Indented_JSON(t *testing.T) {
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-		IndentJSON: true,
-	}))
-
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.JSON(300, Greeting{"hello", "world"})
-	})
-
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
-
-	m.ServeHTTP(res, req)
-
-	expect(t, res.Code, 300)
-	expect(t, res.Header().Get(ContentType), ContentJSON+"; charset=UTF-8")
-	expect(t, res.Body.String(), `{
+		So(resp.Code, ShouldEqual, http.StatusMultipleChoices)
+		So(resp.Header().Get(ContentType), ShouldEqual, ContentJSON+"; charset=UTF-8")
+		So(resp.Body.String(), ShouldEqual, `{
   "one": "hello",
   "two": "world"
 }`)
+	})
+
+	Convey("Render JSON and return string", t, func() {
+		m := Classic()
+		m.Use(Renderer())
+		m.Get("/foobar", func(r Render) {
+			result, err := r.JSONString(Greeting{"hello", "world"})
+			So(err, ShouldBeNil)
+			So(result, ShouldEqual, `{"one":"hello","two":"world"}`)
+		})
+
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+	})
 }
 
 func Test_Render_XML(t *testing.T) {
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-	// nothing here to configure
-	}))
+	Convey("Render XML", t, func() {
+		m := Classic()
+		m.Use(Renderer())
+		m.Get("/foobar", func(r Render) {
+			r.XML(300, GreetingXML{One: "hello", Two: "world"})
+		})
 
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.XML(300, GreetingXML{One: "hello", Two: "world"})
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Code, ShouldEqual, http.StatusMultipleChoices)
+		So(resp.Header().Get(ContentType), ShouldEqual, ContentXML+"; charset=UTF-8")
+		So(resp.Body.String(), ShouldEqual, `<greeting one="hello" two="world"></greeting>`)
 	})
 
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
+	Convey("Render XML with prefix", t, func() {
+		m := Classic()
+		prefix := ")]}',\n"
+		m.Use(Renderer(RenderOptions{
+			PrefixXML: []byte(prefix),
+		}))
+		m.Get("/foobar", func(r Render) {
+			r.XML(300, GreetingXML{One: "hello", Two: "world"})
+		})
 
-	m.ServeHTTP(res, req)
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
 
-	expect(t, res.Code, 300)
-	expect(t, res.Header().Get(ContentType), ContentXML+"; charset=UTF-8")
-	expect(t, res.Body.String(), `<greeting one="hello" two="world"></greeting>`)
-}
-
-func Test_Render_XML_Prefix(t *testing.T) {
-	m := Classic()
-	prefix := ")]}',\n"
-	m.Use(Renderer(RenderOptions{
-		PrefixXML: []byte(prefix),
-	}))
-
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.XML(300, GreetingXML{One: "hello", Two: "world"})
+		So(resp.Code, ShouldEqual, http.StatusMultipleChoices)
+		So(resp.Header().Get(ContentType), ShouldEqual, ContentXML+"; charset=UTF-8")
+		So(resp.Body.String(), ShouldEqual, prefix+`<greeting one="hello" two="world"></greeting>`)
 	})
 
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
+	Convey("Render Indented XML", t, func() {
+		m := Classic()
+		m.Use(Renderer(RenderOptions{
+			IndentXML: true,
+		}))
+		m.Get("/foobar", func(r Render) {
+			r.XML(300, GreetingXML{One: "hello", Two: "world"})
+		})
 
-	m.ServeHTTP(res, req)
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
 
-	expect(t, res.Code, 300)
-	expect(t, res.Header().Get(ContentType), ContentXML+"; charset=UTF-8")
-	expect(t, res.Body.String(), prefix+`<greeting one="hello" two="world"></greeting>`)
-}
-
-func Test_Render_Indented_XML(t *testing.T) {
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-		IndentXML: true,
-	}))
-
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.XML(300, GreetingXML{One: "hello", Two: "world"})
+		So(resp.Code, ShouldEqual, http.StatusMultipleChoices)
+		So(resp.Header().Get(ContentType), ShouldEqual, ContentXML+"; charset=UTF-8")
+		So(resp.Body.String(), ShouldEqual, `<greeting one="hello" two="world"></greeting>`)
 	})
-
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
-
-	m.ServeHTTP(res, req)
-
-	expect(t, res.Code, 300)
-	expect(t, res.Header().Get(ContentType), ContentXML+"; charset=UTF-8")
-	expect(t, res.Body.String(), `<greeting one="hello" two="world"></greeting>`)
 }
 
 func Test_Render_Bad_HTML(t *testing.T) {
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-		Directory: "fixtures/basic",
-	}))
+	Convey("Render HTML", t, func() {
+		m := Classic()
+		m.Use(Renderer(RenderOptions{
+			Directory: "fixtures/basic",
+		}))
+		m.Get("/foobar", func(r Render) {
+			r.HTML(200, "hello", "jeremy")
+		})
 
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.HTML(200, "nope", nil)
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Code, ShouldEqual, http.StatusOK)
+		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
+		So(resp.Body.String(), ShouldEqual, "<h1>Hello jeremy</h1>\n")
 	})
 
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
+	Convey("Render HTML and return string", t, func() {
+		m := Classic()
+		m.Use(Renderer(RenderOptions{
+			Directory: "fixtures/basic",
+		}))
+		m.Get("/foobar", func(r Render) {
+			result, err := r.HTMLString("hello", "jeremy")
+			So(err, ShouldBeNil)
+			So(result, ShouldEqual, "<h1>Hello jeremy</h1>\n")
+		})
 
-	m.ServeHTTP(res, req)
-
-	expect(t, res.Code, 500)
-	expect(t, res.Body.String(), "html/template: \"nope\" is undefined\n")
-}
-
-func Test_Render_HTML(t *testing.T) {
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-		Directory: "fixtures/basic",
-	}))
-
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.HTML(200, "hello", "jeremy")
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
 	})
 
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
+	Convey("Render bad HTML", t, func() {
+		m := Classic()
+		m.Use(Renderer(RenderOptions{
+			Directory: "fixtures/basic",
+		}))
+		m.Get("/foobar", func(r Render) {
+			r.HTML(200, "nope", nil)
+		})
 
-	m.ServeHTTP(res, req)
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
 
-	expect(t, res.Code, 200)
-	expect(t, res.Header().Get(ContentType), ContentHTML+"; charset=UTF-8")
-	expect(t, res.Body.String(), "<h1>Hello jeremy</h1>\n")
+		So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+		So(resp.Body.String(), ShouldEqual, "html/template: \"nope\" is undefined\n")
+	})
 }
 
 func Test_Render_XHTML(t *testing.T) {
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-		Directory:       "fixtures/basic",
-		HTMLContentType: ContentXHTML,
-	}))
+	Convey("Render XHTML", t, func() {
+		m := Classic()
+		m.Use(Renderer(RenderOptions{
+			Directory:       "fixtures/basic",
+			HTMLContentType: ContentXHTML,
+		}))
+		m.Get("/foobar", func(r Render) {
+			r.HTML(200, "hello", "jeremy")
+		})
 
-	m.Get("/foobar", func(r Render) {
-		r.HTML(200, "hello", "jeremy")
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Code, ShouldEqual, http.StatusOK)
+		So(resp.Header().Get(ContentType), ShouldEqual, ContentXHTML+"; charset=UTF-8")
+		So(resp.Body.String(), ShouldEqual, "<h1>Hello jeremy</h1>\n")
 	})
-
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
-
-	m.ServeHTTP(res, req)
-
-	expect(t, res.Code, 200)
-	expect(t, res.Header().Get(ContentType), ContentXHTML+"; charset=UTF-8")
-	expect(t, res.Body.String(), "<h1>Hello jeremy</h1>\n")
 }
 
+// TODO
 func Test_Render_Extensions(t *testing.T) {
 	m := Classic()
 	m.Use(Renderer(RenderOptions{

@@ -49,9 +49,7 @@ func Test_Recovery(t *testing.T) {
 		So(resp.HeaderMap.Get("Content-Type"), ShouldEqual, "text/html")
 		So(buf.String(), ShouldNotBeEmpty)
 	})
-}
 
-func Test_Recovery_ResponseWriter(t *testing.T) {
 	Convey("Revocery panic to another response writer", t, func() {
 		resp := httptest.NewRecorder()
 		resp2 := httptest.NewRecorder()
