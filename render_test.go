@@ -112,6 +112,25 @@ func Test_Render_JSON(t *testing.T) {
 		So(err, ShouldBeNil)
 		m.ServeHTTP(resp, req)
 	})
+
+	Convey("Render with charset JSON", t, func() {
+		m := Classic()
+		m.Use(Renderer(RenderOptions{
+			Charset: "foobar",
+		}))
+		m.Get("/foobar", func(r Render) {
+			r.JSON(300, Greeting{"hello", "world"})
+		})
+
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Code, ShouldEqual, http.StatusMultipleChoices)
+		So(resp.Header().Get(ContentType), ShouldEqual, ContentJSON+"; charset=foobar")
+		So(resp.Body.String(), ShouldEqual, `{"one":"hello","two":"world"}`)
+	})
 }
 
 func Test_Render_XML(t *testing.T) {
@@ -172,7 +191,7 @@ func Test_Render_XML(t *testing.T) {
 	})
 }
 
-func Test_Render_Bad_HTML(t *testing.T) {
+func Test_Render_HTML(t *testing.T) {
 	Convey("Render HTML", t, func() {
 		m := Classic()
 		m.Use(Renderer(RenderOptions{
@@ -207,6 +226,25 @@ func Test_Render_Bad_HTML(t *testing.T) {
 		req, err := http.NewRequest("GET", "/foobar", nil)
 		So(err, ShouldBeNil)
 		m.ServeHTTP(resp, req)
+	})
+
+	Convey("Render with nested HTML", t, func() {
+		m := Classic()
+		m.Use(Renderer(RenderOptions{
+			Directory: "fixtures/basic",
+		}))
+		m.Get("/foobar", func(r Render) {
+			r.HTML(200, "admin/index", "jeremy")
+		})
+
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Code, ShouldEqual, http.StatusOK)
+		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
+		So(resp.Body.String(), ShouldEqual, "<h1>Admin jeremy</h1>\n")
 	})
 
 	Convey("Render bad HTML", t, func() {
@@ -250,313 +288,264 @@ func Test_Render_XHTML(t *testing.T) {
 	})
 }
 
-// TODO
 func Test_Render_Extensions(t *testing.T) {
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-		Directory:  "fixtures/basic",
-		Extensions: []string{".tmpl", ".html"},
-	}))
+	Convey("Render with extensions", t, func() {
+		m := Classic()
+		m.Use(Renderer(RenderOptions{
+			Directory:  "fixtures/basic",
+			Extensions: []string{".tmpl", ".html"},
+		}))
+		m.Get("/foobar", func(r Render) {
+			r.HTML(200, "hypertext", nil)
+		})
 
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.HTML(200, "hypertext", nil)
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Code, ShouldEqual, http.StatusOK)
+		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
+		So(resp.Body.String(), ShouldEqual, "Hypertext!\n")
 	})
-
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
-
-	m.ServeHTTP(res, req)
-
-	expect(t, res.Code, 200)
-	expect(t, res.Header().Get(ContentType), ContentHTML+"; charset=UTF-8")
-	expect(t, res.Body.String(), "Hypertext!\n")
 }
 
 func Test_Render_Funcs(t *testing.T) {
-
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-		Directory: "fixtures/custom_funcs",
-		Funcs: []template.FuncMap{
-			{
-				"myCustomFunc": func() string {
-					return "My custom function"
+	Convey("Render with functions", t, func() {
+		m := Classic()
+		m.Use(Renderer(RenderOptions{
+			Directory: "fixtures/custom_funcs",
+			Funcs: []template.FuncMap{
+				{
+					"myCustomFunc": func() string {
+						return "My custom function"
+					},
 				},
 			},
-		},
-	}))
+		}))
+		m.Get("/foobar", func(r Render) {
+			r.HTML(200, "index", "jeremy")
+		})
 
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.HTML(200, "index", "jeremy")
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Body.String(), ShouldEqual, "My custom function\n")
 	})
-
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
-
-	m.ServeHTTP(res, req)
-
-	expect(t, res.Body.String(), "My custom function\n")
 }
 
 func Test_Render_Layout(t *testing.T) {
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-		Directory: "fixtures/basic",
-		Layout:    "layout",
-	}))
+	Convey("Render with layout", t, func() {
+		m := Classic()
+		m.Use(Renderer(RenderOptions{
+			Directory: "fixtures/basic",
+			Layout:    "layout",
+		}))
+		m.Get("/foobar", func(r Render) {
+			r.HTML(200, "content", "jeremy")
+		})
 
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.HTML(200, "content", "jeremy")
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Body.String(), ShouldEqual, "head\n<h1>jeremy</h1>\n\nfoot\n")
 	})
 
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
+	Convey("Render with current layout", t, func() {
+		m := Classic()
+		m.Use(Renderer(RenderOptions{
+			Directory: "fixtures/basic",
+			Layout:    "current_layout",
+		}))
+		m.Get("/foobar", func(r Render) {
+			r.HTML(200, "content", "jeremy")
+		})
 
-	m.ServeHTTP(res, req)
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
 
-	expect(t, res.Body.String(), "head\n<h1>jeremy</h1>\n\nfoot\n")
-}
-
-func Test_Render_Layout_Current(t *testing.T) {
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-		Directory: "fixtures/basic",
-		Layout:    "current_layout",
-	}))
-
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.HTML(200, "content", "jeremy")
+		So(resp.Body.String(), ShouldEqual, "content head\n<h1>jeremy</h1>\n\ncontent foot\n")
 	})
 
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
+	Convey("Render with override layout", t, func() {
+		m := Classic()
+		m.Use(Renderer(RenderOptions{
+			Directory: "fixtures/basic",
+			Layout:    "layout",
+		}))
+		m.Get("/foobar", func(r Render) {
+			r.HTML(200, "content", "jeremy", HTMLOptions{
+				Layout: "another_layout",
+			})
+		})
 
-	m.ServeHTTP(res, req)
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
 
-	expect(t, res.Body.String(), "content head\n<h1>jeremy</h1>\n\ncontent foot\n")
-}
-
-func Test_Render_Nested_HTML(t *testing.T) {
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-		Directory: "fixtures/basic",
-	}))
-
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.HTML(200, "admin/index", "jeremy")
+		So(resp.Code, ShouldEqual, http.StatusOK)
+		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
+		So(resp.Body.String(), ShouldEqual, "another head\n<h1>jeremy</h1>\n\nanother foot\n")
 	})
-
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
-
-	m.ServeHTTP(res, req)
-
-	expect(t, res.Code, 200)
-	expect(t, res.Header().Get(ContentType), ContentHTML+"; charset=UTF-8")
-	expect(t, res.Body.String(), "<h1>Admin jeremy</h1>\n")
 }
 
 func Test_Render_Delimiters(t *testing.T) {
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-		Delims:    Delims{"{[{", "}]}"},
-		Directory: "fixtures/basic",
-	}))
+	Convey("Render with delimiters", t, func() {
+		m := Classic()
+		m.Use(Renderer(RenderOptions{
+			Delims:    Delims{"{[{", "}]}"},
+			Directory: "fixtures/basic",
+		}))
+		m.Get("/foobar", func(r Render) {
+			r.HTML(200, "delims", "jeremy")
+		})
 
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.HTML(200, "delims", "jeremy")
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Code, ShouldEqual, http.StatusOK)
+		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
+		So(resp.Body.String(), ShouldEqual, "<h1>Hello jeremy</h1>")
 	})
-
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
-
-	m.ServeHTTP(res, req)
-
-	expect(t, res.Code, 200)
-	expect(t, res.Header().Get(ContentType), ContentHTML+"; charset=UTF-8")
-	expect(t, res.Body.String(), "<h1>Hello jeremy</h1>")
 }
 
 func Test_Render_BinaryData(t *testing.T) {
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-	// nothing here to configure
-	}))
+	Convey("Render binary data", t, func() {
+		m := Classic()
+		m.Use(Renderer())
+		m.Get("/foobar", func(r Render) {
+			r.RawData(200, []byte("hello there"))
+		})
 
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.RawData(200, []byte("hello there"))
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Code, ShouldEqual, http.StatusOK)
+		So(resp.Header().Get(ContentType), ShouldEqual, ContentBinary)
+		So(resp.Body.String(), ShouldEqual, "hello there")
 	})
 
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
+	Convey("Render binary data with mime type", t, func() {
+		m := Classic()
+		m.Use(Renderer())
+		m.Get("/foobar", func(r Render) {
+			r.Header().Set(ContentType, "image/jpeg")
+			r.RawData(200, []byte("..jpeg data.."))
+		})
 
-	m.ServeHTTP(res, req)
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
 
-	expect(t, res.Code, 200)
-	expect(t, res.Header().Get(ContentType), ContentBinary)
-	expect(t, res.Body.String(), "hello there")
+		So(resp.Code, ShouldEqual, http.StatusOK)
+		So(resp.Header().Get(ContentType), ShouldEqual, "image/jpeg")
+		So(resp.Body.String(), ShouldEqual, "..jpeg data..")
+	})
 }
 
-func Test_Render_BinaryData_CustomMimeType(t *testing.T) {
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-	// nothing here to configure
-	}))
-
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.Header().Set(ContentType, "image/jpeg")
-		r.RawData(200, []byte("..jpeg data.."))
+func Test_Render_Status(t *testing.T) {
+	Convey("Render with status 204", t, func() {
+		resp := httptest.NewRecorder()
+		r := TplRender{resp, nil, nil, RenderOptions{}, "", time.Now()}
+		r.Status(204)
+		expect(t, resp.Code, 204)
 	})
 
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
+	Convey("Render with status 404", t, func() {
+		resp := httptest.NewRecorder()
+		r := TplRender{resp, nil, nil, RenderOptions{}, "", time.Now()}
+		r.Error(404)
+		expect(t, resp.Code, 404)
+	})
 
-	m.ServeHTTP(res, req)
-
-	expect(t, res.Code, 200)
-	expect(t, res.Header().Get(ContentType), "image/jpeg")
-	expect(t, res.Body.String(), "..jpeg data..")
-}
-
-func Test_Render_Status204(t *testing.T) {
-	res := httptest.NewRecorder()
-	r := TplRender{res, nil, nil, RenderOptions{}, "", time.Now()}
-	r.Status(204)
-	expect(t, res.Code, 204)
-}
-
-func Test_Render_Error404(t *testing.T) {
-	res := httptest.NewRecorder()
-	r := TplRender{res, nil, nil, RenderOptions{}, "", time.Now()}
-	r.Error(404)
-	expect(t, res.Code, 404)
-}
-
-func Test_Render_Error500(t *testing.T) {
-	res := httptest.NewRecorder()
-	r := TplRender{res, nil, nil, RenderOptions{}, "", time.Now()}
-	r.Error(500)
-	expect(t, res.Code, 500)
+	Convey("Render with status 500", t, func() {
+		resp := httptest.NewRecorder()
+		r := TplRender{resp, nil, nil, RenderOptions{}, "", time.Now()}
+		r.Error(500)
+		expect(t, resp.Code, 500)
+	})
 }
 
 func Test_Render_Redirect_Default(t *testing.T) {
-	url, _ := url.Parse("http://localhost/path/one")
-	req := http.Request{
-		Method: "GET",
-		URL:    url,
-	}
-	res := httptest.NewRecorder()
+	Convey("Render with default redirect", t, func() {
+		url, err := url.Parse("http://localhost/path/one")
+		So(err, ShouldBeNil)
+		resp := httptest.NewRecorder()
+		req := http.Request{
+			Method: "GET",
+			URL:    url,
+		}
+		r := TplRender{resp, &req, nil, RenderOptions{}, "", time.Now()}
+		r.Redirect("two")
 
-	r := TplRender{res, &req, nil, RenderOptions{}, "", time.Now()}
-	r.Redirect("two")
-
-	expect(t, res.Code, 302)
-	expect(t, res.HeaderMap["Location"][0], "/path/two")
-}
-
-func Test_Render_Redirect_Code(t *testing.T) {
-	url, _ := url.Parse("http://localhost/path/one")
-	req := http.Request{
-		Method: "GET",
-		URL:    url,
-	}
-	res := httptest.NewRecorder()
-
-	r := TplRender{res, &req, nil, RenderOptions{}, "", time.Now()}
-	r.Redirect("two", 307)
-
-	expect(t, res.Code, 307)
-	expect(t, res.HeaderMap["Location"][0], "/path/two")
-}
-
-func Test_Render_Charset_JSON(t *testing.T) {
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-		Charset: "foobar",
-	}))
-
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.JSON(300, Greeting{"hello", "world"})
+		So(resp.Code, ShouldEqual, http.StatusFound)
+		So(resp.HeaderMap["Location"][0], ShouldEqual, "/path/two")
 	})
 
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
+	Convey("Render with custom redirect", t, func() {
+		url, err := url.Parse("http://localhost/path/one")
+		So(err, ShouldBeNil)
+		resp := httptest.NewRecorder()
+		req := http.Request{
+			Method: "GET",
+			URL:    url,
+		}
+		r := TplRender{resp, &req, nil, RenderOptions{}, "", time.Now()}
+		r.Redirect("two", 307)
 
-	m.ServeHTTP(res, req)
-
-	expect(t, res.Code, 300)
-	expect(t, res.Header().Get(ContentType), ContentJSON+"; charset=foobar")
-	expect(t, res.Body.String(), `{"one":"hello","two":"world"}`)
-}
-
-func Test_Render_Override_Layout(t *testing.T) {
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-		Directory: "fixtures/basic",
-		Layout:    "layout",
-	}))
-
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.HTML(200, "content", "jeremy", HTMLOptions{
-			Layout: "another_layout",
-		})
+		So(resp.Code, ShouldEqual, http.StatusTemporaryRedirect)
+		So(resp.HeaderMap["Location"][0], ShouldEqual, "/path/two")
 	})
-
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/foobar", nil)
-
-	m.ServeHTTP(res, req)
-
-	expect(t, res.Code, 200)
-	expect(t, res.Header().Get(ContentType), ContentHTML+"; charset=UTF-8")
-	expect(t, res.Body.String(), "another head\n<h1>jeremy</h1>\n\nanother foot\n")
 }
 
 func Test_Render_NoRace(t *testing.T) {
-	// This test used to fail if run with -race
-	m := Classic()
-	m.Use(Renderer(RenderOptions{
-		Directory: "fixtures/basic",
-	}))
+	Convey("Make sure render has no race", t, func() {
+		m := Classic()
+		m.Use(Renderer(RenderOptions{
+			Directory: "fixtures/basic",
+		}))
+		m.Get("/foobar", func(r Render) {
+			r.HTML(200, "hello", "world")
+		})
 
-	// routing
-	m.Get("/foobar", func(r Render) {
-		r.HTML(200, "hello", "world")
+		done := make(chan bool)
+		doreq := func() {
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "/foobar", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+
+			So(resp.Code, ShouldEqual, http.StatusOK)
+			So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
+			// ContentLength should be deferred to the ResponseWriter and not Render
+			So(resp.Header().Get(ContentLength), ShouldBeBlank)
+			So(resp.Body.String(), ShouldEqual, "<h1>Hello world</h1>\n")
+			done <- true
+		}
+		// Run two requests to check there is no race condition
+		go doreq()
+		go doreq()
+		<-done
+		<-done
 	})
-
-	done := make(chan bool)
-	doreq := func() {
-		res := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/foobar", nil)
-
-		m.ServeHTTP(res, req)
-
-		expect(t, res.Code, 200)
-		expect(t, res.Header().Get(ContentType), ContentHTML+"; charset=UTF-8")
-		// ContentLength should be deferred to the ResponseWriter and not Render
-		expect(t, res.Header().Get(ContentLength), "")
-		expect(t, res.Body.String(), "<h1>Hello world</h1>\n")
-		done <- true
-	}
-	// Run two requests to check there is no race condition
-	go doreq()
-	go doreq()
-	<-done
-	<-done
 }
 
 func Test_GetExt(t *testing.T) {
-	expect(t, getExt("test"), "")
-	expect(t, getExt("test.tmpl"), ".tmpl")
-	expect(t, getExt("test.go.html"), ".go.html")
+	Convey("Get extension", t, func() {
+		So(getExt("test"), ShouldBeBlank)
+		So(getExt("test.tmpl"), ShouldEqual, ".tmpl")
+		So(getExt("test.go.tmpl"), ShouldEqual, ".go.tmpl")
+	})
 }
