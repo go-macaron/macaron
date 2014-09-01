@@ -37,4 +37,33 @@ func Test_Return_Handler(t *testing.T) {
 		So(resp.Code, ShouldEqual, http.StatusTeapot)
 		So(resp.Body.String(), ShouldEqual, "i'm a teapot")
 	})
+
+	Convey("Return with pointer", t, func() {
+		m := Classic()
+		m.Get("/", func() *string {
+			str := "hello world"
+			return &str
+		})
+
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Body.String(), ShouldEqual, "hello world")
+	})
+
+	Convey("Return with byte slice", t, func() {
+		m := Classic()
+		m.Get("/", func() []byte {
+			return []byte("hello world")
+		})
+
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Body.String(), ShouldEqual, "hello world")
+	})
 }
