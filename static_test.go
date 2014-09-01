@@ -22,215 +22,164 @@ import (
 	"net/http/httptest"
 	"os"
 	"path"
-	"reflect"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
-
-/* Test Helpers */
-func expect(t *testing.T, a interface{}, b interface{}) {
-	if a != b {
-		t.Errorf("Expected %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
-	}
-}
-
-func refute(t *testing.T, a interface{}, b interface{}) {
-	if a == b {
-		t.Errorf("Did not expect %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
-	}
-}
 
 var currentRoot, _ = os.Getwd()
 
 func Test_Static(t *testing.T) {
-	resp := httptest.NewRecorder()
-	resp.Body = new(bytes.Buffer)
+	Convey("Serve static files", t, func() {
+		m := New()
+		m.Use(Static(currentRoot))
 
-	m := New()
-	m.Use(Static(currentRoot))
+		resp := httptest.NewRecorder()
+		resp.Body = new(bytes.Buffer)
+		req, err := http.NewRequest("GET", "http://localhost:4000/macaron.go", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+		So(resp.Code, ShouldEqual, http.StatusOK)
+		So(resp.Header().Get("Expires"), ShouldBeBlank)
+		So(resp.Body.Len(), ShouldBeGreaterThan, 0)
+	})
 
-	req, err := http.NewRequest("GET", "http://localhost:4000/macaron.go", nil)
-	if err != nil {
-		t.Error(err)
-	}
-	m.ServeHTTP(resp, req)
-	expect(t, resp.Code, http.StatusOK)
-	expect(t, resp.Header().Get("Expires"), "")
-	if resp.Body.Len() == 0 {
-		t.Errorf("Got empty body for GET request")
-	}
+	Convey("Serve static files with local path", t, func() {
+		Root = os.TempDir()
+		f, err := ioutil.TempFile(Root, "static_content")
+		So(err, ShouldBeNil)
+		f.WriteString("Expected Content")
+		f.Close()
+
+		m := New()
+		m.Use(Static("."))
+
+		resp := httptest.NewRecorder()
+		resp.Body = new(bytes.Buffer)
+		req, err := http.NewRequest("GET", "http://localhost:4000/"+path.Base(f.Name()), nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+		So(resp.Code, ShouldEqual, http.StatusOK)
+		So(resp.Header().Get("Expires"), ShouldBeBlank)
+		So(resp.Body.String(), ShouldEqual, "Expected Content")
+	})
+
+	Convey("Serve static files with head", t, func() {
+		m := New()
+		m.Use(Static(currentRoot))
+
+		resp := httptest.NewRecorder()
+		resp.Body = new(bytes.Buffer)
+		req, err := http.NewRequest("HEAD", "http://localhost:4000/macaron.go", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+		So(resp.Code, ShouldEqual, http.StatusOK)
+		So(resp.Body.Len(), ShouldEqual, 0)
+	})
+
+	Convey("Serve static files as post", t, func() {
+		m := New()
+		m.Use(Static(currentRoot))
+
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("POST", "http://localhost:4000/macaron.go", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+		So(resp.Code, ShouldEqual, http.StatusNotFound)
+	})
+
+	Convey("Serve static files with bad directory", t, func() {
+		m := Classic()
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "http://localhost:4000/macaron.go", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+		So(resp.Code, ShouldNotEqual, http.StatusOK)
+	})
 }
 
-func Test_Static_Local_Path(t *testing.T) {
-	Root = os.TempDir()
-	resp := httptest.NewRecorder()
-	resp.Body = new(bytes.Buffer)
+func Test_Static_Options(t *testing.T) {
+	Convey("Serve static files with options logging", t, func() {
+		var buf bytes.Buffer
+		m := NewWithLogger(&buf)
+		opt := StaticOptions{}
+		m.Use(Static(currentRoot, opt))
 
-	m := New()
-	m.Use(Static("."))
-	f, err := ioutil.TempFile(Root, "static_content")
-	if err != nil {
-		t.Error(err)
-	}
-	f.WriteString("Expected Content")
-	f.Close()
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "http://localhost:4000/macaron.go", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
 
-	req, err := http.NewRequest("GET", "http://localhost:4000/"+path.Base(f.Name()), nil)
-	if err != nil {
-		t.Error(err)
-	}
-	m.ServeHTTP(resp, req)
-	expect(t, resp.Code, http.StatusOK)
-	expect(t, resp.Header().Get("Expires"), "")
-	expect(t, resp.Body.String(), "Expected Content")
-}
+		So(resp.Code, ShouldEqual, http.StatusOK)
+		So(buf.String(), ShouldEqual, "[Macaron] [Static] Serving /macaron.go\n")
 
-func Test_Static_Head(t *testing.T) {
-	resp := httptest.NewRecorder()
-	resp.Body = new(bytes.Buffer)
+		// Not disable logging.
+		m.Handlers()
+		buf.Reset()
+		opt.SkipLogging = true
+		m.Use(Static(currentRoot, opt))
+		m.ServeHTTP(resp, req)
 
-	m := New()
-	m.Use(Static(currentRoot))
+		So(resp.Code, ShouldEqual, http.StatusOK)
+		So(buf.Len(), ShouldEqual, 0)
+	})
 
-	req, err := http.NewRequest("HEAD", "http://localhost:4000/macaron.go", nil)
-	if err != nil {
-		t.Error(err)
-	}
+	Convey("Serve static files with options serve index", t, func() {
+		var buf bytes.Buffer
+		m := NewWithLogger(&buf)
+		opt := StaticOptions{IndexFile: "macaron.go"}
+		m.Use(Static(currentRoot, opt))
 
-	m.ServeHTTP(resp, req)
-	expect(t, resp.Code, http.StatusOK)
-	if resp.Body.Len() != 0 {
-		t.Errorf("Got non-empty body for HEAD request")
-	}
-}
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "http://localhost:4000/", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
 
-func Test_Static_As_Post(t *testing.T) {
-	resp := httptest.NewRecorder()
+		So(resp.Code, ShouldEqual, http.StatusOK)
+		So(buf.String(), ShouldEqual, "[Macaron] [Static] Serving /macaron.go\n")
+	})
 
-	m := New()
-	m.Use(Static(currentRoot))
+	Convey("Serve static files with options prefix", t, func() {
+		var buf bytes.Buffer
+		m := NewWithLogger(&buf)
+		opt := StaticOptions{Prefix: "/public"}
+		m.Use(Static(currentRoot, opt))
 
-	req, err := http.NewRequest("POST", "http://localhost:4000/macaron.go", nil)
-	if err != nil {
-		t.Error(err)
-	}
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "http://localhost:4000/public/macaron.go", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
 
-	m.ServeHTTP(resp, req)
-	expect(t, resp.Code, http.StatusNotFound)
-}
+		So(resp.Code, ShouldEqual, http.StatusOK)
+		So(buf.String(), ShouldEqual, "[Macaron] [Static] Serving /macaron.go\n")
+	})
 
-func Test_Static_BadDir(t *testing.T) {
-	resp := httptest.NewRecorder()
+	Convey("Serve static files with options expires", t, func() {
+		var buf bytes.Buffer
+		m := NewWithLogger(&buf)
+		opt := StaticOptions{Expires: func() string { return "46" }}
+		m.Use(Static(currentRoot, opt))
 
-	m := Classic()
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "http://localhost:4000/macaron.go", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
 
-	req, err := http.NewRequest("GET", "http://localhost:4000/macaron.go", nil)
-	if err != nil {
-		t.Error(err)
-	}
-
-	m.ServeHTTP(resp, req)
-	refute(t, resp.Code, http.StatusOK)
-}
-
-func Test_Static_Options_Logging(t *testing.T) {
-	resp := httptest.NewRecorder()
-
-	var buffer bytes.Buffer
-	m := NewWithLogger(&buffer)
-	opt := StaticOptions{}
-	m.Use(Static(currentRoot, opt))
-
-	req, err := http.NewRequest("GET", "http://localhost:4000/macaron.go", nil)
-	if err != nil {
-		t.Error(err)
-	}
-
-	m.ServeHTTP(resp, req)
-	expect(t, resp.Code, http.StatusOK)
-	expect(t, buffer.String(), "[Macaron] [Static] Serving /macaron.go\n")
-
-	// Now without logging
-	m.Handlers()
-	buffer.Reset()
-
-	// This should disable logging
-	opt.SkipLogging = true
-	m.Use(Static(currentRoot, opt))
-
-	m.ServeHTTP(resp, req)
-	expect(t, resp.Code, http.StatusOK)
-	expect(t, buffer.String(), "")
-}
-
-func Test_Static_Options_ServeIndex(t *testing.T) {
-	resp := httptest.NewRecorder()
-
-	var buffer bytes.Buffer
-	m := NewWithLogger(&buffer)
-	opt := StaticOptions{IndexFile: "macaron.go"} // Define macaron.go as index file
-	m.Use(Static(currentRoot, opt))
-
-	req, err := http.NewRequest("GET", "http://localhost:4000/", nil)
-	if err != nil {
-		t.Error(err)
-	}
-
-	m.ServeHTTP(resp, req)
-	expect(t, resp.Code, http.StatusOK)
-	expect(t, buffer.String(), "[Macaron] [Static] Serving /macaron.go\n")
-}
-
-func Test_Static_Options_Prefix(t *testing.T) {
-	resp := httptest.NewRecorder()
-
-	var buffer bytes.Buffer
-	m := NewWithLogger(&buffer)
-
-	// Serve current directory under /public
-	m.Use(Static(currentRoot, StaticOptions{Prefix: "/public"}))
-
-	// Check file content behaviour
-	req, err := http.NewRequest("GET", "http://localhost:4000/public/macaron.go", nil)
-	if err != nil {
-		t.Error(err)
-	}
-
-	m.ServeHTTP(resp, req)
-	expect(t, resp.Code, http.StatusOK)
-	expect(t, buffer.String(), "[Macaron] [Static] Serving /macaron.go\n")
-}
-
-func Test_Static_Options_Expires(t *testing.T) {
-	resp := httptest.NewRecorder()
-
-	var buffer bytes.Buffer
-	m := NewWithLogger(&buffer)
-
-	// Serve current directory under /public
-	m.Use(Static(currentRoot, StaticOptions{Expires: func() string { return "46" }}))
-
-	// Check file content behaviour
-	req, err := http.NewRequest("GET", "http://localhost:4000/macaron.go", nil)
-	if err != nil {
-		t.Error(err)
-	}
-
-	m.ServeHTTP(resp, req)
-	expect(t, resp.Header().Get("Expires"), "46")
+		So(resp.Header().Get("Expires"), ShouldEqual, "46")
+	})
 }
 
 func Test_Static_Redirect(t *testing.T) {
-	resp := httptest.NewRecorder()
+	Convey("Serve static files with redirect", t, func() {
+		m := New()
+		m.Use(Static(currentRoot, StaticOptions{Prefix: "/public"}))
 
-	m := New()
-	m.Use(Static(currentRoot, StaticOptions{Prefix: "/public"}))
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "http://localhost:4000/public", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
 
-	req, err := http.NewRequest("GET", "http://localhost:4000/public", nil)
-	if err != nil {
-		t.Error(err)
-	}
-
-	m.ServeHTTP(resp, req)
-	expect(t, resp.Code, http.StatusFound)
-	expect(t, resp.Header().Get("Location"), "/public/")
+		So(resp.Code, ShouldEqual, http.StatusFound)
+		So(resp.Header().Get("Location"), ShouldEqual, "/public/")
+	})
 }

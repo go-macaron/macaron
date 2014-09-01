@@ -460,21 +460,21 @@ func Test_Render_Status(t *testing.T) {
 		resp := httptest.NewRecorder()
 		r := TplRender{resp, nil, nil, RenderOptions{}, "", time.Now()}
 		r.Status(204)
-		expect(t, resp.Code, 204)
+		So(resp.Code, ShouldEqual, http.StatusNoContent)
 	})
 
 	Convey("Render with status 404", t, func() {
 		resp := httptest.NewRecorder()
 		r := TplRender{resp, nil, nil, RenderOptions{}, "", time.Now()}
 		r.Error(404)
-		expect(t, resp.Code, 404)
+		So(resp.Code, ShouldEqual, http.StatusNotFound)
 	})
 
 	Convey("Render with status 500", t, func() {
 		resp := httptest.NewRecorder()
 		r := TplRender{resp, nil, nil, RenderOptions{}, "", time.Now()}
 		r.Error(500)
-		expect(t, resp.Code, 500)
+		So(resp.Code, ShouldEqual, http.StatusInternalServerError)
 	})
 }
 

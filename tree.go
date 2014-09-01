@@ -1,4 +1,4 @@
-// Copyright 2014 Unknown
+// Copyright 2014 Unknwon
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -154,7 +154,7 @@ func (t *Tree) AddRouter(pattern string, handle Handle) {
 	t.addSegments(splitPath(pattern), handle, nil, "")
 }
 
-// splitSegment splites segment into parts.
+// splitSegment splits segment into parts.
 //
 // Examples:
 // 		"admin" -> false, nil, ""
@@ -184,7 +184,7 @@ func splitSegment(key string) (bool, []string, string) {
 		var expt []rune
 		var skipnum int
 		params := []string{}
-		reg := regexp.MustCompile(`[a-zA-Z0-9_]+`)
+		reg := regexp.MustCompile(`[a-zA-Z0-9]+`)
 		for i, v := range key {
 			if skipnum > 0 {
 				skipnum -= 1
