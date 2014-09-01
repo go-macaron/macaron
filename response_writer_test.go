@@ -21,23 +21,11 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 	"time"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
-
-/* Test Helpers */
-func expect(t *testing.T, a interface{}, b interface{}) {
-	if a != b {
-		t.Errorf("Expected %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
-	}
-}
-
-func refute(t *testing.T, a interface{}, b interface{}) {
-	if a == b {
-		t.Errorf("Did not expect %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
-	}
-}
 
 type closeNotifyingRecorder struct {
 	*httptest.ResponseRecorder
@@ -76,142 +64,125 @@ func (h *hijackableResponse) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return nil, nil, nil
 }
 
-func Test_ResponseWriter_WritingString(t *testing.T) {
-	rec := httptest.NewRecorder()
-	rw := NewResponseWriter(rec)
+func Test_ResponseWriter(t *testing.T) {
+	Convey("Write string to response writer", t, func() {
+		resp := httptest.NewRecorder()
+		rw := NewResponseWriter(resp)
+		rw.Write([]byte("Hello world"))
 
-	rw.Write([]byte("Hello world"))
-
-	expect(t, rec.Code, rw.Status())
-	expect(t, rec.Body.String(), "Hello world")
-	expect(t, rw.Status(), http.StatusOK)
-	expect(t, rw.Size(), 11)
-	expect(t, rw.Written(), true)
-}
-
-func Test_ResponseWriter_WritingStrings(t *testing.T) {
-	rec := httptest.NewRecorder()
-	rw := NewResponseWriter(rec)
-
-	rw.Write([]byte("Hello world"))
-	rw.Write([]byte("foo bar bat baz"))
-
-	expect(t, rec.Code, rw.Status())
-	expect(t, rec.Body.String(), "Hello worldfoo bar bat baz")
-	expect(t, rw.Status(), http.StatusOK)
-	expect(t, rw.Size(), 26)
-}
-
-func Test_ResponseWriter_WritingHeader(t *testing.T) {
-	rec := httptest.NewRecorder()
-	rw := NewResponseWriter(rec)
-
-	rw.WriteHeader(http.StatusNotFound)
-
-	expect(t, rec.Code, rw.Status())
-	expect(t, rec.Body.String(), "")
-	expect(t, rw.Status(), http.StatusNotFound)
-	expect(t, rw.Size(), 0)
-}
-
-func Test_ResponseWriter_Before(t *testing.T) {
-	rec := httptest.NewRecorder()
-	rw := NewResponseWriter(rec)
-	result := ""
-
-	rw.Before(func(ResponseWriter) {
-		result += "foo"
-	})
-	rw.Before(func(ResponseWriter) {
-		result += "bar"
+		So(resp.Code, ShouldEqual, rw.Status())
+		So(resp.Body.String(), ShouldEqual, "Hello world")
+		So(rw.Status(), ShouldEqual, http.StatusOK)
+		So(rw.Size(), ShouldEqual, 11)
+		So(rw.Written(), ShouldBeTrue)
 	})
 
-	rw.WriteHeader(http.StatusNotFound)
+	Convey("Write strings to response writer", t, func() {
+		resp := httptest.NewRecorder()
+		rw := NewResponseWriter(resp)
+		rw.Write([]byte("Hello world"))
+		rw.Write([]byte("foo bar bat baz"))
 
-	expect(t, rec.Code, rw.Status())
-	expect(t, rec.Body.String(), "")
-	expect(t, rw.Status(), http.StatusNotFound)
-	expect(t, rw.Size(), 0)
-	expect(t, result, "barfoo")
-}
+		So(resp.Code, ShouldEqual, rw.Status())
+		So(resp.Body.String(), ShouldEqual, "Hello worldfoo bar bat baz")
+		So(rw.Status(), ShouldEqual, http.StatusOK)
+		So(rw.Size(), ShouldEqual, 26)
+		So(rw.Written(), ShouldBeTrue)
+	})
 
-func Test_ResponseWriter_Hijack(t *testing.T) {
-	hijackable := newHijackableResponse()
-	rw := NewResponseWriter(hijackable)
-	hijacker, ok := rw.(http.Hijacker)
-	expect(t, ok, true)
-	_, _, err := hijacker.Hijack()
-	if err != nil {
-		t.Error(err)
-	}
-	expect(t, hijackable.Hijacked, true)
-}
+	Convey("Write header to response writer", t, func() {
+		resp := httptest.NewRecorder()
+		rw := NewResponseWriter(resp)
+		rw.WriteHeader(http.StatusNotFound)
 
-func Test_ResponseWrite_Hijack_NotOK(t *testing.T) {
-	hijackable := new(http.ResponseWriter)
-	rw := NewResponseWriter(*hijackable)
-	hijacker, ok := rw.(http.Hijacker)
-	expect(t, ok, true)
-	_, _, err := hijacker.Hijack()
+		So(resp.Code, ShouldEqual, rw.Status())
+		So(resp.Body.String(), ShouldBeBlank)
+		So(rw.Status(), ShouldEqual, http.StatusNotFound)
+		So(rw.Size(), ShouldEqual, 0)
+	})
 
-	refute(t, err, nil)
-}
+	Convey("Write before response write", t, func() {
+		result := ""
+		resp := httptest.NewRecorder()
+		rw := NewResponseWriter(resp)
+		rw.Before(func(ResponseWriter) {
+			result += "foo"
+		})
+		rw.Before(func(ResponseWriter) {
+			result += "bar"
+		})
+		rw.WriteHeader(http.StatusNotFound)
 
-func Test_ResponseWriter_CloseNotify(t *testing.T) {
-	rec := newCloseNotifyingRecorder()
-	rw := NewResponseWriter(rec)
-	closed := false
-	notifier := rw.(http.CloseNotifier).CloseNotify()
-	rec.close()
-	select {
-	case <-notifier:
-		closed = true
-	case <-time.After(time.Second):
-	}
-	expect(t, closed, true)
-}
+		So(resp.Code, ShouldEqual, rw.Status())
+		So(resp.Body.String(), ShouldBeBlank)
+		So(rw.Status(), ShouldEqual, http.StatusNotFound)
+		So(rw.Size(), ShouldEqual, 0)
+		So(result, ShouldEqual, "barfoo")
+	})
 
-func Test_ResponseWriter_Flusher(t *testing.T) {
+	Convey("Response writer with Hijack", t, func() {
+		hijackable := newHijackableResponse()
+		rw := NewResponseWriter(hijackable)
+		hijacker, ok := rw.(http.Hijacker)
+		So(ok, ShouldBeTrue)
+		_, _, err := hijacker.Hijack()
+		So(err, ShouldBeNil)
+		So(hijackable.Hijacked, ShouldBeTrue)
+	})
 
-	rec := httptest.NewRecorder()
-	rw := NewResponseWriter(rec)
+	Convey("Response writer with bad Hijack", t, func() {
+		hijackable := new(http.ResponseWriter)
+		rw := NewResponseWriter(*hijackable)
+		hijacker, ok := rw.(http.Hijacker)
+		So(ok, ShouldBeTrue)
+		_, _, err := hijacker.Hijack()
+		So(err, ShouldNotBeNil)
+	})
 
-	_, ok := rw.(http.Flusher)
-	expect(t, ok, true)
-}
-
-func Test_ResponseWriter_FlusherHandler(t *testing.T) {
-
-	// New Macaron instance
-	m := Classic()
-
-	m.Get("/events", func(w http.ResponseWriter, r *http.Request) {
-
-		f, ok := w.(http.Flusher)
-		expect(t, ok, true)
-
-		w.Header().Set("Content-Type", "text/event-stream")
-		w.Header().Set("Cache-Control", "no-cache")
-		w.Header().Set("Connection", "keep-alive")
-
-		for i := 0; i < 2; i++ {
-			time.Sleep(10 * time.Millisecond)
-			io.WriteString(w, "data: Hello\n\n")
-			f.Flush()
+	Convey("Response writer with close notify", t, func() {
+		resp := newCloseNotifyingRecorder()
+		rw := NewResponseWriter(resp)
+		closed := false
+		notifier := rw.(http.CloseNotifier).CloseNotify()
+		resp.close()
+		select {
+		case <-notifier:
+			closed = true
+		case <-time.After(time.Second):
 		}
-
+		So(closed, ShouldBeTrue)
 	})
 
-	recorder := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/events", nil)
-	m.ServeHTTP(recorder, r)
+	Convey("Response writer with flusher", t, func() {
+		resp := httptest.NewRecorder()
+		rw := NewResponseWriter(resp)
+		_, ok := rw.(http.Flusher)
+		So(ok, ShouldBeTrue)
+	})
 
-	if recorder.Code != 200 {
-		t.Error("Response not 200")
-	}
+	Convey("Response writer with flusher handler", t, func() {
+		m := Classic()
+		m.Get("/events", func(w http.ResponseWriter, r *http.Request) {
+			f, ok := w.(http.Flusher)
+			So(ok, ShouldBeTrue)
 
-	if recorder.Body.String() != "data: Hello\n\ndata: Hello\n\n" {
-		t.Error("Didn't receive correct body, got:", recorder.Body.String())
-	}
+			w.Header().Set("Content-Type", "text/event-stream")
+			w.Header().Set("Cache-Control", "no-cache")
+			w.Header().Set("Connection", "keep-alive")
 
+			for i := 0; i < 2; i++ {
+				time.Sleep(10 * time.Millisecond)
+				io.WriteString(w, "data: Hello\n\n")
+				f.Flush()
+			}
+		})
+
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/events", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Code, ShouldEqual, http.StatusOK)
+		So(resp.Body.String(), ShouldEqual, "data: Hello\n\ndata: Hello\n\n")
+	})
 }
