@@ -1,3 +1,4 @@
+// Copyright 2013 Beego Authors
 // Copyright 2014 Unknwon
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
@@ -13,6 +14,8 @@
 // under the License.
 
 package macaron
+
+// NOTE: last sync 4f4f7ce on Sep 04, 2014.
 
 import (
 	"path"
@@ -330,11 +333,15 @@ func (t *Tree) addSegments(segments []string, handle Handle, wildcards []string,
 				regexpStr = "/" + regexpStr
 			}
 		} else if reg != "" {
-			for _, w := range params {
-				if w == "." || w == ":" {
-					continue
+			if seg == "*.*" {
+				regexpStr = "/([^.]+).(.+)"
+			} else {
+				for _, w := range params {
+					if w == "." || w == ":" {
+						continue
+					}
+					regexpStr = "/([^/]+)" + regexpStr
 				}
-				regexpStr = "/([^/]+)" + regexpStr
 			}
 		}
 		t.wildcard.addSegments(segments[1:], handle, append(wildcards, params...), reg+regexpStr)
