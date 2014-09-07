@@ -30,6 +30,19 @@ func Test_Context(t *testing.T) {
 			Directory: "fixtures/basic",
 		}))
 
+		Convey("Get remote IP address", func() {
+			m.Get("/remoteaddr", func(ctx *Context) string {
+				return ctx.RemoteAddr()
+			})
+
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "/remoteaddr", nil)
+			req.RemoteAddr = "127.0.0.1:3333"
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+			So(resp.Body.String(), ShouldEqual, "127.0.0.1")
+		})
+
 		Convey("Render HTML", func() {
 			m.Get("/html", func(ctx *Context) {
 				ctx.HTML(304, "hello", "Unknwon") // 304 for logger test.

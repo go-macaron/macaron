@@ -84,6 +84,21 @@ func (c *Context) run() {
 	}
 }
 
+// RemoteAddr returns more real IP address.
+func (ctx *Context) RemoteAddr() string {
+	addr := ctx.Req.Header.Get("X-Real-IP")
+	if len(addr) == 0 {
+		addr = ctx.Req.Header.Get("X-Forwarded-For")
+		if addr == "" {
+			addr = ctx.Req.RemoteAddr
+			if i := strings.LastIndex(addr, ":"); i > -1 {
+				addr = addr[:i]
+			}
+		}
+	}
+	return addr
+}
+
 // HTML calls Render.HTML but allows less arguments.
 func (ctx *Context) HTML(status int, name string, binding ...interface{}) {
 	if len(binding) == 0 {
