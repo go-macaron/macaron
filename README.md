@@ -43,6 +43,7 @@ func main() {
 
 - [Gogs](https://github.com/gogits/gogs): Go Git Service
 - [Gogs Web](https://github.com/gogits/gogsweb): Gogs official website
+- [Switch](https://github.com/gpmgo/switch): Gopm registry
 - [NvMingXing](http://nvmingxing.net): Beauty women pictures
 
 ## Getting Help
