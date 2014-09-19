@@ -119,7 +119,9 @@ m.NotFound(func() {
 })
 ```
 
-路由匹配的顺序是按照他们被定义的顺序执行的. 最先被定义的路由将会首先被用户请求匹配并调用.
+路由匹配的顺序是按照他们被定义的顺序执行的. 最先被定义的路由将会首先被用户请求匹配并调用。
+
+如果您想要使用子路径但让路由代码保持简洁，可以调用 `m.SetURLPrefix(suburl)`。
 
 路由模型可能包含参数列表, 可以通过  [*Context.Params](https://gowalker.org/github.com/Unknwon/macaron#Context_Params) 来获取:
 
