@@ -123,6 +123,8 @@ m.NotFound(func() {
 Routes are matched in the order they are defined. The first route that
 matches the request is invoked.
 
+if you want to use suburl without having a huge group indent, use `m.SetURLPrefix(suburl)`.
+
 Route patterns may include named parameters, accessible via the [*Context.Params](https://gowalker.org/github.com/Unknwon/macaron#Context_Params):
 
 ```go
