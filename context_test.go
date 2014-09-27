@@ -139,5 +139,27 @@ func Test_Context(t *testing.T) {
 			m.ServeHTTP(resp, req)
 			So(resp.Body.String(), ShouldEqual, "Unknwon")
 		})
+
+		Convey("Serve files", func() {
+			m.Get("/file", func(ctx *Context) {
+				ctx.ServeFile("fixtures/custom_funcs/index.tmpl")
+			})
+
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "/file", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+			So(resp.Body.String(), ShouldEqual, "{{ myCustomFunc }}\n")
+
+			m.Get("/file2", func(ctx *Context) {
+				ctx.ServeFile("fixtures/custom_funcs/index.tmpl", "ok.tmpl")
+			})
+
+			resp = httptest.NewRecorder()
+			req, err = http.NewRequest("GET", "/file2", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+			So(resp.Body.String(), ShouldEqual, "{{ myCustomFunc }}\n")
+		})
 	})
 }
