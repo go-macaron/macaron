@@ -3,7 +3,7 @@ Macaron [![wercker status](https://app.wercker.com/status/282aa746d272d0eaa703a8
 
 Package macaron is a high productive and modular design web framework in Go.
 
-##### Current version: 0.1.7
+##### Current version: 0.1.8
 
 Anyone who uses [Martini](https://github.com/go-martini/martini) and familiar with dependency injection like me, should be very comfortable about how to use Macaron.
 
@@ -58,7 +58,7 @@ func main() {
 
 Start by looking in the [macaron-contrib](https://github.com/macaron-contrib) projects. If it is not there feel free to contact a [macaron-contrib](https://github.com/macaron-contrib) team member about adding a new repo to the organization.
 
-- [renders](https://github.com/macaron-contrib/renders) - Beego-like render engine
+- [renders](https://github.com/macaron-contrib/renders) - Beego-like render engine(Macaron has built-in template engine, this is another option)
 - [i18n](https://github.com/macaron-contrib/i18n) - Internationalization and Localization
 - [cache](https://github.com/macaron-contrib/cache) - Cache manager
 - [session](https://github.com/macaron-contrib/session) - Session manager
@@ -85,8 +85,8 @@ Some middlewares depends on others, here is a list for best ordering:
 
 ### How do I integrate with existing servers?
 
-A Martini instance implements `http.Handler`, so it can easily be used to serve subtrees
-on existing Go servers. For example this is a working Martini app for Google App Engine:
+A Macaron instance implements `http.Handler`, so it can easily be used to serve subtrees
+on existing Go servers. For example this is a working Macaron app for Google App Engine:
 
 ```go
 package hello
