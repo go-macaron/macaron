@@ -15,10 +15,13 @@
 package macaron
 
 import (
+	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/Unknwon/com"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -68,14 +71,30 @@ func Test_Context(t *testing.T) {
 
 		Convey("Parse from and query", func() {
 			m.Get("/query", func(ctx *Context) string {
-				return ctx.Query("name")
+				var buf bytes.Buffer
+				buf.WriteString(ctx.Query("name") + " ")
+				buf.WriteString(com.ToStr(ctx.QueryInt("int")) + " ")
+				buf.WriteString(com.ToStr(ctx.QueryInt64("int64")) + " ")
+				return buf.String()
+			})
+			m.Get("/query2", func(ctx *Context) string {
+				var buf bytes.Buffer
+				buf.WriteString(strings.Join(ctx.QueryStrings("list"), ",") + " ")
+				buf.WriteString(strings.Join(ctx.QueryStrings("404"), ",") + " ")
+				return buf.String()
 			})
 
 			resp := httptest.NewRecorder()
-			req, err := http.NewRequest("GET", "/query?name=Unknwon", nil)
+			req, err := http.NewRequest("GET", "/query?name=Unknwon&int=12&int64=123", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, "Unknwon")
+			So(resp.Body.String(), ShouldEqual, "Unknwon 12 123 ")
+
+			resp = httptest.NewRecorder()
+			req, err = http.NewRequest("GET", "/query2?list=item1&list=item2", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+			So(resp.Body.String(), ShouldEqual, "item1,item2  ")
 		})
 
 		Convey("URL parameter", func() {

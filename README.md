@@ -3,7 +3,7 @@ Macaron [![wercker status](https://app.wercker.com/status/282aa746d272d0eaa703a8
 
 Package macaron is a high productive and modular design web framework in Go.
 
-##### Current version: 0.1.8
+##### Current version: 0.2.0
 
 Anyone who uses [Martini](https://github.com/go-martini/martini) and familiar with dependency injection like me, should be very comfortable about how to use Macaron.
 
@@ -12,7 +12,7 @@ Anyone who uses [Martini](https://github.com/go-martini/martini) and familiar wi
 To install Macaron:
 
 	go get github.com/Unknwon/macaron
-	
+
 The very basic usage of Macaron:
 
 ```go
@@ -111,7 +111,7 @@ Macaron's `Run` function looks for the PORT and HOST environment variables and u
 To have more flexibility over port and host, use the `http.ListenAndServe` function instead.
 
 ```go
-m := macaro.Classic()
+m := macaron.Classic()
 // ...
 log.Fatal(http.ListenAndServe(":8080", m))
 ```
@@ -119,7 +119,7 @@ log.Fatal(http.ListenAndServe(":8080", m))
 Or 
 
 ```go
-m := macaro.Classic()
+m := macaron.Classic()
 // ...
 m.RunOnAddr(":8080")
 ```

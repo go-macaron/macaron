@@ -26,8 +26,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Unknwon/com"
+
 	"github.com/Unknwon/macaron/inject"
 )
+
+// Locale reprents a localization interface.
+type Locale interface {
+	Language() string
+	Tr(string, ...interface{}) string
+}
 
 // Context represents the runtime context of current request of Macaron instance.
 // It is the integration of most frequently used middlewares and helper methods.
@@ -42,7 +50,8 @@ type Context struct {
 	Resp   ResponseWriter
 	params Params
 	Render // Not nil only if you use macaran.Render middleware.
-	Data   map[string]interface{}
+	Locale
+	Data map[string]interface{}
 }
 
 func (c *Context) handler() Handler {
@@ -114,8 +123,33 @@ func (ctx *Context) HTML(status int, name string, binding ...interface{}) {
 
 // Query querys form parameter.
 func (ctx *Context) Query(name string) string {
-	ctx.Req.ParseForm()
+	if ctx.Req.Form == nil {
+		ctx.Req.ParseForm()
+	}
 	return ctx.Req.Form.Get(name)
+}
+
+// QueryStrings returns a list of results by given query name.
+func (ctx *Context) QueryStrings(name string) []string {
+	if ctx.Req.Form == nil {
+		ctx.Req.ParseForm()
+	}
+
+	vals, ok := ctx.Req.Form[name]
+	if !ok {
+		return []string{}
+	}
+	return vals
+}
+
+// QueryInt returns query result in int type.
+func (ctx *Context) QueryInt(name string) int {
+	return com.StrTo(ctx.Query(name)).MustInt()
+}
+
+// QueryInt64 returns query result in int64 type.
+func (ctx *Context) QueryInt64(name string) int64 {
+	return com.StrTo(ctx.Query(name)).MustInt64()
 }
 
 // Params return value of given param name.
