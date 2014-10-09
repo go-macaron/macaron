@@ -58,7 +58,7 @@ func main() {
 
 Start by looking in the [macaron-contrib](https://github.com/macaron-contrib) projects. If it is not there feel free to contact a [macaron-contrib](https://github.com/macaron-contrib) team member about adding a new repo to the organization.
 
-- [renders](https://github.com/macaron-contrib/renders) - Beego-like render engine(Macaron has built-in template engine, this is another option)
+- [binding](https://github.com/macaron-contrib/binding) - Request data binding and validation
 - [i18n](https://github.com/macaron-contrib/i18n) - Internationalization and Localization
 - [cache](https://github.com/macaron-contrib/cache) - Cache manager
 - [session](https://github.com/macaron-contrib/session) - Session manager
@@ -66,6 +66,7 @@ Start by looking in the [macaron-contrib](https://github.com/macaron-contrib) pr
 - [captcha](https://github.com/macaron-contrib/captcha) - Captcha service
 - [pongo2](https://github.com/macaron-contrib/pongo2) - Pongo2 template engine support
 - [toolbox](https://github.com/macaron-contrib/toolbox) - Health check, pprof, profile and statistic services
+- [renders](https://github.com/macaron-contrib/renders) - Beego-like render engine(Macaron has built-in template engine, this is another option)
 
 ### Best register order for middlewares?
 
