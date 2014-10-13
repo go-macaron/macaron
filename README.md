@@ -74,17 +74,17 @@ Start by looking in the [macaron-contrib](https://github.com/macaron-contrib) pr
 
 Some middlewares depends on others, here is a list for best ordering:
 
-1. `macaron.Logger`
-2. `macaron.Recovery`
-3. `macaron.Static`
-4. `macaron.Gzip`
-5. `macaron.Renderer`
-6. `i18n.I18n`
-7. `cache.Cacher`
-8. `captcha.Captchaer`
-9. `session.Sessioner`
-10. `csrf.Generate`
-11. `toolbox.Toolboxer`
+1. `macaron.Logger()`
+2. `macaron.Recovery()`
+3. `macaron.Gziper()`
+4. `macaron.Static()`
+5. `macaron.Renderer()`
+6. `i18n.I18n()`
+7. `cache.Cacher()`
+8. `captcha.Captchaer()`
+9. `session.Sessioner()`
+10. `csrf.Csrfer()`
+11. `toolbox.Toolboxer()`
 
 ### How do I integrate with existing servers?
 

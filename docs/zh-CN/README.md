@@ -296,10 +296,10 @@ m.Use(func(ctx *macaron.Context, log *log.Logger){
 
 ### Gzip
 
-您需要在注册任何其它有响应输出的中间件之前注册 Gzip 中间件，但是在 `macaron.Static` 中间件之后：
+您需要在注册任何其它有响应输出的中间件之前注册 Gzip 中间件：
 
 ```go
-m.Use(macaron.Gzip())
+m.Use(macaron.Gziper())
 ```
 
 ### Render

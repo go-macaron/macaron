@@ -299,10 +299,10 @@ m.Use(func(ctx *macaron.Context, log *log.Logger){
 
 ### Gzip
 
-Register middleware Gzip before **ALL** the other middlewares that have response, but **AFTER** `macaron.Static` middleware.
+Register middleware Gzip before **ALL** the other middlewares that have response.
 
 ```go
-m.Use(macaron.Gzip())
+m.Use(macaron.Gziper())
 ```
 
 ### Render
