@@ -107,6 +107,32 @@ func Test_Router_Handle(t *testing.T) {
 		So(resp.Body.String(), ShouldEqual, "ROUTE")
 	})
 
+	Convey("Register all HTTP methods routes with combo", t, func() {
+		m := Classic()
+		m.SetURLPrefix("/prefix")
+		m.Combo("/").
+			Get(func() string { return "GET" }).
+			Patch(func() string { return "PATCH" }).
+			Post(func() string { return "POST" }).
+			Put(func() string { return "PUT" }).
+			Delete(func() string { return "DELETE" }).
+			Options(func() string { return "OPTIONS" }).
+			Head(func() string { return "HEAD" })
+
+		for name := range _HTTP_METHODS {
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest(name, "/", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+			So(resp.Body.String(), ShouldEqual, name)
+		}
+
+		defer func() {
+			So(recover(), ShouldNotBeNil)
+		}()
+		m.Combo("/").Get(func() {}).Get(nil)
+	})
+
 	Convey("Register duplicated routes", t, func() {
 		r := NewRouter()
 		r.Get("/")

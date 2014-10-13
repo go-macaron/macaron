@@ -115,6 +115,15 @@ m.Route("/", "GET,POST", func() {
 	// combine something
 })
 
+m.Combo("/").
+	Get(func() string { return "GET" }).
+	Patch(func() string { return "PATCH" }).
+	Post(func() string { return "POST" }).
+	Put(func() string { return "PUT" }).
+	Delete(func() string { return "DELETE" }).
+	Options(func() string { return "OPTIONS" }).
+	Head(func() string { return "HEAD" })
+
 m.NotFound(func() {
 	// handle 404
 })

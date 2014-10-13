@@ -222,6 +222,11 @@ func (r *Router) Route(pattern, methods string, h ...Handler) {
 	}
 }
 
+// Combo returns a combo router.
+func (r *Router) Combo(pattern string) *ComboRouter {
+	return &ComboRouter{r, pattern, map[string]bool{}}
+}
+
 // Configurable http.HandlerFunc which is called when no matching route is
 // found. If it is not set, http.NotFound is used.
 // Be sure to set 404 response code in your handler.
@@ -250,4 +255,60 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	r.notFound(rw, req)
+}
+
+// ComboRouter represents a combo router.
+type ComboRouter struct {
+	router  *Router
+	pattern string
+	methods map[string]bool // Registered methods.
+}
+
+func (cr *ComboRouter) checkMethod(name string) {
+	if cr.methods[name] {
+		panic("method '" + name + "' has already been registered")
+	}
+	cr.methods[name] = true
+}
+
+func (cr *ComboRouter) Get(h ...Handler) *ComboRouter {
+	cr.checkMethod("GET")
+	cr.router.Get(cr.pattern, h...)
+	return cr
+}
+
+func (cr *ComboRouter) Patch(h ...Handler) *ComboRouter {
+	cr.checkMethod("PATCH")
+	cr.router.Patch(cr.pattern, h...)
+	return cr
+}
+
+func (cr *ComboRouter) Post(h ...Handler) *ComboRouter {
+	cr.checkMethod("POST")
+	cr.router.Post(cr.pattern, h...)
+	return cr
+}
+
+func (cr *ComboRouter) Put(h ...Handler) *ComboRouter {
+	cr.checkMethod("PUT")
+	cr.router.Put(cr.pattern, h...)
+	return cr
+}
+
+func (cr *ComboRouter) Delete(h ...Handler) *ComboRouter {
+	cr.checkMethod("DELETE")
+	cr.router.Delete(cr.pattern, h...)
+	return cr
+}
+
+func (cr *ComboRouter) Options(h ...Handler) *ComboRouter {
+	cr.checkMethod("OPTIONS")
+	cr.router.Options(cr.pattern, h...)
+	return cr
+}
+
+func (cr *ComboRouter) Head(h ...Handler) *ComboRouter {
+	cr.checkMethod("HEAD")
+	cr.router.Head(cr.pattern, h...)
+	return cr
 }
