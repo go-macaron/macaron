@@ -29,13 +29,13 @@ func Test_Gzip(t *testing.T) {
 		before := false
 
 		m := New()
-		m.Use(Gzip())
+		m.Use(Gziper())
 		m.Use(func(r http.ResponseWriter) {
 			r.(ResponseWriter).Before(func(rw ResponseWriter) {
 				before = true
 			})
 		})
-		m.Get("/", func() {})
+		m.Get("/", func() string { return "hello wolrd!" })
 
 		// Not yet gzip.
 		resp := httptest.NewRecorder()

@@ -32,26 +32,27 @@ const (
 	HeaderVary            = "Vary"
 )
 
-// All returns a Handler that adds gzip compression to all requests.
+// Gziper returns a Handler that adds gzip compression to all requests.
 // Make sure to include the Gzip middleware above other middleware
 // that alter the response body (like the render middleware).
-func Gzip() Handler {
-	return func(w http.ResponseWriter, r *http.Request, c *Context) {
-		if !strings.Contains(r.Header.Get(HeaderAcceptEncoding), "gzip") {
+func Gziper() Handler {
+	return func(ctx *Context) {
+		if !strings.Contains(ctx.Req.Header.Get(HeaderAcceptEncoding), "gzip") {
 			return
 		}
 
-		headers := w.Header()
+		headers := ctx.Resp.Header()
 		headers.Set(HeaderContentEncoding, "gzip")
 		headers.Set(HeaderVary, HeaderAcceptEncoding)
 
-		gz := gzip.NewWriter(w)
+		gz := gzip.NewWriter(ctx.Resp)
 		defer gz.Close()
 
-		gzw := gzipResponseWriter{gz, w.(ResponseWriter)}
-		c.MapTo(gzw, (*http.ResponseWriter)(nil))
+		gzw := gzipResponseWriter{gz, ctx.Resp}
+		ctx.Resp = gzw
+		ctx.MapTo(gzw, (*http.ResponseWriter)(nil))
 
-		c.Next()
+		ctx.Next()
 
 		// delete content length after we know we have been written to
 		gzw.Header().Del("Content-Length")
