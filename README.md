@@ -5,7 +5,7 @@ Macaron [![wercker status](https://app.wercker.com/status/282aa746d272d0eaa703a8
 
 Package macaron is a high productive and modular design web framework in Go.
 
-##### Current version: 0.2.2
+##### Current version: 0.2.4
 
 Anyone who uses [Martini](https://github.com/go-martini/martini) and familiar with dependency injection like me, should be very comfortable about how to use Macaron.
 
@@ -78,7 +78,7 @@ Some middlewares depends on others, here is a list for best ordering:
 2. `macaron.Recovery()`
 3. `macaron.Gziper()`
 4. `macaron.Static()`
-5. `macaron.Renderer()`
+5. `macaron.Renderer()`/`pongo2.Pongoer()`
 6. `i18n.I18n()`
 7. `cache.Cacher()`
 8. `captcha.Captchaer()`

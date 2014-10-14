@@ -109,6 +109,17 @@ func Test_Context(t *testing.T) {
 			So(resp.Body.String(), ShouldEqual, "user")
 		})
 
+		Convey("Get file", func() {
+			m.Get("/getfile", func(ctx *Context) {
+				ctx.GetFile("hi")
+			})
+
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "/getfile", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+		})
+
 		Convey("Set and get cookie", func() {
 			m.Get("/set", func(ctx *Context) {
 				ctx.SetCookie("user", "Unknwon", 1)
