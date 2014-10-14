@@ -19,6 +19,7 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"path"
 	"reflect"
@@ -152,9 +153,14 @@ func (ctx *Context) QueryInt64(name string) int64 {
 	return com.StrTo(ctx.Query(name)).MustInt64()
 }
 
-// Params return value of given param name.
+// Params returns value of given param name.
 func (ctx *Context) Params(name string) string {
 	return ctx.params[name]
+}
+
+// GetFile returns information about user upload file by given form field name.
+func (ctx *Context) GetFile(name string) (multipart.File, *multipart.FileHeader, error) {
+	return ctx.Req.FormFile(name)
 }
 
 // SetCookie sets given cookie value to response header.
