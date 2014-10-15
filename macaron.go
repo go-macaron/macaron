@@ -124,6 +124,7 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 		Req:      req,
 		Resp:     NewResponseWriter(rw),
 		Data:     make(map[string]interface{}),
+		statics:  make(map[string]*http.Dir),
 	}
 	c.SetParent(m)
 	c.Map(c)
