@@ -304,6 +304,9 @@ func (ctx *Context) ServeFile(file string, names ...string) {
 // ChangeStaticPath changes static path from old to new one.
 func (ctx *Context) ChangeStaticPath(oldPath, newPath string) {
 	if _, ok := ctx.statics[oldPath]; ok {
-		*ctx.statics[oldPath] = http.Dir(newPath)
+		dir := ctx.statics[oldPath]
+		delete(ctx.statics, oldPath)
+		*dir = http.Dir(newPath)
+		ctx.statics[newPath] = dir
 	}
 }
