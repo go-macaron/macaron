@@ -60,7 +60,6 @@ func prepareStaticOptions(options []StaticOptions) StaticOptions {
 
 // Static returns a middleware handler that serves static files in the given directory.
 func Static(directory string, staticOpt ...StaticOptions) Handler {
-	staticPath := directory
 	if !filepath.IsAbs(directory) {
 		directory = filepath.Join(Root, directory)
 	}
@@ -68,7 +67,7 @@ func Static(directory string, staticOpt ...StaticOptions) Handler {
 	opt := prepareStaticOptions(staticOpt)
 
 	return func(ctx *Context, log *log.Logger) {
-		ctx.statics[staticPath] = &dir
+		ctx.statics[string(dir)] = &dir
 		if ctx.Req.Method != "GET" && ctx.Req.Method != "HEAD" {
 			return
 		}
