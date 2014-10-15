@@ -43,58 +43,66 @@ const (
 	defaultCharset = "UTF-8"
 )
 
-// Provides a temporary buffer to execute templates into and catch errors.
-var bufpool *bpool.BufferPool
+var (
+	// Provides a temporary buffer to execute templates into and catch errors.
+	bufpool *bpool.BufferPool
 
-// Included helper functions for use when rendering html
-var helperFuncs = template.FuncMap{
-	"yield": func() (string, error) {
-		return "", fmt.Errorf("yield called with no layout defined")
-	},
-	"current": func() (string, error) {
-		return "", nil
-	},
-}
+	// Included helper functions for use when rendering html
+	helperFuncs = template.FuncMap{
+		"yield": func() (string, error) {
+			return "", fmt.Errorf("yield called with no layout defined")
+		},
+		"current": func() (string, error) {
+			return "", nil
+		},
+	}
 
-// Delims represents a set of Left and Right delimiters for HTML template rendering
-type Delims struct {
-	// Left delimiter, defaults to {{
-	Left string
-	// Right delimiter, defaults to }}
-	Right string
-}
+	// Render global variables.
+	renderOpt RenderOptions
+	renderTpl *template.Template
+)
 
-// RenderOptions represents a struct for specifying configuration options for the Render middleware.
-type RenderOptions struct {
-	// Directory to load templates. Default is "templates"
-	Directory string
-	// Layout template name. Will not render a layout if "". Defaults to "".
-	Layout string
-	// Extensions to parse template files from. Defaults to [".tmpl", ".html"]
-	Extensions []string
-	// Funcs is a slice of FuncMaps to apply to the template upon compilation. This is useful for helper functions. Defaults to [].
-	Funcs []template.FuncMap
-	// Delims sets the action delimiters to the specified strings in the Delims struct.
-	Delims Delims
-	// Appends the given charset to the Content-Type header. Default is "UTF-8".
-	Charset string
-	// Outputs human readable JSON
-	IndentJSON bool
-	// Outputs human readable XML
-	IndentXML bool
-	// Prefixes the JSON output with the given bytes.
-	PrefixJSON []byte
-	// Prefixes the XML output with the given bytes.
-	PrefixXML []byte
-	// Allows changing of output to XHTML instead of HTML. Default is "text/html"
-	HTMLContentType string
-}
+type (
+	// Delims represents a set of Left and Right delimiters for HTML template rendering
+	Delims struct {
+		// Left delimiter, defaults to {{
+		Left string
+		// Right delimiter, defaults to }}
+		Right string
+	}
 
-// HTMLOptions is a struct for overriding some rendering Options for specific HTML call
-type HTMLOptions struct {
-	// Layout template name. Overrides Options.Layout.
-	Layout string
-}
+	// RenderOptions represents a struct for specifying configuration options for the Render middleware.
+	RenderOptions struct {
+		// Directory to load templates. Default is "templates"
+		Directory string
+		// Layout template name. Will not render a layout if "". Defaults to "".
+		Layout string
+		// Extensions to parse template files from. Defaults to [".tmpl", ".html"]
+		Extensions []string
+		// Funcs is a slice of FuncMaps to apply to the template upon compilation. This is useful for helper functions. Defaults to [].
+		Funcs []template.FuncMap
+		// Delims sets the action delimiters to the specified strings in the Delims struct.
+		Delims Delims
+		// Appends the given charset to the Content-Type header. Default is "UTF-8".
+		Charset string
+		// Outputs human readable JSON
+		IndentJSON bool
+		// Outputs human readable XML
+		IndentXML bool
+		// Prefixes the JSON output with the given bytes.
+		PrefixJSON []byte
+		// Prefixes the XML output with the given bytes.
+		PrefixXML []byte
+		// Allows changing of output to XHTML instead of HTML. Default is "text/html"
+		HTMLContentType string
+	}
+
+	// HTMLOptions is a struct for overriding some rendering Options for specific HTML call
+	HTMLOptions struct {
+		// Layout template name. Overrides Options.Layout.
+		Layout string
+	}
+)
 
 type Render interface {
 	http.ResponseWriter
@@ -110,6 +118,7 @@ type Render interface {
 	Error(int, ...string)
 	Status(int)
 	Redirect(string, ...int)
+	SetTemplatePath(string)
 }
 
 func prepareOptions(options []RenderOptions) RenderOptions {
@@ -151,7 +160,7 @@ func compile(options RenderOptions) *template.Template {
 	dir := options.Directory
 	t := template.New(dir)
 	t.Delims(options.Delims.Left, options.Delims.Right)
-	// parse an initial template in case we don't have any
+	// Parse an initial template in case we don't have any
 	template.Must(t.Parse("Macaron"))
 
 	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
@@ -198,24 +207,24 @@ func compile(options RenderOptions) *template.Template {
 // If MACARON_ENV is set to "" or "development" then templates will be recompiled on every request. For more performance, set the
 // MACARON_ENV environment variable to "production".
 func Renderer(options ...RenderOptions) Handler {
-	opt := prepareOptions(options)
-	cs := prepareCharset(opt.Charset)
-	t := compile(opt)
+	renderOpt = prepareOptions(options)
+	cs := prepareCharset(renderOpt.Charset)
+	renderTpl = compile(renderOpt)
 	bufpool = bpool.NewBufferPool(64)
 	return func(ctx *Context, rw http.ResponseWriter, req *http.Request) {
 		var tc *template.Template
 		if Env == DEV {
 			// recompile for easy development
-			tc = compile(opt)
+			tc = compile(renderOpt)
 		} else {
 			// use a clone of the initial template
-			tc, _ = t.Clone()
+			tc, _ = renderTpl.Clone()
 		}
 		r := &TplRender{
 			ResponseWriter:  rw,
 			Req:             req,
 			t:               tc,
-			Opt:             opt,
+			Opt:             renderOpt,
 			CompiledCharset: cs,
 		}
 		ctx.Data["TmplLoadTimes"] = func() string {
@@ -405,4 +414,10 @@ func (r *TplRender) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {
 	return HTMLOptions{
 		Layout: r.Opt.Layout,
 	}
+}
+
+// SetTemplatePath changes templates path.
+func (r *TplRender) SetTemplatePath(newPath string) {
+	renderOpt.Directory = newPath
+	renderTpl = compile(renderOpt)
 }

@@ -26,7 +26,7 @@ import (
 )
 
 func Version() string {
-	return "0.2.4.1014"
+	return "0.2.5.1015"
 }
 
 // Handler can be any callable function.
