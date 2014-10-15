@@ -52,7 +52,8 @@ type Context struct {
 	params Params
 	Render // Not nil only if you use macaran.Render middleware.
 	Locale
-	Data map[string]interface{}
+	Data    map[string]interface{}
+	statics map[string]*http.Dir // Registered static paths.
 }
 
 func (c *Context) handler() Handler {
@@ -298,4 +299,11 @@ func (ctx *Context) ServeFile(file string, names ...string) {
 	ctx.Resp.Header().Set("Cache-Control", "must-revalidate")
 	ctx.Resp.Header().Set("Pragma", "public")
 	http.ServeFile(ctx.Resp, ctx.Req, file)
+}
+
+// ChangeStaticPath changes static path from old to new one.
+func (ctx *Context) ChangeStaticPath(oldPath, newPath string) {
+	if _, ok := ctx.statics[oldPath]; ok {
+		*ctx.statics[oldPath] = http.Dir(newPath)
+	}
 }

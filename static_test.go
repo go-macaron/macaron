@@ -42,6 +42,26 @@ func Test_Static(t *testing.T) {
 		So(resp.Code, ShouldEqual, http.StatusOK)
 		So(resp.Header().Get("Expires"), ShouldBeBlank)
 		So(resp.Body.Len(), ShouldBeGreaterThan, 0)
+
+		Convey("Change static path", func() {
+			m.Get("/", func(ctx *Context) {
+				ctx.ChangeStaticPath(currentRoot, path.Join(currentRoot, "inject"))
+			})
+
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "/", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+
+			resp = httptest.NewRecorder()
+			resp.Body = new(bytes.Buffer)
+			req, err = http.NewRequest("GET", "http://localhost:4000/inject.go", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+			So(resp.Code, ShouldEqual, http.StatusOK)
+			So(resp.Header().Get("Expires"), ShouldBeBlank)
+			So(resp.Body.Len(), ShouldBeGreaterThan, 0)
+		})
 	})
 
 	Convey("Serve static files with local path", t, func() {
