@@ -32,7 +32,7 @@ var currentRoot, _ = os.Getwd()
 func Test_Static(t *testing.T) {
 	Convey("Serve static files", t, func() {
 		m := New()
-		m.Use(Static(currentRoot))
+		m.Use(Static("./"))
 
 		resp := httptest.NewRecorder()
 		resp.Body = new(bytes.Buffer)
@@ -45,7 +45,7 @@ func Test_Static(t *testing.T) {
 
 		Convey("Change static path", func() {
 			m.Get("/", func(ctx *Context) {
-				ctx.ChangeStaticPath(currentRoot, path.Join(currentRoot, "inject"))
+				ctx.ChangeStaticPath("./", "inject")
 			})
 
 			resp := httptest.NewRecorder()

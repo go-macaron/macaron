@@ -22,6 +22,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"path"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -303,9 +304,16 @@ func (ctx *Context) ServeFile(file string, names ...string) {
 
 // ChangeStaticPath changes static path from old to new one.
 func (ctx *Context) ChangeStaticPath(oldPath, newPath string) {
+	if !filepath.IsAbs(oldPath) {
+		oldPath = filepath.Join(Root, oldPath)
+	}
 	if _, ok := ctx.statics[oldPath]; ok {
 		dir := ctx.statics[oldPath]
 		delete(ctx.statics, oldPath)
+
+		if !filepath.IsAbs(newPath) {
+			newPath = filepath.Join(Root, newPath)
+		}
 		*dir = http.Dir(newPath)
 		ctx.statics[newPath] = dir
 	}
