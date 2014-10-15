@@ -56,10 +56,6 @@ var (
 			return "", nil
 		},
 	}
-
-	// Render global variables.
-	renderOpt RenderOptions
-	renderTpl *template.Template
 )
 
 type (
@@ -207,24 +203,24 @@ func compile(options RenderOptions) *template.Template {
 // If MACARON_ENV is set to "" or "development" then templates will be recompiled on every request. For more performance, set the
 // MACARON_ENV environment variable to "production".
 func Renderer(options ...RenderOptions) Handler {
-	renderOpt = prepareOptions(options)
-	cs := prepareCharset(renderOpt.Charset)
-	renderTpl = compile(renderOpt)
+	opt := prepareOptions(options)
+	cs := prepareCharset(opt.Charset)
+	t := compile(opt)
 	bufpool = bpool.NewBufferPool(64)
 	return func(ctx *Context, rw http.ResponseWriter, req *http.Request) {
 		var tc *template.Template
 		if Env == DEV {
 			// recompile for easy development
-			tc = compile(renderOpt)
+			tc = compile(opt)
 		} else {
 			// use a clone of the initial template
-			tc, _ = renderTpl.Clone()
+			tc, _ = t.Clone()
 		}
 		r := &TplRender{
 			ResponseWriter:  rw,
 			Req:             req,
 			t:               tc,
-			Opt:             renderOpt,
+			Opt:             &opt,
 			CompiledCharset: cs,
 		}
 		ctx.Data["TmplLoadTimes"] = func() string {
@@ -243,7 +239,7 @@ type TplRender struct {
 	http.ResponseWriter
 	Req             *http.Request
 	t               *template.Template
-	Opt             RenderOptions
+	Opt             *RenderOptions
 	CompiledCharset string
 
 	startTime time.Time
@@ -418,6 +414,6 @@ func (r *TplRender) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {
 
 // SetTemplatePath changes templates path.
 func (r *TplRender) SetTemplatePath(newPath string) {
-	renderOpt.Directory = newPath
-	renderTpl = compile(renderOpt)
+	r.Opt.Directory = newPath
+	r.t = compile(*r.Opt)
 }
