@@ -140,8 +140,8 @@ func (m *Macaron) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	m.Router.ServeHTTP(resp, req)
 }
 
-// getDefaultListenAddr returns default server listen address of Macaron.
-func getDefaultListenAddr() string {
+// GetDefaultListenAddr returns default server listen address of Macaron.
+func GetDefaultListenAddr() string {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "4000"
@@ -162,7 +162,7 @@ func (m *Macaron) RunOnAddr(addr string) {
 
 // Run the http server. Listening on os.GetEnv("PORT") or 4000 by default.
 func (m *Macaron) Run() {
-	m.RunOnAddr(getDefaultListenAddr())
+	m.RunOnAddr(GetDefaultListenAddr())
 }
 
 // \_   _____/ _______  __
