@@ -10,7 +10,6 @@
 	- [Gzip](#gzip)
 	- [Render](#render)
 	- [Cookie](#cookie)
-- [Host Switcher](#host-switcher)
 - [Macaron Env](#macaron-env)
 
 ## Classic Macaron
@@ -340,26 +339,6 @@ For people who wants even more secure cookies that change secret string every ti
 
 - [ctx.SetSuperSecureCookie](https://gowalker.org/github.com/Unknwon/macaron#Context_SetSuperSecureCookie)
 - [ctx.GetSuperSecureCookie](https://gowalker.org/github.com/Unknwon/macaron#Context_GetSuperSecureCookie)
-
-## Host Switcher
-
-If you want to run 2 instances in one program, [HostSwitcher](https://gowalker.org/github.com/Unknwon/macaron#HostSwitcher) is the feature you're looking for.
-
-```go
-func main() {
-	m1 := macaron.Classic()
-	// Register m1 middlewares and routers.
-
-	m2 := macaron.Classic()
-	// Register m2 middlewares and routers.
-
-	hs := macaron.NewHostSwitcher()
-	// Set instance corresponding to host address.
-	hs.Set("gowalker.org", m1)
-	hs.Set("gogs.io", m2)
-	hs.Run()
-}
-```
 
 ## Macaron Env
 
