@@ -114,6 +114,9 @@ func (ctx *Context) RemoteAddr() string {
 
 // HTML calls Render.HTML but allows less arguments.
 func (ctx *Context) HTML(status int, name string, binding ...interface{}) {
+	if ctx.Render == nil {
+		panic("renderer middleware hasn't been registered")
+	}
 	if len(binding) == 0 {
 		ctx.Render.HTML(status, name, ctx.Data)
 	} else {
