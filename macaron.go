@@ -26,7 +26,7 @@ import (
 )
 
 func Version() string {
-	return "0.2.5.1017"
+	return "0.2.6.1017"
 }
 
 // Handler can be any callable function.
@@ -165,11 +165,12 @@ func (m *Macaron) Run() {
 	m.RunOnAddr(GetDefaultListenAddr())
 }
 
-// \_   _____/ _______  __
-//  |    __)_ /    \  \/ /
-//  |        \   |  \   /
-// /_______  /___|  /\_/
-//         \/     \/
+// ____   ____            .__      ___.   .__
+// \   \ /   /____ _______|__|____ \_ |__ |  |   ____   ______
+//  \   Y   /\__  \\_  __ \  \__  \ | __ \|  | _/ __ \ /  ___/
+//   \     /  / __ \|  | \/  |/ __ \| \_\ \  |_\  ___/ \___ \
+//    \___/  (____  /__|  |__(____  /___  /____/\___  >____  >
+//                \/              \/    \/          \/     \/
 
 const (
 	DEV  string = "development"
@@ -177,10 +178,17 @@ const (
 	TEST string = "test"
 )
 
-// Env is the environment that Macaron is executing in.
-// The MACARON_ENV is read on initialization to set this variable.
-var Env = DEV
-var Root string
+var (
+	// Env is the environment that Macaron is executing in.
+	// The MACARON_ENV is read on initialization to set this variable.
+	Env = DEV
+
+	// Path of work directory.
+	Root string
+
+	// Flash applies to current request.
+	FlashNow bool
+)
 
 func setENV(e string) {
 	if len(e) > 0 {

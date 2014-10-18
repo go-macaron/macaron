@@ -5,7 +5,7 @@ Macaron [![wercker status](https://app.wercker.com/status/282aa746d272d0eaa703a8
 
 Package macaron is a high productive and modular design web framework in Go.
 
-##### Current version: 0.2.5
+##### Current version: 0.2.6
 
 ## Getting Started
 
@@ -67,6 +67,7 @@ Start by looking in the [macaron-contrib](https://github.com/macaron-contrib) pr
 - [pongo2](https://github.com/macaron-contrib/pongo2) - Pongo2 template engine support
 - [toolbox](https://github.com/macaron-contrib/toolbox) - Health check, pprof, profile and statistic services
 - [renders](https://github.com/macaron-contrib/renders) - Beego-like render engine(Macaron has built-in template engine, this is another option)
+- [switcher](https://github.com/macaron-contrib/switcher) - Multiple-site support
 
 ### Best register order for middlewares?
 
