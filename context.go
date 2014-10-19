@@ -19,6 +19,8 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"path"
@@ -39,6 +41,33 @@ type Locale interface {
 	Tr(string, ...interface{}) string
 }
 
+// Body is the request's body.
+type RequestBody struct {
+	reader io.ReadCloser
+}
+
+func (rb *RequestBody) Bytes() ([]byte, error) {
+	return ioutil.ReadAll(rb.reader)
+}
+
+func (rb *RequestBody) String() (string, error) {
+	data, err := rb.Bytes()
+	return string(data), err
+}
+
+func (rb *RequestBody) ReadCloser() io.ReadCloser {
+	return rb.reader
+}
+
+// A Request represents an HTTP request received by a server or to be sent by a client.
+type Request struct {
+	*http.Request
+}
+
+func (r *Request) Body() *RequestBody {
+	return &RequestBody{r.Request.Body}
+}
+
 // Context represents the runtime context of current request of Macaron instance.
 // It is the integration of most frequently used middlewares and helper methods.
 type Context struct {
@@ -48,7 +77,7 @@ type Context struct {
 	index    int
 
 	*Router
-	Req    *http.Request
+	Req    Request
 	Resp   ResponseWriter
 	params Params
 	Render // Not nil only if you use macaran.Render middleware.
@@ -302,7 +331,7 @@ func (ctx *Context) ServeFile(file string, names ...string) {
 	ctx.Resp.Header().Set("Expires", "0")
 	ctx.Resp.Header().Set("Cache-Control", "must-revalidate")
 	ctx.Resp.Header().Set("Pragma", "public")
-	http.ServeFile(ctx.Resp, ctx.Req, file)
+	http.ServeFile(ctx.Resp, ctx.Req.Request, file)
 }
 
 // ChangeStaticPath changes static path from old to new one.

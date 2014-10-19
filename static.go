@@ -98,7 +98,7 @@ func Static(directory string, staticOpt ...StaticOptions) Handler {
 		if fi.IsDir() {
 			// redirect if missing trailing slash
 			if !strings.HasSuffix(ctx.Req.URL.Path, "/") {
-				http.Redirect(ctx.Resp, ctx.Req, ctx.Req.URL.Path+"/", http.StatusFound)
+				http.Redirect(ctx.Resp, ctx.Req.Request, ctx.Req.URL.Path+"/", http.StatusFound)
 				return
 			}
 
@@ -124,6 +124,6 @@ func Static(directory string, staticOpt ...StaticOptions) Handler {
 			ctx.Resp.Header().Set("Expires", opt.Expires())
 		}
 
-		http.ServeContent(ctx.Resp, ctx.Req, file, fi.ModTime(), f)
+		http.ServeContent(ctx.Resp, ctx.Req.Request, file, fi.ModTime(), f)
 	}
 }
