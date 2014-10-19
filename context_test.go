@@ -16,6 +16,7 @@ package macaron
 
 import (
 	"bytes"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -32,6 +33,32 @@ func Test_Context(t *testing.T) {
 		m.Use(Renderer(RenderOptions{
 			Directory: "fixtures/basic",
 		}))
+
+		Convey("Get request body", func() {
+			m.Get("/body1", func(ctx *Context) {
+				data, err := ioutil.ReadAll(ctx.Req.Body().ReadCloser())
+				So(err, ShouldBeNil)
+				So(string(data), ShouldEqual, "This is my request body")
+			})
+			m.Get("/body2", func(ctx *Context) {
+				data, err := ctx.Req.Body().Bytes()
+				So(err, ShouldBeNil)
+				So(string(data), ShouldEqual, "This is my request body")
+			})
+			m.Get("/body3", func(ctx *Context) {
+				data, err := ctx.Req.Body().String()
+				So(err, ShouldBeNil)
+				So(data, ShouldEqual, "This is my request body")
+			})
+
+			for i := 1; i <= 3; i++ {
+				resp := httptest.NewRecorder()
+				req, err := http.NewRequest("GET", "/body"+com.ToStr(i), nil)
+				req.Body = ioutil.NopCloser(bytes.NewBufferString("This is my request body"))
+				So(err, ShouldBeNil)
+				m.ServeHTTP(resp, req)
+			}
+		})
 
 		Convey("Get remote IP address", func() {
 			m.Get("/remoteaddr", func(ctx *Context) string {
