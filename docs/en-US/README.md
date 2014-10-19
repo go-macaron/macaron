@@ -1,80 +1,10 @@
 ## Table of Contents
 
-- [Classic Macaron](#classic-macaron)
-	- [Handlers](#handlers)
-	- [Routing](#routing)
-	- [Services](#services)
-	- [Serving Static Files](#serving-static-files)
 - [Middleware Handlers](#middleware-handlers)
 	- [Next()](#next)
 	- [Gzip](#gzip)
 	- [Render](#render)
 	- [Cookie](#cookie)
-- [Macaron Env](#macaron-env)
-
-## Classic Macaron
-
-To get up and running quickly, [macaron.Classic()](https://gowalker.org/github.com/Unknwon/macaron#Classic) provides some reasonable defaults that work well for most web applications:
-
-```go
-  m := macaron.Classic()
-  // ... middleware and routing goes here
-  m.Run()
-```
-
-Below is some of the functionality [macaron.Classic()](https://gowalker.org/github.com/Unknwon/macaron#Classic) pulls in automatically:
-
-- Request/Response Logging - [macaron.Logger](https://gowalker.org/github.com/Unknwon/macaron#Logger)
-- Panic Recovery - [macaron.Recovery](https://gowalker.org/github.com/Unknwon/macaron#Recovery)
-- Static File serving - [macaron.Static](https://gowalker.org/github.com/Unknwon/macaron#Static)
-
-### Handlers
-
-Handlers are the heart and soul of Macaron. A handler is basically any kind of callable function:
-
-```go
-m.Get("/", func() {
-	println("hello world")
-})
-```
-
-#### Return Values
-
-If a handler returns something, Macaron will write the result to the current [http.ResponseWriter](http://gowalker.org/net/http#ResponseWriter) as a string:
-
-```go
-m.Get("/", func() string {
-	return "hello world" // HTTP 200 : "hello world"
-})
-```
-
-You can also optionally return a status code:
-
-```go
-m.Get("/", func() (int, string) {
-	return 418, "i'm a teapot" // HTTP 418 : "i'm a teapot"
-})
-```
-
-#### Service Injection
-
-Handlers are invoked via reflection. Macaron makes use of *Dependency Injection* to resolve dependencies in a Handlers argument list. **This makes Macaron completely  compatible with golang's `http.HandlerFunc` interface.**
-
-If you add an argument to your Handler, Martini will search its list of services and attempt to resolve the dependency via type assertion:
-
-```go
-m.Get("/", func(rw http.ResponseWriter, req *http.Request) { 
-	// rw and req are injected by Macaron
-	rw.WriteHeader(200) // HTTP 200
-})
-```
-
-The following services are included with [macaron.Classic()](https://gowalker.org/github.com/Unknwon/macaron#Classic):
-
-- [*log.Logger](http://gowalker.org/log#Logger) - Global logger for Macaron.
-- [*macaron.Context](https://gowalker.org/github.com/Unknwon/macaron#Context) - HTTP request context.
-- [http.ResponseWriter](http://gowalker.org/net/http/#ResponseWriter) - HTTP Response writer interface.
-- [*http.Request](http://gowalker.org/net/http/#Request) - HTTP Request.
 
 ### Routing
 
@@ -241,15 +171,6 @@ func WrapResponseWriter(ctx *macaron.Context) {
 }
 ```
 
-### Serving Static Files
-
-A [macaron.Classic()](https://gowalker.org/github.com/Unknwon/macaron#Classic) instance automatically serves static files from the "public" directory in the root of your server.
-You can serve from more directories by adding more [macaron.Static](https://gowalker.org/github.com/Unknwon/macaron#Static) handlers.
-
-```go
-m.Use(macaron.Static("assets")) // serve from the "assets" directory as well
-```
-
 ## Middleware Handlers
 
 Middleware Handlers sit between the incoming http request and the router. In essence they are no different than any other Handler in Macaron. You can add a middleware handler to the stack like so:
@@ -339,7 +260,3 @@ For people who wants even more secure cookies that change secret string every ti
 
 - [ctx.SetSuperSecureCookie](https://gowalker.org/github.com/Unknwon/macaron#Context_SetSuperSecureCookie)
 - [ctx.GetSuperSecureCookie](https://gowalker.org/github.com/Unknwon/macaron#Context_GetSuperSecureCookie)
-
-## Macaron Env
-
-Some Macaron handlers make use of the `macaron.Env` global variable to provide special functionality for development environments vs production environments. It is recommended that the `MACARON_ENV=production` environment variable to be set when deploying a Martini server into a production environment.
