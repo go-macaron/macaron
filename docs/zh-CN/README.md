@@ -1,81 +1,10 @@
 ## 目录
 
-- [Macaron 核心](#macaron-%E6%A0%B8%E5%BF%83)
-	- [处理器](#%E5%A4%84%E7%90%86%E5%99%A8)
-	- [路由设置](#%E8%B7%AF%E7%94%B1%E8%AE%BE%E7%BD%AE)
-	- [自定义服务](#%E8%87%AA%E5%AE%9A%E4%B9%89%E6%9C%8D%E5%8A%A1)
-	- [静态文件](#%E9%9D%99%E6%80%81%E6%96%87%E4%BB%B6)
 - [中间件机制](#%E4%B8%AD%E9%97%B4%E4%BB%B6%E6%9C%BA%E5%88%B6)
 	- [Next()](#next)
 	- [Gzip](#gzip)
 	- [Render](#render)
 	- [Cookie](#cookie)
-- [多站点支持](#%E5%A4%9A%E7%AB%99%E7%82%B9%E6%94%AF%E6%8C%81)
-- [Macaron 环境变量](#macaron-%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F)
-
-## Macaron 核心
-
-为了更快速的启用 Macaron, [macaron.Classic()](https://gowalker.org/github.com/Unknwon/macaron#Classic) 提供了一些默认的方便 Web 开发的工具:
-
-```go
-  m := macaron.Classic()
-  // ... middleware and routing goes here
-  m.Run()
-```
-
-下面是 Macaron 核心已经包含的功能  [macaron.Classic()](https://gowalker.org/github.com/Unknwon/macaron#Classic):
-
-- Request/Response Logging（请求/响应日志）- [macaron.Logger](https://gowalker.org/github.com/Unknwon/macaron#Logger)
-- Panic Recovery（容错恢复）- [macaron.Recovery](https://gowalker.org/github.com/Unknwon/macaron#Recovery)
-- Static File serving（静态文件服务）- [macaron.Static](https://gowalker.org/github.com/Unknwon/macaron#Static)
-
-### 处理器
-
-处理器是 Macaron 的灵魂和核心所在. 一个处理器基本上可以是任何的函数:
-
-```go
-m.Get("/", func() {
-	println("hello world")
-})
-```
-
-#### 返回值
-
-当一个处理器返回结果的时候, Macaron 将会把返回值作为字符串写入到当前的 [http.ResponseWriter](http://gowalker.org/net/http#ResponseWriter) 里面:
-
-```go
-m.Get("/", func() string {
-	return "hello world" // HTTP 200 : "hello world"
-})
-```
-
-另外你也可以选择性的返回状态码:
-
-```go
-m.Get("/", func() (int, string) {
-	return 418, "i'm a teapot" // HTTP 418 : "i'm a teapot"
-})
-```
-
-#### 注入服务
-
-处理器是通过反射来调用的. Macaron 通过*Dependency Injection* *（依赖注入）* 来为处理器注入参数列表。 **这样使得 Macaron 与 Go 语言的 `http.HandlerFunc` 接口完全兼容** 
-
-如果你加入一个参数到你的处理器, Macaron 将会搜索它参数列表中的服务，并且通过类型判断来解决依赖关系:
-
-```go
-m.Get("/", func(rw http.ResponseWriter, req *http.Request) { 
-	// rw and req are injected by Macaron
-	rw.WriteHeader(200) // HTTP 200
-})
-```
-
-下面的这些服务已经被包含在核心 Macaron 中: [macaron.Classic()](https://gowalker.org/github.com/Unknwon/macaron#Classic):
-
-- [*log.Logger](http://gowalker.org/log#Logger) - Macaron 全局日志器
-- [*macaron.Context](https://gowalker.org/github.com/Unknwon/macaron#Context) - HTTP 请求上下文
-- [http.ResponseWriter](http://gowalker.org/net/http/#ResponseWriter) - HTTP 响应结果的流接口
-- [*http.Request](http://gowalker.org/net/http/#Request) - HTTP 请求
 
 ### 路由设置
 
@@ -357,7 +286,3 @@ func main() {
 	hs.Run()
 }
 ```
-
-## Macaron 环境变量
-
-一些 Macaron 处理器依赖 `macaron.Env` 全局变量为开发模式和部署模式表现出不同的行为，不过更建议使用环境变量 `MACARON_ENV=production` 来指示当前的模式为部署模式。
