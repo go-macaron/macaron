@@ -5,7 +5,7 @@ Macaron [![wercker status](https://app.wercker.com/status/282aa746d272d0eaa703a8
 
 Package macaron is a high productive and modular design web framework in Go.
 
-##### Current version: 0.2.7
+##### Current version: 0.3.0
 
 ## Getting Started
 
@@ -50,60 +50,6 @@ func main() {
 - [API Reference](https://gowalker.org/github.com/Unknwon/macaron)
 - [Documentation](http://macaron.gogs.io)
 - [FAQs](http://macaron.gogs.io/docs/faqs)
-
-## FAQs
-
-### How do I integrate with existing servers?
-
-A Macaron instance implements `http.Handler`, so it can easily be used to serve subtrees
-on existing Go servers. For example this is a working Macaron app for Google App Engine:
-
-```go
-package hello
-
-import (
-	"net/http"
-	"github.com/Unknwon/macaron"
-)
-
-func init() {
-	m := macaron.Classic()
-	m.Get("/", func() string {
-		return "Hello world!"
-	})
-	http.Handle("/", m)
-}
-```
-
-### How do I change the port/host?
-
-Macaron's `Run` function looks for the PORT and HOST environment variables and uses those. Otherwise Macaro will default to `localhost:4000`.
-To have more flexibility over port and host, use the `http.ListenAndServe` function instead.
-
-```go
-m := macaron.Classic()
-// ...
-log.Fatal(http.ListenAndServe(":8080", m))
-```
-
-Or 
-
-```go
-m := macaron.Classic()
-// ...
-m.RunOnAddr(":8080")
-```
-
-### What's the idea behind this other than Martini?
-
-- Integrate frequently used middlewares and helper methods with less reflection.
-- Replace default router with faster beego router.
-- To make much easier power [Gogs](http://gogs.io) project.
-- Make a deep source study against Martini.
-
-### Live code reload?
-
-[Bra](https://github.com/Unknwon/bra) is the prefect fit for live reloading Macaron apps.
 
 ## Credits
 

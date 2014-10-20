@@ -1,11 +1,5 @@
 ## Table of Contents
 
-- [Middleware Handlers](#middleware-handlers)
-	- [Next()](#next)
-	- [Gzip](#gzip)
-	- [Render](#render)
-	- [Cookie](#cookie)
-
 ### Routing
 
 In Macaron, a route is an HTTP method paired with a URL-matching pattern.
@@ -171,37 +165,6 @@ func WrapResponseWriter(ctx *macaron.Context) {
 }
 ```
 
-## Middleware Handlers
-
-Middleware Handlers sit between the incoming http request and the router. In essence they are no different than any other Handler in Macaron. You can add a middleware handler to the stack like so:
-
-```go
-m.Use(func() {
-  // do some middleware stuff
-})
-```
-
-You can have full control over the middleware stack with the `Handlers` function. This will replace any handlers that have been previously set:
-
-```go
-m.Handlers(
-	Middleware1,
-	Middleware2,
-	Middleware3,
-)
-```
-
-Middleware Handlers work really well for things like logging, authorization, authentication, sessions, gzipping, error pages and any other operations that must happen before or after an http request:
-
-```go
-// validate an api key
-m.Use(func(ctx *macaron.Context) {
-	if ctx.Req.Header.Get("X-API-KEY") != "secret123" {
-		ctx.Resp.WriteHeader(http.StatusUnauthorized)
-	}
-})
-```
-
 ### Next()
 
 [Context.Next()](https://gowalker.org/github.com/Unknwon/macaron#Context_Next) is an optional function that Middleware Handlers can call to yield the until after the other Handlers have been executed. This works really well for any operations that must happen after an http request:
@@ -215,14 +178,6 @@ m.Use(func(ctx *macaron.Context, log *log.Logger){
 
 	log.Println("after a request")
 })
-```
-
-### Gzip
-
-Register middleware Gzip before **ALL** the other middlewares that have response.
-
-```go
-m.Use(macaron.Gziper())
 ```
 
 ### Render

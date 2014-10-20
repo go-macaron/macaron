@@ -1,11 +1,5 @@
 ## 目录
 
-- [中间件机制](#%E4%B8%AD%E9%97%B4%E4%BB%B6%E6%9C%BA%E5%88%B6)
-	- [Next()](#next)
-	- [Gzip](#gzip)
-	- [Render](#render)
-	- [Cookie](#cookie)
-
 ### 路由设置
 
 在 Macaron 中, 路由是一个 HTTP 方法配对一个 URL 匹配模型. 每一个路由可以对应一个或多个处理器方法:
@@ -169,45 +163,6 @@ func WrapResponseWriter(ctx *macaron.Context) {
 }
 ```
 
-### 静态文件
-
-[macaron.Classic()](https://gowalker.org/github.com/Unknwon/macaron#Classic) 默认会服务位于你服务器环境根目录下的 "public" 文件夹。你可以通过加入 [macaron.Static](https://gowalker.org/github.com/Unknwon/macaron#Static) 的处理器来加入更多的静态文件服务的文件夹：
-
-```go
-m.Use(macaron.Static("assets")) // serve from the "assets" directory as well
-```
-
-## 中间件机制
-
-中间件处理器是工作于请求和路由之间的. 本质上来说和 Macaron 其他的处理器没有分别. 你可以像如下这样添加一个中间件处理器到它的堆中:
-
-```go
-m.Use(func() {
-  // do some middleware stuff
-})
-```
-
-你可以通过 `Handlers` 函数对中间件堆有完全的控制. 它将会替换掉之前的任何设置过的处理器:
-
-```go
-m.Handlers(
-	Middleware1,
-	Middleware2,
-	Middleware3,
-)
-```
-
-中间件处理器可以非常好处理一些功能，像 logging(日志), authorization(授权), authentication(认证), sessions(会话), error pages(错误页面), 以及任何其他的操作需要在 HTTP 请求发生之前或者之后的:
-
-```go
-// validate an api key
-m.Use(func(ctx *macaron.Context) {
-	if ctx.Req.Header.Get("X-API-KEY") != "secret123" {
-		ctx.Resp.WriteHeader(http.StatusUnauthorized)
-	}
-})
-```
-
 ### Next()
 
 [Context.Next()](https://gowalker.org/github.com/Unknwon/macaron#Context_Next) 是一个可选的函数用于中间件处理器暂时放弃执行直到其他的处理器都执行完毕. 这样就可以很好的处理在 HTTP 请求完成后需要做的操作：
@@ -221,14 +176,6 @@ m.Use(func(ctx *macaron.Context, log *log.Logger){
 
 	log.Println("after a request")
 })
-```
-
-### Gzip
-
-您需要在注册任何其它有响应输出的中间件之前注册 Gzip 中间件：
-
-```go
-m.Use(macaron.Gziper())
 ```
 
 ### Render

@@ -21,12 +21,13 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/Unknwon/macaron/inject"
 )
 
 func Version() string {
-	return "0.2.7.1018"
+	return "0.3.0.1019"
 }
 
 // Handler can be any callable function.
@@ -48,7 +49,12 @@ type Macaron struct {
 	inject.Injector
 	handlers []Handler
 	action   Handler
+
+	urlPrefix string // For suburl support.
 	*Router
+	routers  []*Router
+	notFound http.HandlerFunc
+
 	logger *log.Logger
 }
 
@@ -62,6 +68,7 @@ func NewWithLogger(out io.Writer) *Macaron {
 		Router:   NewRouter(),
 		logger:   log.New(out, "[Macaron] ", 0),
 	}
+	m.routers = []*Router{m.Router}
 	m.Router.m = m
 	m.Map(m.logger)
 	m.Map(defaultReturnHandler())
@@ -110,6 +117,13 @@ func (m *Macaron) Action(handler Handler) {
 // and panics if the handler is not a callable func.
 // Middleware Handlers are invoked in the order that they are added.
 func (m *Macaron) Use(handler Handler) {
+	// In case it's a Router.
+	if r, ok := handler.(*Router); ok {
+		r.m = m
+		m.routers = append(m.routers, r)
+		return
+	}
+
 	validateHandler(handler)
 	m.handlers = append(m.handlers, handler)
 }
@@ -137,7 +151,22 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 // Useful if you want to control your own HTTP server.
 // Be aware that none of middleware will run without registering any router.
 func (m *Macaron) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	m.Router.ServeHTTP(resp, req)
+	req.URL.Path = strings.TrimPrefix(req.URL.Path, m.urlPrefix)
+	for _, r := range m.routers {
+		if r.ServeHTTP(resp, req) {
+			return
+		}
+	}
+
+	// Not found.
+	for _, r := range m.routers {
+		if r.notFound != nil {
+			r.notFound(resp, req)
+			return
+		}
+	}
+
+	m.notFound(resp, req)
 }
 
 // GetDefaultListenAddr returns default server listen address of Macaron.
@@ -163,6 +192,11 @@ func (m *Macaron) RunOnAddr(addr string) {
 // Run the http server. Listening on os.GetEnv("PORT") or 4000 by default.
 func (m *Macaron) Run() {
 	m.RunOnAddr(GetDefaultListenAddr())
+}
+
+// SetURLPrefix sets URL prefix of router layer, so that it support suburl.
+func (m *Macaron) SetURLPrefix(prefix string) {
+	m.urlPrefix = prefix
 }
 
 // ____   ____            .__      ___.   .__
