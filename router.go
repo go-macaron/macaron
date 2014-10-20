@@ -232,7 +232,7 @@ func (r *Router) NotFound(handlers ...Handler) {
 	}
 }
 
-func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) bool {
+func (r *Router) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	if t, ok := r.routers[req.Method]; ok {
 		h, p := t.Match(req.URL.Path)
 		if h != nil {
@@ -243,11 +243,12 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) bool {
 					p[com.ToStr(k)] = v
 				}
 			}
-			h(rw, req, p)
-			return true
+			h(resp, req, p)
+			return
 		}
 	}
-	return false
+
+	r.notFound(resp, req)
 }
 
 // ComboRouter represents a combo router.

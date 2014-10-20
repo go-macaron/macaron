@@ -27,7 +27,7 @@ import (
 )
 
 func Version() string {
-	return "0.3.0.1019"
+	return "0.3.0.1020"
 }
 
 // Handler can be any callable function.
@@ -52,8 +52,6 @@ type Macaron struct {
 
 	urlPrefix string // For suburl support.
 	*Router
-	routers  []*Router
-	notFound http.HandlerFunc
 
 	logger *log.Logger
 }
@@ -68,7 +66,6 @@ func NewWithLogger(out io.Writer) *Macaron {
 		Router:   NewRouter(),
 		logger:   log.New(out, "[Macaron] ", 0),
 	}
-	m.routers = []*Router{m.Router}
 	m.Router.m = m
 	m.Map(m.logger)
 	m.Map(defaultReturnHandler())
@@ -117,13 +114,6 @@ func (m *Macaron) Action(handler Handler) {
 // and panics if the handler is not a callable func.
 // Middleware Handlers are invoked in the order that they are added.
 func (m *Macaron) Use(handler Handler) {
-	// In case it's a Router.
-	if r, ok := handler.(*Router); ok {
-		r.m = m
-		m.routers = append(m.routers, r)
-		return
-	}
-
 	validateHandler(handler)
 	m.handlers = append(m.handlers, handler)
 }
@@ -152,21 +142,7 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 // Be aware that none of middleware will run without registering any router.
 func (m *Macaron) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	req.URL.Path = strings.TrimPrefix(req.URL.Path, m.urlPrefix)
-	for _, r := range m.routers {
-		if r.ServeHTTP(resp, req) {
-			return
-		}
-	}
-
-	// Not found.
-	for _, r := range m.routers {
-		if r.notFound != nil {
-			r.notFound(resp, req)
-			return
-		}
-	}
-
-	m.notFound(resp, req)
+	m.Router.ServeHTTP(resp, req)
 }
 
 // GetDefaultListenAddr returns default server listen address of Macaron.
