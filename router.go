@@ -75,9 +75,8 @@ type group struct {
 
 // Router represents a Macaron router layer.
 type Router struct {
-	m         *Macaron
-	urlPrefix string // For suburl support.
-	routers   map[string]*Tree
+	m       *Macaron
+	routers map[string]*Tree
 	*routeMap
 
 	groups   []group
@@ -96,11 +95,6 @@ type Params map[string]string
 // Handle is a function that can be registered to a route to handle HTTP requests.
 // Like http.HandlerFunc, but has a third parameter for the values of wildcards (variables).
 type Handle func(http.ResponseWriter, *http.Request, Params)
-
-// SetURLPrefix sets URL prefix of router layer, so that it support suburl.
-func (r *Router) SetURLPrefix(prefix string) {
-	r.urlPrefix = prefix
-}
 
 // handle adds new route to the router tree.
 func (r *Router) handle(method, pattern string, handle Handle) {
@@ -238,9 +232,9 @@ func (r *Router) NotFound(handlers ...Handler) {
 	}
 }
 
-func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) bool {
 	if t, ok := r.routers[req.Method]; ok {
-		h, p := t.Match(strings.TrimPrefix(req.URL.Path, r.urlPrefix))
+		h, p := t.Match(req.URL.Path)
 		if h != nil {
 			if splat, ok := p[":splat"]; ok {
 				p["*"] = p[":splat"] // Better name.
@@ -250,11 +244,10 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				}
 			}
 			h(rw, req, p)
-			return
+			return true
 		}
 	}
-
-	r.notFound(rw, req)
+	return false
 }
 
 // ComboRouter represents a combo router.

@@ -105,6 +105,19 @@ func Test_Router_Handle(t *testing.T) {
 		So(err, ShouldBeNil)
 		m.ServeHTTP(resp, req)
 		So(resp.Body.String(), ShouldEqual, "ROUTE")
+
+		Convey("Append custom router", func() {
+			r := NewRouter()
+			r.Get("/custom", func() string { return "CUSTOM" })
+
+			m.Use(r)
+
+			resp = httptest.NewRecorder()
+			req, err = http.NewRequest("GET", "/custom", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+			So(resp.Body.String(), ShouldEqual, "CUSTOM")
+		})
 	})
 
 	Convey("Register all HTTP methods routes with combo", t, func() {
