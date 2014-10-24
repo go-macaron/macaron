@@ -5,7 +5,7 @@ Macaron [![wercker status](https://app.wercker.com/status/282aa746d272d0eaa703a8
 
 Package macaron is a high productive and modular design web framework in Go.
 
-##### Current version: 0.3.0
+##### Current version: 0.3.1
 
 ## Getting Started
 

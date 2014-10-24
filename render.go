@@ -69,21 +69,21 @@ type (
 
 	// RenderOptions represents a struct for specifying configuration options for the Render middleware.
 	RenderOptions struct {
-		// Directory to load templates. Default is "templates"
+		// Directory to load templates. Default is "templates".
 		Directory string
-		// Layout template name. Will not render a layout if "". Defaults to "".
+		// Layout template name. Will not render a layout if "". Default is to "".
 		Layout string
-		// Extensions to parse template files from. Defaults to [".tmpl", ".html"]
+		// Extensions to parse template files from. Defaults are [".tmpl", ".html"].
 		Extensions []string
-		// Funcs is a slice of FuncMaps to apply to the template upon compilation. This is useful for helper functions. Defaults to [].
+		// Funcs is a slice of FuncMaps to apply to the template upon compilation. This is useful for helper functions. Default is [].
 		Funcs []template.FuncMap
 		// Delims sets the action delimiters to the specified strings in the Delims struct.
 		Delims Delims
 		// Appends the given charset to the Content-Type header. Default is "UTF-8".
 		Charset string
-		// Outputs human readable JSON
+		// Outputs human readable JSON.
 		IndentJSON bool
-		// Outputs human readable XML
+		// Outputs human readable XML.
 		IndentXML bool
 		// Prefixes the JSON output with the given bytes.
 		PrefixJSON []byte

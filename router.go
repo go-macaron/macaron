@@ -160,9 +160,9 @@ func (r *Router) Handle(method string, pattern string, handlers []Handler) {
 	})
 }
 
-func (r *Router) Group(pattern string, fn func(*Router), h ...Handler) {
+func (r *Router) Group(pattern string, fn func(), h ...Handler) {
 	r.groups = append(r.groups, group{pattern, h})
-	fn(r)
+	fn()
 	r.groups = r.groups[:len(r.groups)-1]
 }
 
