@@ -151,9 +151,9 @@ func Test_Router_Handle(t *testing.T) {
 func Test_Router_Group(t *testing.T) {
 	Convey("Register route group", t, func() {
 		m := Classic()
-		m.Group("/api", func(_ *Router) {
-			m.Group("/v1", func(r *Router) {
-				r.Get("/list", func() string {
+		m.Group("/api", func() {
+			m.Group("/v1", func() {
+				m.Get("/list", func() string {
 					return "Well done!"
 				})
 			})
