@@ -28,6 +28,7 @@ import (
 const (
 	panicHtml = `<html>
 <head><title>PANIC: %s</title>
+<meta charset="utf-8" />
 <style type="text/css">
 html, body {
 	font-family: "Roboto", sans-serif;
