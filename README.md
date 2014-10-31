@@ -38,6 +38,23 @@ func main() {
 - Handy dependency injection powered by [inject](https://github.com/codegangsta/inject).
 - Better router layer and less reflection make faster speed.
 
+## Middlewares 
+
+Middlewares allow you easily plugin/unplugin features for your Macaron applications.
+
+There are already many [middlewares](https://github.com/macaron-contrib) to simplify your work:
+
+- [binding](https://github.com/macaron-contrib/binding) - Request data binding and validation
+- [i18n](https://github.com/macaron-contrib/i18n) - Internationalization and Localization
+- [cache](https://github.com/macaron-contrib/cache) - Cache manager
+- [session](https://github.com/macaron-contrib/session) - Session manager
+- [csrf](https://github.com/macaron-contrib/csrf) - Generates and validates csrf tokens
+- [captcha](https://github.com/macaron-contrib/captcha) - Captcha service
+- [pongo2](https://github.com/macaron-contrib/pongo2) - Pongo2 template engine support
+- [toolbox](https://github.com/macaron-contrib/toolbox) - Health check, pprof, profile and statistic services
+- [switcher](https://github.com/macaron-contrib/switcher) - Multiple-site support
+- [renders](https://github.com/macaron-contrib/renders) - Beego-like render engine(Macaron has built-in template engine, this is another option)
+
 ## Use Cases
 
 - [Gogs](https://github.com/gogits/gogs): Go Git Service
