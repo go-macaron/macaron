@@ -34,6 +34,7 @@ func main() {
 - Powerful routing with suburl.
 - Flexible routes combinations.
 - Unlimited nested group routers.
+- Directly integrate with existing services.
 - Easy to plugin/unplugin features with modular design.
 - Handy dependency injection powered by [inject](https://github.com/codegangsta/inject).
 - Better router layer and less reflection make faster speed.

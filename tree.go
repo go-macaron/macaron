@@ -15,7 +15,7 @@
 
 package macaron
 
-// NOTE: last sync 4f4f7ce on Sep 04, 2014.
+// NOTE: last sync 90cff5f on Nov 2, 2014.
 
 import (
 	"path"
@@ -97,11 +97,11 @@ func (leaf *leafInfo) match(wildcardValues []string) (ok bool, params Params) {
 				}
 				return true, params
 			}
-			if j >= len(wildcardValues) {
+			if len(wildcardValues) <= j {
 				return false, nil
 			}
 			params[v] = wildcardValues[j]
-			j += 1
+			j++
 		}
 		if len(params) != len(wildcardValues) {
 			return false, nil
