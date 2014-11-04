@@ -199,7 +199,7 @@ func Test_Render_HTML(t *testing.T) {
 		}))
 		m.Get("/foobar", func(r Render) {
 			r.HTML(200, "hello", "jeremy")
-			// r.SetTemplatePath("fixtures/basic2")
+			r.SetTemplatePath("", "fixtures/basic2")
 		})
 
 		resp := httptest.NewRecorder()
@@ -211,16 +211,16 @@ func Test_Render_HTML(t *testing.T) {
 		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
 		So(resp.Body.String(), ShouldEqual, "<h1>Hello jeremy</h1>\n")
 
-		// Convey("Change render templates path", func() {
-		// 	resp := httptest.NewRecorder()
-		// 	req, err := http.NewRequest("GET", "/foobar", nil)
-		// 	So(err, ShouldBeNil)
-		// 	m.ServeHTTP(resp, req)
+		Convey("Change render templates path", func() {
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "/foobar", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
 
-		// 	So(resp.Code, ShouldEqual, http.StatusOK)
-		// 	So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
-		// 	So(resp.Body.String(), ShouldEqual, "<h1>What's up, jeremy</h1>\n")
-		// })
+			So(resp.Code, ShouldEqual, http.StatusOK)
+			So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
+			So(resp.Body.String(), ShouldEqual, "<h1>What's up, jeremy</h1>\n")
+		})
 	})
 
 	Convey("Render HTML and return string", t, func() {
@@ -470,21 +470,21 @@ func Test_Render_BinaryData(t *testing.T) {
 func Test_Render_Status(t *testing.T) {
 	Convey("Render with status 204", t, func() {
 		resp := httptest.NewRecorder()
-		r := TplRender{resp, nil, nil, &RenderOptions{}, "", time.Now()}
+		r := TplRender{resp, nil, &RenderOptions{}, "", time.Now()}
 		r.Status(204)
 		So(resp.Code, ShouldEqual, http.StatusNoContent)
 	})
 
 	Convey("Render with status 404", t, func() {
 		resp := httptest.NewRecorder()
-		r := TplRender{resp, nil, nil, &RenderOptions{}, "", time.Now()}
+		r := TplRender{resp, nil, &RenderOptions{}, "", time.Now()}
 		r.Error(404)
 		So(resp.Code, ShouldEqual, http.StatusNotFound)
 	})
 
 	Convey("Render with status 500", t, func() {
 		resp := httptest.NewRecorder()
-		r := TplRender{resp, nil, nil, &RenderOptions{}, "", time.Now()}
+		r := TplRender{resp, nil, &RenderOptions{}, "", time.Now()}
 		r.Error(500)
 		So(resp.Code, ShouldEqual, http.StatusInternalServerError)
 	})
@@ -499,7 +499,7 @@ func Test_Render_Redirect_Default(t *testing.T) {
 			Method: "GET",
 			URL:    url,
 		}
-		r := TplRender{resp, &req, nil, &RenderOptions{}, "", time.Now()}
+		r := TplRender{resp, &req, &RenderOptions{}, "", time.Now()}
 		r.Redirect("two")
 
 		So(resp.Code, ShouldEqual, http.StatusFound)
@@ -514,7 +514,7 @@ func Test_Render_Redirect_Default(t *testing.T) {
 			Method: "GET",
 			URL:    url,
 		}
-		r := TplRender{resp, &req, nil, &RenderOptions{}, "", time.Now()}
+		r := TplRender{resp, &req, &RenderOptions{}, "", time.Now()}
 		r.Redirect("two", 307)
 
 		So(resp.Code, ShouldEqual, http.StatusTemporaryRedirect)
