@@ -116,6 +116,7 @@ type Render interface {
 	Error(int, ...string)
 	Status(int)
 	Redirect(string, ...int)
+	SetTemplatePath(string, string)
 }
 
 func prepareOptions(options []RenderOptions) RenderOptions {
@@ -434,4 +435,8 @@ func (r *TplRender) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {
 	return HTMLOptions{
 		Layout: r.Opt.Layout,
 	}
+}
+
+func (r *TplRender) SetTemplatePath(setName, dir string) {
+
 }
