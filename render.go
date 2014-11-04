@@ -111,6 +111,7 @@ type Render interface {
 	HTML(int, string, interface{}, ...HTMLOptions)
 	HTMLSet(int, string, string, interface{}, ...HTMLOptions)
 	HTMLString(string, interface{}, ...HTMLOptions) (string, error)
+	HTMLSetString(string, string, interface{}, ...HTMLOptions) (string, error)
 	XML(int, interface{})
 	Error(int, ...string)
 	Status(int)
@@ -370,6 +371,14 @@ func (r *TplRender) HTMLSet(status int, setName, name string, binding interface{
 }
 
 func (r *TplRender) HTMLString(name string, binding interface{}, htmlOpt ...HTMLOptions) (string, error) {
+	if out, err := r.renderBytes(name, binding, htmlOpt...); err != nil {
+		return "", err
+	} else {
+		return out.String(), nil
+	}
+}
+
+func (r *TplRender) HTMLSetString(setName, name string, binding interface{}, htmlOpt ...HTMLOptions) (string, error) {
 	if out, err := r.renderBytes(name, binding, htmlOpt...); err != nil {
 		return "", err
 	} else {
