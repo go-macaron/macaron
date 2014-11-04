@@ -109,12 +109,12 @@ type Render interface {
 	RawData(int, []byte)
 	RenderData(int, []byte)
 	HTML(int, string, interface{}, ...HTMLOptions)
+	HTMLSet(int, string, string, interface{}, ...HTMLOptions)
 	HTMLString(string, interface{}, ...HTMLOptions) (string, error)
 	XML(int, interface{})
 	Error(int, ...string)
 	Status(int)
 	Redirect(string, ...int)
-	SetTemplatePath(string)
 }
 
 func prepareOptions(options []RenderOptions) RenderOptions {
@@ -156,7 +156,7 @@ func compile(options RenderOptions) *template.Template {
 	dir := options.Directory
 	t := template.New(dir)
 	t.Delims(options.Delims.Left, options.Delims.Right)
-	// Parse an initial template in case we don't have any
+	// Parse an initial template in case we don't have any.
 	template.Must(t.Parse("Macaron"))
 
 	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
@@ -354,6 +354,21 @@ func (r *TplRender) HTML(status int, name string, binding interface{}, htmlOpt .
 	bufpool.Put(out)
 }
 
+func (r *TplRender) HTMLSet(status int, setName, name string, binding interface{}, htmlOpt ...HTMLOptions) {
+	r.startTime = time.Now()
+
+	out, err := r.renderBytes(name, binding, htmlOpt...)
+	if err != nil {
+		http.Error(r, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	r.Header().Set(ContentType, r.Opt.HTMLContentType+r.CompiledCharset)
+	r.WriteHeader(status)
+	io.Copy(r, out)
+	bufpool.Put(out)
+}
+
 func (r *TplRender) HTMLString(name string, binding interface{}, htmlOpt ...HTMLOptions) (string, error) {
 	if out, err := r.renderBytes(name, binding, htmlOpt...); err != nil {
 		return "", err
@@ -410,10 +425,4 @@ func (r *TplRender) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {
 	return HTMLOptions{
 		Layout: r.Opt.Layout,
 	}
-}
-
-// SetTemplatePath changes templates path.
-func (r *TplRender) SetTemplatePath(newPath string) {
-	r.Opt.Directory = newPath
-	r.t = compile(*r.Opt)
 }
