@@ -27,6 +27,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Unknwon/macaron/bpool"
@@ -45,7 +46,7 @@ const (
 
 var (
 	// Provides a temporary buffer to execute templates into and catch errors.
-	bufpool *bpool.BufferPool
+	bufpool = bpool.NewBufferPool(64)
 
 	// Included helper functions for use when rendering html
 	helperFuncs = template.FuncMap{
@@ -69,6 +70,8 @@ type (
 
 	// RenderOptions represents a struct for specifying configuration options for the Render middleware.
 	RenderOptions struct {
+		// Name of template set, leave empty to be default.
+		Name string
 		// Directory to load templates. Default is "templates".
 		Directory string
 		// Layout template name. Will not render a layout if "". Default is to "".
@@ -119,13 +122,26 @@ type Render interface {
 	SetTemplatePath(string, string)
 }
 
-func prepareOptions(options []RenderOptions) RenderOptions {
+const (
+	_DEFAULT_TPL_SET_NAME = "DEFAULT"
+)
+
+var (
+	tplSets    = make(map[string]*template.Template)
+	tplSetOpts = make(map[string]*RenderOptions)
+	lock       sync.RWMutex
+)
+
+func prepareOptions(options []RenderOptions) *RenderOptions {
 	var opt RenderOptions
 	if len(options) > 0 {
 		opt = options[0]
 	}
 
 	// Defaults.
+	if len(opt.Name) == 0 {
+		opt.Name = _DEFAULT_TPL_SET_NAME
+	}
 	if len(opt.Directory) == 0 {
 		opt.Directory = "templates"
 	}
@@ -136,7 +152,11 @@ func prepareOptions(options []RenderOptions) RenderOptions {
 		opt.HTMLContentType = ContentHTML
 	}
 
-	return opt
+	lock.RLock()
+	defer lock.RUnlock()
+
+	tplSetOpts[opt.Name] = &opt
+	return &opt
 }
 
 func prepareCharset(charset string) string {
@@ -154,14 +174,14 @@ func getExt(s string) string {
 	return "." + strings.Join(strings.Split(s, ".")[1:], ".")
 }
 
-func compile(options RenderOptions) *template.Template {
+func compile(options *RenderOptions) {
 	dir := options.Directory
 	t := template.New(dir)
 	t.Delims(options.Delims.Left, options.Delims.Right)
 	// Parse an initial template in case we don't have any.
 	template.Must(t.Parse("Macaron"))
 
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		r, err := filepath.Rel(dir, path)
 		if err != nil {
 			return err
@@ -192,9 +212,14 @@ func compile(options RenderOptions) *template.Template {
 		}
 
 		return nil
-	})
+	}); err != nil {
+		panic("fail to walk templates directory: " + err.Error())
+	}
 
-	return t
+	lock.Lock()
+	defer lock.Unlock()
+
+	tplSets[options.Name] = t
 }
 
 // Renderer is a Middleware that maps a macaron.Render service into the Macaron handler chain.
@@ -207,22 +232,13 @@ func compile(options RenderOptions) *template.Template {
 func Renderer(options ...RenderOptions) Handler {
 	opt := prepareOptions(options)
 	cs := prepareCharset(opt.Charset)
-	t := compile(opt)
-	bufpool = bpool.NewBufferPool(64)
+	compile(opt)
+
 	return func(ctx *Context, rw http.ResponseWriter, req *http.Request) {
-		var tc *template.Template
-		if Env == DEV {
-			// recompile for easy development
-			tc = compile(opt)
-		} else {
-			// use a clone of the initial template
-			tc, _ = t.Clone()
-		}
 		r := &TplRender{
 			ResponseWriter:  rw,
 			Req:             req,
-			t:               tc,
-			Opt:             &opt,
+			Opt:             opt,
 			CompiledCharset: cs,
 		}
 		ctx.Data["TmplLoadTimes"] = func() string {
@@ -240,7 +256,6 @@ func Renderer(options ...RenderOptions) Handler {
 type TplRender struct {
 	http.ResponseWriter
 	Req             *http.Request
-	t               *template.Template
 	Opt             *RenderOptions
 	CompiledCharset string
 
@@ -325,15 +340,47 @@ func (r *TplRender) RenderData(status int, v []byte) {
 	r.data(status, ContentHTML, v)
 }
 
-func (r *TplRender) renderBytes(name string, binding interface{}, htmlOpt ...HTMLOptions) (*bytes.Buffer, error) {
+func (r *TplRender) execute(t *template.Template, name string, data interface{}) (*bytes.Buffer, error) {
+	buf := bufpool.Get()
+	return buf, t.ExecuteTemplate(buf, name, data)
+}
+
+func (r *TplRender) addYield(t *template.Template, tplName string, data interface{}) {
+	funcs := template.FuncMap{
+		"yield": func() (template.HTML, error) {
+			buf, err := r.execute(t, tplName, data)
+			// return safe html here since we are rendering our own template
+			return template.HTML(buf.String()), err
+		},
+		"current": func() (string, error) {
+			return tplName, nil
+		},
+	}
+	t.Funcs(funcs)
+}
+
+func (r *TplRender) renderBytes(setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) (*bytes.Buffer, error) {
+	renderOpt := tplSetOpts[setName]
+	if Env == DEV {
+		compile(renderOpt)
+	}
+
+	lock.RLock()
+	defer lock.RUnlock()
+
+	t := tplSets[setName]
+	if t == nil {
+		return nil, fmt.Errorf("html/template: template \"%s\" is undefined", tplName)
+	}
+
 	opt := r.prepareHTMLOptions(htmlOpt)
 
 	if len(opt.Layout) > 0 {
-		r.addYield(name, binding)
-		name = opt.Layout
+		r.addYield(t, tplName, data)
+		tplName = opt.Layout
 	}
 
-	out, err := r.execute(name, binding)
+	out, err := r.execute(t, tplName, data)
 	if err != nil {
 		return nil, err
 	}
@@ -341,10 +388,10 @@ func (r *TplRender) renderBytes(name string, binding interface{}, htmlOpt ...HTM
 	return out, nil
 }
 
-func (r *TplRender) HTML(status int, name string, binding interface{}, htmlOpt ...HTMLOptions) {
+func (r *TplRender) renderHTML(status int, setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) {
 	r.startTime = time.Now()
 
-	out, err := r.renderBytes(name, binding, htmlOpt...)
+	out, err := r.renderBytes(setName, tplName, data, htmlOpt...)
 	if err != nil {
 		http.Error(r, err.Error(), http.StatusInternalServerError)
 		return
@@ -352,39 +399,33 @@ func (r *TplRender) HTML(status int, name string, binding interface{}, htmlOpt .
 
 	r.Header().Set(ContentType, r.Opt.HTMLContentType+r.CompiledCharset)
 	r.WriteHeader(status)
+
 	io.Copy(r, out)
 	bufpool.Put(out)
 }
 
-func (r *TplRender) HTMLSet(status int, setName, name string, binding interface{}, htmlOpt ...HTMLOptions) {
-	r.startTime = time.Now()
-
-	out, err := r.renderBytes(name, binding, htmlOpt...)
-	if err != nil {
-		http.Error(r, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	r.Header().Set(ContentType, r.Opt.HTMLContentType+r.CompiledCharset)
-	r.WriteHeader(status)
-	io.Copy(r, out)
-	bufpool.Put(out)
+func (r *TplRender) HTML(status int, name string, data interface{}, htmlOpt ...HTMLOptions) {
+	r.renderHTML(status, _DEFAULT_TPL_SET_NAME, name, data, htmlOpt...)
 }
 
-func (r *TplRender) HTMLString(name string, binding interface{}, htmlOpt ...HTMLOptions) (string, error) {
-	if out, err := r.renderBytes(name, binding, htmlOpt...); err != nil {
+func (r *TplRender) HTMLSet(status int, setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) {
+	r.renderHTML(status, setName, tplName, data, htmlOpt...)
+}
+
+func (r *TplRender) renderHTMLString(setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) (string, error) {
+	if out, err := r.renderBytes(setName, tplName, data, htmlOpt...); err != nil {
 		return "", err
 	} else {
 		return out.String(), nil
 	}
 }
 
-func (r *TplRender) HTMLSetString(setName, name string, binding interface{}, htmlOpt ...HTMLOptions) (string, error) {
-	if out, err := r.renderBytes(name, binding, htmlOpt...); err != nil {
-		return "", err
-	} else {
-		return out.String(), nil
-	}
+func (r *TplRender) HTMLString(name string, data interface{}, htmlOpt ...HTMLOptions) (string, error) {
+	return r.renderHTMLString(_DEFAULT_TPL_SET_NAME, name, data, htmlOpt...)
+}
+
+func (r *TplRender) HTMLSetString(setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) (string, error) {
+	return r.renderHTMLString(setName, tplName, data, htmlOpt...)
 }
 
 // Error writes the given HTTP status to the current ResponseWriter
@@ -408,25 +449,6 @@ func (r *TplRender) Redirect(location string, status ...int) {
 	http.Redirect(r, r.Req, location, code)
 }
 
-func (r *TplRender) execute(name string, binding interface{}) (*bytes.Buffer, error) {
-	buf := bufpool.Get()
-	return buf, r.t.ExecuteTemplate(buf, name, binding)
-}
-
-func (r *TplRender) addYield(name string, binding interface{}) {
-	funcs := template.FuncMap{
-		"yield": func() (template.HTML, error) {
-			buf, err := r.execute(name, binding)
-			// return safe html here since we are rendering our own template
-			return template.HTML(buf.String()), err
-		},
-		"current": func() (string, error) {
-			return name, nil
-		},
-	}
-	r.t.Funcs(funcs)
-}
-
 func (r *TplRender) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {
 	if len(htmlOpt) > 0 {
 		return htmlOpt[0]
@@ -438,5 +460,10 @@ func (r *TplRender) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {
 }
 
 func (r *TplRender) SetTemplatePath(setName, dir string) {
-
+	if len(setName) == 0 {
+		setName = _DEFAULT_TPL_SET_NAME
+	}
+	opt := tplSetOpts[setName]
+	opt.Directory = dir
+	compile(opt)
 }
