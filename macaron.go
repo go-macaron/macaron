@@ -23,11 +23,13 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/Unknwon/com"
+
 	"github.com/Unknwon/macaron/inject"
 )
 
 func Version() string {
-	return "0.3.1.1026"
+	return "0.4.0.1104"
 }
 
 // Handler can be any callable function.
@@ -145,29 +147,41 @@ func (m *Macaron) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	m.Router.ServeHTTP(resp, req)
 }
 
-// GetDefaultListenAddr returns default server listen address of Macaron.
-func GetDefaultListenAddr() string {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "4000"
-	}
+func GetDefaultListenInfo() (string, int) {
 	host := os.Getenv("HOST")
 	if len(host) == 0 {
 		host = "0.0.0.0"
 	}
-	return host + ":" + port
-}
-
-// RunOnAddr runs server in given address and port.
-func (m *Macaron) RunOnAddr(addr string) {
-	logger := m.Injector.GetVal(reflect.TypeOf(m.logger)).Interface().(*log.Logger)
-	logger.Printf("listening on %s (%s)\n", addr, Env)
-	logger.Fatalln(http.ListenAndServe(addr, m))
+	port := com.StrTo(os.Getenv("PORT")).MustInt()
+	if port == 0 {
+		port = 4000
+	}
+	return host, port
 }
 
 // Run the http server. Listening on os.GetEnv("PORT") or 4000 by default.
-func (m *Macaron) Run() {
-	m.RunOnAddr(GetDefaultListenAddr())
+func (m *Macaron) Run(args ...interface{}) {
+	host, port := GetDefaultListenInfo()
+	if len(args) == 1 {
+		switch arg := args[0].(type) {
+		case string:
+			host = arg
+		case int:
+			port = arg
+		}
+	} else if len(args) >= 2 {
+		if arg, ok := args[0].(string); ok {
+			host = arg
+		}
+		if arg, ok := args[1].(int); ok {
+			port = arg
+		}
+	}
+
+	addr := host + ":" + com.ToStr(port)
+	logger := m.Injector.GetVal(reflect.TypeOf(m.logger)).Interface().(*log.Logger)
+	logger.Printf("listening on %s (%s)\n", addr, Env)
+	logger.Fatalln(http.ListenAndServe(addr, m))
 }
 
 // SetURLPrefix sets URL prefix of router layer, so that it support suburl.

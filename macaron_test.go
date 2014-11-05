@@ -18,7 +18,9 @@ package macaron
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
+	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -30,10 +32,11 @@ func Test_New(t *testing.T) {
 
 	Convey("Just test that Run doesn't bomb", t, func() {
 		go New().Run()
-	})
-
-	Convey("Just test that RunOnAddr doesn't bomb", t, func() {
-		go New().RunOnAddr("0.0.0.0:4001")
+		time.Sleep(1 * time.Second)
+		os.Setenv("PORT", "4001")
+		go New().Run("0.0.0.0")
+		go New().Run(4002)
+		go New().Run("0.0.0.0", 4003)
 	})
 }
 
