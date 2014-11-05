@@ -40,6 +40,22 @@ func Test_New(t *testing.T) {
 	})
 }
 
+func Test_Macaron_Before(t *testing.T) {
+	Convey("Register before handlers", t, func() {
+		m := New()
+		m.Before(func(rw http.ResponseWriter, req *http.Request) bool {
+			return false
+		})
+		m.Before(func(rw http.ResponseWriter, req *http.Request) bool {
+			return true
+		})
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+	})
+}
+
 func Test_Macaron_ServeHTTP(t *testing.T) {
 	Convey("Serve HTTP requests", t, func() {
 		result := ""
