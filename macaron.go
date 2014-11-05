@@ -49,6 +49,7 @@ func validateHandler(handler Handler) {
 // inject.Injector methods can be invoked to map services on a global level.
 type Macaron struct {
 	inject.Injector
+	befores  []BeforeHandler
 	handlers []Handler
 	action   Handler
 
@@ -112,6 +113,14 @@ func (m *Macaron) Action(handler Handler) {
 	m.action = handler
 }
 
+// BeforeHandler represents a handler executes at beginning of every request.
+// Macaron stops future process when it returns true.
+type BeforeHandler func(rw http.ResponseWriter, req *http.Request) bool
+
+func (m *Macaron) Before(handler BeforeHandler) {
+	m.befores = append(m.befores, handler)
+}
+
 // Use adds a middleware Handler to the stack,
 // and panics if the handler is not a callable func.
 // Middleware Handlers are invoked in the order that they are added.
@@ -142,9 +151,14 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 // ServeHTTP is the HTTP Entry point for a Macaron instance.
 // Useful if you want to control your own HTTP server.
 // Be aware that none of middleware will run without registering any router.
-func (m *Macaron) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+func (m *Macaron) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	req.URL.Path = strings.TrimPrefix(req.URL.Path, m.urlPrefix)
-	m.Router.ServeHTTP(resp, req)
+	for _, h := range m.befores {
+		if h(rw, req) {
+			return
+		}
+	}
+	m.Router.ServeHTTP(rw, req)
 }
 
 func GetDefaultListenInfo() (string, int) {
