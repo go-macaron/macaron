@@ -197,9 +197,16 @@ func Test_Render_HTML(t *testing.T) {
 		m.Use(Renderer(RenderOptions{
 			Directory: "fixtures/basic",
 		}))
+		m.Use(Renderer(RenderOptions{
+			Name:      "basic2",
+			Directory: "fixtures/basic2",
+		}))
 		m.Get("/foobar", func(r Render) {
 			r.HTML(200, "hello", "jeremy")
 			r.SetTemplatePath("", "fixtures/basic2")
+		})
+		m.Get("/foobar2", func(r Render) {
+			r.HTMLSet(200, "basic2", "hello", "jeremy")
 		})
 
 		resp := httptest.NewRecorder()
@@ -210,6 +217,15 @@ func Test_Render_HTML(t *testing.T) {
 		So(resp.Code, ShouldEqual, http.StatusOK)
 		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
 		So(resp.Body.String(), ShouldEqual, "<h1>Hello jeremy</h1>\n")
+
+		resp = httptest.NewRecorder()
+		req, err = http.NewRequest("GET", "/foobar2", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Code, ShouldEqual, http.StatusOK)
+		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
+		So(resp.Body.String(), ShouldEqual, "<h1>What's up, jeremy</h1>\n")
 
 		Convey("Change render templates path", func() {
 			resp := httptest.NewRecorder()
@@ -228,14 +244,28 @@ func Test_Render_HTML(t *testing.T) {
 		m.Use(Renderer(RenderOptions{
 			Directory: "fixtures/basic",
 		}))
+		m.Use(Renderer(RenderOptions{
+			Name:      "basic2",
+			Directory: "fixtures/basic2",
+		}))
 		m.Get("/foobar", func(r Render) {
 			result, err := r.HTMLString("hello", "jeremy")
 			So(err, ShouldBeNil)
 			So(result, ShouldEqual, "<h1>Hello jeremy</h1>\n")
 		})
+		m.Get("/foobar2", func(r Render) {
+			result, err := r.HTMLSetString("basic2", "hello", "jeremy")
+			So(err, ShouldBeNil)
+			So(result, ShouldEqual, "<h1>What's up, jeremy</h1>\n")
+		})
 
 		resp := httptest.NewRecorder()
 		req, err := http.NewRequest("GET", "/foobar", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		resp = httptest.NewRecorder()
+		req, err = http.NewRequest("GET", "/foobar2", nil)
 		So(err, ShouldBeNil)
 		m.ServeHTTP(resp, req)
 	})
@@ -437,6 +467,9 @@ func Test_Render_BinaryData(t *testing.T) {
 		m.Get("/foobar", func(r Render) {
 			r.RawData(200, []byte("hello there"))
 		})
+		m.Get("/foobar2", func(r Render) {
+			r.RenderData(200, []byte("hello there"))
+		})
 
 		resp := httptest.NewRecorder()
 		req, err := http.NewRequest("GET", "/foobar", nil)
@@ -446,13 +479,22 @@ func Test_Render_BinaryData(t *testing.T) {
 		So(resp.Code, ShouldEqual, http.StatusOK)
 		So(resp.Header().Get(ContentType), ShouldEqual, ContentBinary)
 		So(resp.Body.String(), ShouldEqual, "hello there")
+
+		resp = httptest.NewRecorder()
+		req, err = http.NewRequest("GET", "/foobar2", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Code, ShouldEqual, http.StatusOK)
+		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML)
+		So(resp.Body.String(), ShouldEqual, "hello there")
 	})
 
 	Convey("Render binary data with mime type", t, func() {
 		m := Classic()
 		m.Use(Renderer())
 		m.Get("/foobar", func(r Render) {
-			r.Header().Set(ContentType, "image/jpeg")
+			r.RW().Header().Set(ContentType, "image/jpeg")
 			r.RawData(200, []byte("..jpeg data.."))
 		})
 
