@@ -21,7 +21,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"runtime"
 	"testing"
 	"time"
 
@@ -566,10 +565,6 @@ func Test_Render_Redirect_Default(t *testing.T) {
 }
 
 func Test_Render_NoRace(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		return
-	}
-
 	Convey("Make sure render has no race", t, func() {
 		m := Classic()
 		m.Use(Renderer(RenderOptions{
@@ -582,15 +577,8 @@ func Test_Render_NoRace(t *testing.T) {
 		done := make(chan bool)
 		doreq := func() {
 			resp := httptest.NewRecorder()
-			req, err := http.NewRequest("GET", "/foobar", nil)
-			So(err, ShouldBeNil)
+			req, _ := http.NewRequest("GET", "/foobar", nil)
 			m.ServeHTTP(resp, req)
-
-			So(resp.Code, ShouldEqual, http.StatusOK)
-			So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
-			// ContentLength should be deferred to the ResponseWriter and not Render
-			So(resp.Header().Get(ContentLength), ShouldBeBlank)
-			So(resp.Body.String(), ShouldEqual, "<h1>Hello world</h1>\n")
 			done <- true
 		}
 		// Run two requests to check there is no race condition
