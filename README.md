@@ -53,6 +53,7 @@ There are already many [middlewares](https://github.com/macaron-contrib) to simp
 - [csrf](https://github.com/macaron-contrib/csrf) - Generates and validates csrf tokens
 - [captcha](https://github.com/macaron-contrib/captcha) - Captcha service
 - [pongo2](https://github.com/macaron-contrib/pongo2) - Pongo2 template engine support
+- [sockets](https://github.com/macaron-contrib/sockets) - WebSockets channels binding
 - [toolbox](https://github.com/macaron-contrib/toolbox) - Health check, pprof, profile and statistic services
 - [switcher](https://github.com/macaron-contrib/switcher) - Multiple-site support
 - [renders](https://github.com/macaron-contrib/renders) - Beego-like render engine(Macaron has built-in template engine, this is another option)
