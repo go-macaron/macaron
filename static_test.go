@@ -22,6 +22,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path"
+	"strings"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -76,7 +77,7 @@ func Test_Static(t *testing.T) {
 
 		resp := httptest.NewRecorder()
 		resp.Body = new(bytes.Buffer)
-		req, err := http.NewRequest("GET", "http://localhost:4000/"+path.Base(f.Name()), nil)
+		req, err := http.NewRequest("GET", "http://localhost:4000/"+path.Base(strings.Replace(f.Name(), "\\", "/", -1)), nil)
 		So(err, ShouldBeNil)
 		m.ServeHTTP(resp, req)
 		So(resp.Code, ShouldEqual, http.StatusOK)
