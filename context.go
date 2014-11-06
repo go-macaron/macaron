@@ -141,19 +141,28 @@ func (ctx *Context) RemoteAddr() string {
 	return addr
 }
 
-// HTML calls Render.HTML but allows less arguments.
-func (ctx *Context) HTML(status int, name string, binding ...interface{}) {
+func (ctx *Context) renderHTML(status int, setName, tplName string, data ...interface{}) {
 	if ctx.Render == nil {
 		panic("renderer middleware hasn't been registered")
 	}
-	if len(binding) == 0 {
-		ctx.Render.HTML(status, name, ctx.Data)
+	if len(data) == 0 {
+		ctx.Render.HTMLSet(status, setName, tplName, ctx.Data)
 	} else {
-		ctx.Render.HTML(status, name, binding[0])
-		if len(binding) > 1 {
-			ctx.Render.HTML(status, name, binding[1].(HTMLOptions))
+		ctx.Render.HTMLSet(status, setName, tplName, data[0])
+		if len(data) > 1 {
+			ctx.Render.HTMLSet(status, setName, tplName, data[0], data[1].(HTMLOptions))
 		}
 	}
+}
+
+// HTML calls Render.HTML but allows less arguments.
+func (ctx *Context) HTML(status int, name string, data ...interface{}) {
+	ctx.renderHTML(status, _DEFAULT_TPL_SET_NAME, name, data...)
+}
+
+// HTML calls Render.HTMLSet but allows less arguments.
+func (ctx *Context) HTMLSet(status int, setName, tplName string, data ...interface{}) {
+	ctx.renderHTML(status, setName, tplName, data...)
 }
 
 // Query querys form parameter.
