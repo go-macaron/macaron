@@ -82,7 +82,7 @@ func Test_Context(t *testing.T) {
 			req, err := http.NewRequest("GET", "/html", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, "<h1>Hello Unknwon</h1>\n")
+			So(resp.Body.String(), ShouldEqual, "<h1>Hello Unknwon</h1>")
 
 			m.Get("/html2", func(ctx *Context) {
 				ctx.Data["Name"] = "Unknwon"
@@ -93,7 +93,7 @@ func Test_Context(t *testing.T) {
 			req, err = http.NewRequest("GET", "/html2", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, "<h1>Hello Unknwon</h1>\n")
+			So(resp.Body.String(), ShouldEqual, "<h1>Hello Unknwon</h1>")
 		})
 
 		Convey("Parse from and query", func() {
@@ -206,7 +206,7 @@ func Test_Context(t *testing.T) {
 			req, err := http.NewRequest("GET", "/file", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, "{{ myCustomFunc }}\n")
+			So(resp.Body.String(), ShouldEqual, "{{ myCustomFunc }}")
 
 			m.Get("/file2", func(ctx *Context) {
 				ctx.ServeFile("fixtures/custom_funcs/index.tmpl", "ok.tmpl")
@@ -216,7 +216,7 @@ func Test_Context(t *testing.T) {
 			req, err = http.NewRequest("GET", "/file2", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, "{{ myCustomFunc }}\n")
+			So(resp.Body.String(), ShouldEqual, "{{ myCustomFunc }}")
 		})
 	})
 }

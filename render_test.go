@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"runtime"
 	"testing"
 	"time"
 
@@ -216,7 +217,7 @@ func Test_Render_HTML(t *testing.T) {
 
 		So(resp.Code, ShouldEqual, http.StatusOK)
 		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
-		So(resp.Body.String(), ShouldEqual, "<h1>Hello jeremy</h1>\n")
+		So(resp.Body.String(), ShouldEqual, "<h1>Hello jeremy</h1>")
 
 		resp = httptest.NewRecorder()
 		req, err = http.NewRequest("GET", "/foobar2", nil)
@@ -225,7 +226,7 @@ func Test_Render_HTML(t *testing.T) {
 
 		So(resp.Code, ShouldEqual, http.StatusOK)
 		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
-		So(resp.Body.String(), ShouldEqual, "<h1>What's up, jeremy</h1>\n")
+		So(resp.Body.String(), ShouldEqual, "<h1>What's up, jeremy</h1>")
 
 		Convey("Change render templates path", func() {
 			resp := httptest.NewRecorder()
@@ -235,7 +236,7 @@ func Test_Render_HTML(t *testing.T) {
 
 			So(resp.Code, ShouldEqual, http.StatusOK)
 			So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
-			So(resp.Body.String(), ShouldEqual, "<h1>What's up, jeremy</h1>\n")
+			So(resp.Body.String(), ShouldEqual, "<h1>What's up, jeremy</h1>")
 		})
 	})
 
@@ -251,12 +252,12 @@ func Test_Render_HTML(t *testing.T) {
 		m.Get("/foobar", func(r Render) {
 			result, err := r.HTMLString("hello", "jeremy")
 			So(err, ShouldBeNil)
-			So(result, ShouldEqual, "<h1>Hello jeremy</h1>\n")
+			So(result, ShouldEqual, "<h1>Hello jeremy</h1>")
 		})
 		m.Get("/foobar2", func(r Render) {
 			result, err := r.HTMLSetString("basic2", "hello", "jeremy")
 			So(err, ShouldBeNil)
-			So(result, ShouldEqual, "<h1>What's up, jeremy</h1>\n")
+			So(result, ShouldEqual, "<h1>What's up, jeremy</h1>")
 		})
 
 		resp := httptest.NewRecorder()
@@ -286,7 +287,7 @@ func Test_Render_HTML(t *testing.T) {
 
 		So(resp.Code, ShouldEqual, http.StatusOK)
 		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
-		So(resp.Body.String(), ShouldEqual, "<h1>Admin jeremy</h1>\n")
+		So(resp.Body.String(), ShouldEqual, "<h1>Admin jeremy</h1>")
 	})
 
 	Convey("Render bad HTML", t, func() {
@@ -326,7 +327,7 @@ func Test_Render_XHTML(t *testing.T) {
 
 		So(resp.Code, ShouldEqual, http.StatusOK)
 		So(resp.Header().Get(ContentType), ShouldEqual, ContentXHTML+"; charset=UTF-8")
-		So(resp.Body.String(), ShouldEqual, "<h1>Hello jeremy</h1>\n")
+		So(resp.Body.String(), ShouldEqual, "<h1>Hello jeremy</h1>")
 	})
 }
 
@@ -348,7 +349,7 @@ func Test_Render_Extensions(t *testing.T) {
 
 		So(resp.Code, ShouldEqual, http.StatusOK)
 		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
-		So(resp.Body.String(), ShouldEqual, "Hypertext!\n")
+		So(resp.Body.String(), ShouldEqual, "Hypertext!")
 	})
 }
 
@@ -374,7 +375,7 @@ func Test_Render_Funcs(t *testing.T) {
 		So(err, ShouldBeNil)
 		m.ServeHTTP(resp, req)
 
-		So(resp.Body.String(), ShouldEqual, "My custom function\n")
+		So(resp.Body.String(), ShouldEqual, "My custom function")
 	})
 }
 
@@ -394,7 +395,7 @@ func Test_Render_Layout(t *testing.T) {
 		So(err, ShouldBeNil)
 		m.ServeHTTP(resp, req)
 
-		So(resp.Body.String(), ShouldEqual, "head\n<h1>jeremy</h1>\n\nfoot\n")
+		So(resp.Body.String(), ShouldEqual, "head<h1>jeremy</h1>foot")
 	})
 
 	Convey("Render with current layout", t, func() {
@@ -412,7 +413,7 @@ func Test_Render_Layout(t *testing.T) {
 		So(err, ShouldBeNil)
 		m.ServeHTTP(resp, req)
 
-		So(resp.Body.String(), ShouldEqual, "content head\n<h1>jeremy</h1>\n\ncontent foot\n")
+		So(resp.Body.String(), ShouldEqual, "content head<h1>jeremy</h1>content foot")
 	})
 
 	Convey("Render with override layout", t, func() {
@@ -434,7 +435,7 @@ func Test_Render_Layout(t *testing.T) {
 
 		So(resp.Code, ShouldEqual, http.StatusOK)
 		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
-		So(resp.Body.String(), ShouldEqual, "another head\n<h1>jeremy</h1>\n\nanother foot\n")
+		So(resp.Body.String(), ShouldEqual, "another head<h1>jeremy</h1>another foot")
 	})
 }
 
@@ -565,6 +566,10 @@ func Test_Render_Redirect_Default(t *testing.T) {
 }
 
 func Test_Render_NoRace(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		return
+	}
+
 	Convey("Make sure render has no race", t, func() {
 		m := Classic()
 		m.Use(Renderer(RenderOptions{
