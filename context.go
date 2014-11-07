@@ -19,6 +19,7 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -186,6 +187,11 @@ func (ctx *Context) QueryStrings(name string) []string {
 	return vals
 }
 
+// QueryEscape returns escapred query result.
+func (ctx *Context) QueryEscape(name string) string {
+	return template.HTMLEscapeString(ctx.Query(name))
+}
+
 // QueryInt returns query result in int type.
 func (ctx *Context) QueryInt(name string) int {
 	return com.StrTo(ctx.Query(name)).MustInt()
@@ -199,6 +205,21 @@ func (ctx *Context) QueryInt64(name string) int64 {
 // Params returns value of given param name.
 func (ctx *Context) Params(name string) string {
 	return ctx.params[name]
+}
+
+// ParamsEscape returns escapred params result.
+func (ctx *Context) ParamsEscape(name string) string {
+	return template.HTMLEscapeString(ctx.Params(name))
+}
+
+// ParamsInt returns params result in int type.
+func (ctx *Context) ParamsInt(name string) int {
+	return com.StrTo(ctx.Params(name)).MustInt()
+}
+
+// ParamsInt64 returns params result in int64 type.
+func (ctx *Context) ParamsInt64(name string) int64 {
+	return com.StrTo(ctx.Params(name)).MustInt64()
 }
 
 // GetFile returns information about user upload file by given form field name.
