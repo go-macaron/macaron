@@ -33,6 +33,10 @@ func Test_Context(t *testing.T) {
 		m.Use(Renderer(RenderOptions{
 			Directory: "fixtures/basic",
 		}))
+		m.Use(Renderer(RenderOptions{
+			Name:      "basic2",
+			Directory: "fixtures/basic2",
+		}))
 
 		Convey("Get request body", func() {
 			m.Get("/body1", func(ctx *Context) {
@@ -86,7 +90,7 @@ func Test_Context(t *testing.T) {
 
 			m.Get("/html2", func(ctx *Context) {
 				ctx.Data["Name"] = "Unknwon"
-				ctx.HTML(200, "hello2")
+				ctx.HTMLSet(200, "basic2", "hello2")
 			})
 
 			resp = httptest.NewRecorder()
@@ -100,6 +104,7 @@ func Test_Context(t *testing.T) {
 			m.Get("/query", func(ctx *Context) string {
 				var buf bytes.Buffer
 				buf.WriteString(ctx.Query("name") + " ")
+				buf.WriteString(ctx.QueryEscape("name") + " ")
 				buf.WriteString(com.ToStr(ctx.QueryInt("int")) + " ")
 				buf.WriteString(com.ToStr(ctx.QueryInt64("int64")) + " ")
 				return buf.String()
@@ -115,7 +120,7 @@ func Test_Context(t *testing.T) {
 			req, err := http.NewRequest("GET", "/query?name=Unknwon&int=12&int64=123", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, "Unknwon 12 123 ")
+			So(resp.Body.String(), ShouldEqual, "Unknwon Unknwon 12 123 ")
 
 			resp = httptest.NewRecorder()
 			req, err = http.NewRequest("GET", "/query2?list=item1&list=item2", nil)
@@ -125,15 +130,20 @@ func Test_Context(t *testing.T) {
 		})
 
 		Convey("URL parameter", func() {
-			m.Get("/:name", func(ctx *Context) string {
-				return ctx.Params(":name")
+			m.Get("/:name/:int/:int64", func(ctx *Context) string {
+				var buf bytes.Buffer
+				buf.WriteString(ctx.Params(":name") + " ")
+				buf.WriteString(ctx.ParamsEscape(":name") + " ")
+				buf.WriteString(com.ToStr(ctx.ParamsInt(":int")) + " ")
+				buf.WriteString(com.ToStr(ctx.ParamsInt64(":int64")) + " ")
+				return buf.String()
 			})
 
 			resp := httptest.NewRecorder()
-			req, err := http.NewRequest("GET", "/user", nil)
+			req, err := http.NewRequest("GET", "/user/1/13", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, "user")
+			So(resp.Body.String(), ShouldEqual, "user user 1 13 ")
 		})
 
 		Convey("Get file", func() {
