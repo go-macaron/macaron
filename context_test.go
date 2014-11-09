@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -228,5 +229,47 @@ func Test_Context(t *testing.T) {
 			m.ServeHTTP(resp, req)
 			So(resp.Body.String(), ShouldEqual, "{{ myCustomFunc }}")
 		})
+	})
+}
+
+func Test_Context_Redirect(t *testing.T) {
+	Convey("Context with default redirect", t, func() {
+		url, err := url.Parse("http://localhost/path/one")
+		So(err, ShouldBeNil)
+		resp := httptest.NewRecorder()
+		req := http.Request{
+			Method: "GET",
+			URL:    url,
+		}
+		ctx := &Context{
+			Req:     Request{&req},
+			Resp:    NewResponseWriter(resp),
+			Data:    make(map[string]interface{}),
+			statics: make(map[string]*http.Dir),
+		}
+		ctx.Redirect("two")
+
+		So(resp.Code, ShouldEqual, http.StatusFound)
+		So(resp.HeaderMap["Location"][0], ShouldEqual, "/path/two")
+	})
+
+	Convey("Context with custom redirect", t, func() {
+		url, err := url.Parse("http://localhost/path/one")
+		So(err, ShouldBeNil)
+		resp := httptest.NewRecorder()
+		req := http.Request{
+			Method: "GET",
+			URL:    url,
+		}
+		ctx := &Context{
+			Req:     Request{&req},
+			Resp:    NewResponseWriter(resp),
+			Data:    make(map[string]interface{}),
+			statics: make(map[string]*http.Dir),
+		}
+		ctx.Redirect("two", 307)
+
+		So(resp.Code, ShouldEqual, http.StatusTemporaryRedirect)
+		So(resp.HeaderMap["Location"][0], ShouldEqual, "/path/two")
 	})
 }

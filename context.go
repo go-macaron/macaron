@@ -166,6 +166,15 @@ func (ctx *Context) HTMLSet(status int, setName, tplName string, data ...interfa
 	ctx.renderHTML(status, setName, tplName, data...)
 }
 
+func (ctx *Context) Redirect(location string, status ...int) {
+	code := http.StatusFound
+	if len(status) == 1 {
+		code = status[0]
+	}
+
+	http.Redirect(ctx.Resp, ctx.Req.Request, location, code)
+}
+
 // Query querys form parameter.
 func (ctx *Context) Query(name string) string {
 	if ctx.Req.Form == nil {
