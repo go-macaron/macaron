@@ -120,7 +120,6 @@ type Render interface {
 	XML(int, interface{})
 	Error(int, ...string)
 	Status(int)
-	Redirect(string, ...int)
 	SetTemplatePath(string, string)
 	HasTemplateSet(string) bool
 }
@@ -447,15 +446,6 @@ func (r *TplRender) Error(status int, message ...string) {
 
 func (r *TplRender) Status(status int) {
 	r.WriteHeader(status)
-}
-
-func (r *TplRender) Redirect(location string, status ...int) {
-	code := http.StatusFound
-	if len(status) == 1 {
-		code = status[0]
-	}
-
-	http.Redirect(r, r.Req, location, code)
 }
 
 func (r *TplRender) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {

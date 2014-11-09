@@ -20,7 +20,6 @@ import (
 	"html/template"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 	"time"
 
@@ -531,38 +530,6 @@ func Test_Render_Status(t *testing.T) {
 		r := TplRender{resp, nil, &RenderOptions{}, "", time.Now()}
 		r.Error(500)
 		So(resp.Code, ShouldEqual, http.StatusInternalServerError)
-	})
-}
-
-func Test_Render_Redirect_Default(t *testing.T) {
-	Convey("Render with default redirect", t, func() {
-		url, err := url.Parse("http://localhost/path/one")
-		So(err, ShouldBeNil)
-		resp := httptest.NewRecorder()
-		req := http.Request{
-			Method: "GET",
-			URL:    url,
-		}
-		r := TplRender{resp, &req, &RenderOptions{}, "", time.Now()}
-		r.Redirect("two")
-
-		So(resp.Code, ShouldEqual, http.StatusFound)
-		So(resp.HeaderMap["Location"][0], ShouldEqual, "/path/two")
-	})
-
-	Convey("Render with custom redirect", t, func() {
-		url, err := url.Parse("http://localhost/path/one")
-		So(err, ShouldBeNil)
-		resp := httptest.NewRecorder()
-		req := http.Request{
-			Method: "GET",
-			URL:    url,
-		}
-		r := TplRender{resp, &req, &RenderOptions{}, "", time.Now()}
-		r.Redirect("two", 307)
-
-		So(resp.Code, ShouldEqual, http.StatusTemporaryRedirect)
-		So(resp.HeaderMap["Location"][0], ShouldEqual, "/path/two")
 	})
 }
 
