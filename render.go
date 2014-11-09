@@ -113,13 +113,16 @@ type Render interface {
 	RenderData(int, []byte)
 	HTML(int, string, interface{}, ...HTMLOptions)
 	HTMLSet(int, string, string, interface{}, ...HTMLOptions)
-	HTMLString(string, interface{}, ...HTMLOptions) (string, error)
 	HTMLSetString(string, string, interface{}, ...HTMLOptions) (string, error)
+	HTMLString(string, interface{}, ...HTMLOptions) (string, error)
+	HTMLSetBytes(string, string, interface{}, ...HTMLOptions) ([]byte, error)
+	HTMLBytes(string, interface{}, ...HTMLOptions) ([]byte, error)
 	XML(int, interface{})
 	Error(int, ...string)
 	Status(int)
 	Redirect(string, ...int)
 	SetTemplatePath(string, string)
+	HasTemplateSet(string) bool
 }
 
 const (
@@ -412,20 +415,26 @@ func (r *TplRender) HTMLSet(status int, setName, tplName string, data interface{
 	r.renderHTML(status, setName, tplName, data, htmlOpt...)
 }
 
-func (r *TplRender) renderHTMLString(setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) (string, error) {
-	if out, err := r.renderBytes(setName, tplName, data, htmlOpt...); err != nil {
-		return "", err
-	} else {
-		return out.String(), nil
+func (r *TplRender) HTMLSetBytes(setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) ([]byte, error) {
+	out, err := r.renderBytes(setName, tplName, data, htmlOpt...)
+	if err != nil {
+		return []byte(""), err
 	}
+	return out.Bytes(), nil
 }
 
-func (r *TplRender) HTMLString(name string, data interface{}, htmlOpt ...HTMLOptions) (string, error) {
-	return r.renderHTMLString(_DEFAULT_TPL_SET_NAME, name, data, htmlOpt...)
+func (r *TplRender) HTMLBytes(name string, data interface{}, htmlOpt ...HTMLOptions) ([]byte, error) {
+	return r.HTMLSetBytes(_DEFAULT_TPL_SET_NAME, name, data, htmlOpt...)
 }
 
 func (r *TplRender) HTMLSetString(setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) (string, error) {
-	return r.renderHTMLString(setName, tplName, data, htmlOpt...)
+	p, err := r.HTMLSetBytes(setName, tplName, data, htmlOpt...)
+	return string(p), err
+}
+
+func (r *TplRender) HTMLString(name string, data interface{}, htmlOpt ...HTMLOptions) (string, error) {
+	p, err := r.HTMLBytes(name, data, htmlOpt...)
+	return string(p), err
 }
 
 // Error writes the given HTTP status to the current ResponseWriter
@@ -466,4 +475,9 @@ func (r *TplRender) SetTemplatePath(setName, dir string) {
 	opt := tplSetOpts[setName]
 	opt.Directory = dir
 	compile(opt)
+}
+
+func (r *TplRender) HasTemplateSet(name string) bool {
+	_, ok := tplSets[name]
+	return ok
 }
