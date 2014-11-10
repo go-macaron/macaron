@@ -193,13 +193,9 @@ func Test_Render_XML(t *testing.T) {
 func Test_Render_HTML(t *testing.T) {
 	Convey("Render HTML", t, func() {
 		m := Classic()
-		m.Use(Renderer(RenderOptions{
+		m.Use(Renderers(RenderOptions{
 			Directory: "fixtures/basic",
-		}))
-		m.Use(Renderer(RenderOptions{
-			Name:      "basic2",
-			Directory: "fixtures/basic2",
-		}))
+		}, "fixtures/basic2"))
 		m.Get("/foobar", func(r Render) {
 			r.HTML(200, "hello", "jeremy")
 			r.SetTemplatePath("", "fixtures/basic2")
@@ -242,13 +238,9 @@ func Test_Render_HTML(t *testing.T) {
 
 	Convey("Render HTML and return string", t, func() {
 		m := Classic()
-		m.Use(Renderer(RenderOptions{
+		m.Use(Renderers(RenderOptions{
 			Directory: "fixtures/basic",
-		}))
-		m.Use(Renderer(RenderOptions{
-			Name:      "basic2",
-			Directory: "fixtures/basic2",
-		}))
+		}, "basic2:fixtures/basic2"))
 		m.Get("/foobar", func(r Render) {
 			result, err := r.HTMLString("hello", "jeremy")
 			So(err, ShouldBeNil)
@@ -513,21 +505,21 @@ func Test_Render_BinaryData(t *testing.T) {
 func Test_Render_Status(t *testing.T) {
 	Convey("Render with status 204", t, func() {
 		resp := httptest.NewRecorder()
-		r := TplRender{resp, nil, &RenderOptions{}, "", time.Now()}
+		r := TplRender{resp, newTemplateSet(), &RenderOptions{}, "", time.Now()}
 		r.Status(204)
 		So(resp.Code, ShouldEqual, http.StatusNoContent)
 	})
 
 	Convey("Render with status 404", t, func() {
 		resp := httptest.NewRecorder()
-		r := TplRender{resp, nil, &RenderOptions{}, "", time.Now()}
+		r := TplRender{resp, newTemplateSet(), &RenderOptions{}, "", time.Now()}
 		r.Error(404)
 		So(resp.Code, ShouldEqual, http.StatusNotFound)
 	})
 
 	Convey("Render with status 500", t, func() {
 		resp := httptest.NewRecorder()
-		r := TplRender{resp, nil, &RenderOptions{}, "", time.Now()}
+		r := TplRender{resp, newTemplateSet(), &RenderOptions{}, "", time.Now()}
 		r.Error(500)
 		So(resp.Code, ShouldEqual, http.StatusInternalServerError)
 	})

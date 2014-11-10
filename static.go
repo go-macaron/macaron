@@ -67,6 +67,7 @@ func Static(directory string, staticOpt ...StaticOptions) Handler {
 	opt := prepareStaticOptions(staticOpt)
 
 	return func(ctx *Context, log *log.Logger) {
+		// FIXME: BUG BUG BUG
 		ctx.statics[string(dir)] = &dir
 		if ctx.Req.Method != "GET" && ctx.Req.Method != "HEAD" {
 			return
