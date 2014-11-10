@@ -31,13 +31,9 @@ import (
 func Test_Context(t *testing.T) {
 	Convey("Do advanced encapsulation operations", t, func() {
 		m := Classic()
-		m.Use(Renderer(RenderOptions{
+		m.Use(Renderers(RenderOptions{
 			Directory: "fixtures/basic",
-		}))
-		m.Use(Renderer(RenderOptions{
-			Name:      "basic2",
-			Directory: "fixtures/basic2",
-		}))
+		}, "fixtures/basic2"))
 
 		Convey("Get request body", func() {
 			m.Get("/body1", func(ctx *Context) {

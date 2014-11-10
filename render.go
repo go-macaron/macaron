@@ -25,6 +25,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -59,6 +60,105 @@ var (
 	}
 )
 
+func PrepareCharset(charset string) string {
+	if len(charset) != 0 {
+		return "; charset=" + charset
+	}
+
+	return "; charset=" + defaultCharset
+}
+
+func GetExt(s string) string {
+	if strings.Index(s, ".") == -1 {
+		return ""
+	}
+	return "." + strings.Join(strings.Split(s, ".")[1:], ".")
+}
+
+func compile(options *RenderOptions) *template.Template {
+	dir := options.Directory
+	t := template.New(dir)
+	t.Delims(options.Delims.Left, options.Delims.Right)
+	// Parse an initial template in case we don't have any.
+	template.Must(t.Parse("Macaron"))
+
+	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		r, err := filepath.Rel(dir, path)
+		if err != nil {
+			return err
+		}
+
+		ext := GetExt(r)
+
+		for _, extension := range options.Extensions {
+			if ext == extension {
+
+				buf, err := ioutil.ReadFile(path)
+				if err != nil {
+					panic(err)
+				}
+
+				name := (r[0 : len(r)-len(ext)])
+				tmpl := t.New(filepath.ToSlash(name))
+
+				// add our funcmaps
+				for _, funcs := range options.Funcs {
+					tmpl.Funcs(funcs)
+				}
+
+				// Bomb out if parse fails. We don't want any silent server starts.
+				template.Must(tmpl.Funcs(helperFuncs).Parse(string(buf)))
+				break
+			}
+		}
+
+		return nil
+	}); err != nil {
+		panic("fail to walk templates directory: " + err.Error())
+	}
+
+	return t
+}
+
+// templateSet represents a template set of type *template.Template.
+type templateSet struct {
+	lock sync.RWMutex
+	sets map[string]*template.Template
+	dirs map[string]string
+}
+
+func newTemplateSet() *templateSet {
+	return &templateSet{
+		sets: make(map[string]*template.Template),
+		dirs: make(map[string]string),
+	}
+}
+
+func (ts *templateSet) Set(name string, opt *RenderOptions) *template.Template {
+	t := compile(opt)
+
+	ts.lock.Lock()
+	defer ts.lock.Unlock()
+
+	ts.sets[name] = t
+	ts.dirs[name] = opt.Directory
+	return t
+}
+
+func (ts *templateSet) Get(name string) *template.Template {
+	ts.lock.RLock()
+	defer ts.lock.RUnlock()
+
+	return ts.sets[name]
+}
+
+func (ts *templateSet) GetDir(name string) string {
+	ts.lock.RLock()
+	defer ts.lock.RUnlock()
+
+	return ts.dirs[name]
+}
+
 type (
 	// Delims represents a set of Left and Right delimiters for HTML template rendering
 	Delims struct {
@@ -70,8 +170,6 @@ type (
 
 	// RenderOptions represents a struct for specifying configuration options for the Render middleware.
 	RenderOptions struct {
-		// Name of template set, leave empty to be default.
-		Name string
 		// Directory to load templates. Default is "templates".
 		Directory string
 		// Layout template name. Will not render a layout if "". Default is to "".
@@ -128,22 +226,13 @@ const (
 	_DEFAULT_TPL_SET_NAME = "DEFAULT"
 )
 
-var (
-	tplSets    = make(map[string]*template.Template)
-	tplSetOpts = make(map[string]*RenderOptions)
-	lock       sync.RWMutex
-)
-
-func prepareOptions(options []RenderOptions) *RenderOptions {
+func prepareOptions(options []RenderOptions) RenderOptions {
 	var opt RenderOptions
 	if len(options) > 0 {
 		opt = options[0]
 	}
 
 	// Defaults.
-	if len(opt.Name) == 0 {
-		opt.Name = _DEFAULT_TPL_SET_NAME
-	}
 	if len(opt.Directory) == 0 {
 		opt.Directory = "templates"
 	}
@@ -154,93 +243,38 @@ func prepareOptions(options []RenderOptions) *RenderOptions {
 		opt.HTMLContentType = ContentHTML
 	}
 
-	lock.RLock()
-	defer lock.RUnlock()
-
-	tplSetOpts[opt.Name] = &opt
-	return &opt
+	return opt
 }
 
-func prepareCharset(charset string) string {
-	if len(charset) != 0 {
-		return "; charset=" + charset
-	}
+func renderHandler(opt RenderOptions, tplSets []string) Handler {
+	cs := PrepareCharset(opt.Charset)
+	ts := newTemplateSet()
+	ts.Set(_DEFAULT_TPL_SET_NAME, &opt)
 
-	return "; charset=" + defaultCharset
-}
-
-func getExt(s string) string {
-	if strings.Index(s, ".") == -1 {
-		return ""
-	}
-	return "." + strings.Join(strings.Split(s, ".")[1:], ".")
-}
-
-func compile(options *RenderOptions) {
-	dir := options.Directory
-	t := template.New(dir)
-	t.Delims(options.Delims.Left, options.Delims.Right)
-	// Parse an initial template in case we don't have any.
-	template.Must(t.Parse("Macaron"))
-
-	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		r, err := filepath.Rel(dir, path)
-		if err != nil {
-			return err
+	var (
+		tmpOpt  RenderOptions
+		tplName string
+		tplDir  string
+	)
+	for _, tplSet := range tplSets {
+		infos := strings.Split(tplSet, ":")
+		if len(infos) == 1 {
+			tplDir = infos[0]
+			tplName = path.Base(tplDir)
+		} else {
+			tplName = infos[0]
+			tplDir = infos[1]
 		}
-
-		ext := getExt(r)
-
-		for _, extension := range options.Extensions {
-			if ext == extension {
-
-				buf, err := ioutil.ReadFile(path)
-				if err != nil {
-					panic(err)
-				}
-
-				name := (r[0 : len(r)-len(ext)])
-				tmpl := t.New(filepath.ToSlash(name))
-
-				// add our funcmaps
-				for _, funcs := range options.Funcs {
-					tmpl.Funcs(funcs)
-				}
-
-				// Bomb out if parse fails. We don't want any silent server starts.
-				template.Must(tmpl.Funcs(helperFuncs).Parse(string(buf)))
-				break
-			}
-		}
-
-		return nil
-	}); err != nil {
-		panic("fail to walk templates directory: " + err.Error())
+		tmpOpt = opt
+		tmpOpt.Directory = tplDir
+		ts.Set(tplName, &tmpOpt)
 	}
 
-	lock.Lock()
-	defer lock.Unlock()
-
-	tplSets[options.Name] = t
-}
-
-// Renderer is a Middleware that maps a macaron.Render service into the Macaron handler chain.
-// An single variadic macaron.RenderOptions struct can be optionally provided to configure
-// HTML rendering. The default directory for templates is "templates" and the default
-// file extension is ".tmpl" and ".html".
-//
-// If MACARON_ENV is set to "" or "development" then templates will be recompiled on every request. For more performance, set the
-// MACARON_ENV environment variable to "production".
-func Renderer(options ...RenderOptions) Handler {
-	opt := prepareOptions(options)
-	cs := prepareCharset(opt.Charset)
-	compile(opt)
-
-	return func(ctx *Context, rw http.ResponseWriter, req *http.Request) {
+	return func(ctx *Context) {
 		r := &TplRender{
-			ResponseWriter:  rw,
-			Req:             req,
-			Opt:             opt,
+			ResponseWriter:  ctx.Resp,
+			templateSet:     ts,
+			Opt:             &opt,
 			CompiledCharset: cs,
 		}
 		ctx.Data["TmplLoadTimes"] = func() string {
@@ -255,9 +289,24 @@ func Renderer(options ...RenderOptions) Handler {
 	}
 }
 
+// Renderer is a Middleware that maps a macaron.Render service into the Macaron handler chain.
+// An single variadic macaron.RenderOptions struct can be optionally provided to configure
+// HTML rendering. The default directory for templates is "templates" and the default
+// file extension is ".tmpl" and ".html".
+//
+// If MACARON_ENV is set to "" or "development" then templates will be recompiled on every request. For more performance, set the
+// MACARON_ENV environment variable to "production".
+func Renderer(options ...RenderOptions) Handler {
+	return renderHandler(prepareOptions(options), []string{})
+}
+
+func Renderers(options RenderOptions, tplSets ...string) Handler {
+	return renderHandler(prepareOptions([]RenderOptions{options}), tplSets)
+}
+
 type TplRender struct {
 	http.ResponseWriter
-	Req             *http.Request
+	*templateSet
 	Opt             *RenderOptions
 	CompiledCharset string
 
@@ -362,15 +411,12 @@ func (r *TplRender) addYield(t *template.Template, tplName string, data interfac
 }
 
 func (r *TplRender) renderBytes(setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) (*bytes.Buffer, error) {
-	renderOpt := tplSetOpts[setName]
+	t := r.templateSet.Get(setName)
 	if Env == DEV {
-		compile(renderOpt)
+		opt := *r.Opt
+		opt.Directory = r.templateSet.GetDir(setName)
+		t = r.templateSet.Set(setName, &opt)
 	}
-
-	lock.RLock()
-	defer lock.RUnlock()
-
-	t := tplSets[setName]
 	if t == nil {
 		return nil, fmt.Errorf("html/template: template \"%s\" is undefined", tplName)
 	}
@@ -462,12 +508,11 @@ func (r *TplRender) SetTemplatePath(setName, dir string) {
 	if len(setName) == 0 {
 		setName = _DEFAULT_TPL_SET_NAME
 	}
-	opt := tplSetOpts[setName]
+	opt := *r.Opt
 	opt.Directory = dir
-	compile(opt)
+	r.templateSet.Set(setName, &opt)
 }
 
 func (r *TplRender) HasTemplateSet(name string) bool {
-	_, ok := tplSets[name]
-	return ok
+	return r.templateSet.Get(name) != nil
 }
