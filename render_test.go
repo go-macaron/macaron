@@ -552,8 +552,8 @@ func Test_Render_NoRace(t *testing.T) {
 
 func Test_GetExt(t *testing.T) {
 	Convey("Get extension", t, func() {
-		So(getExt("test"), ShouldBeBlank)
-		So(getExt("test.tmpl"), ShouldEqual, ".tmpl")
-		So(getExt("test.go.tmpl"), ShouldEqual, ".go.tmpl")
+		So(GetExt("test"), ShouldBeBlank)
+		So(GetExt("test.tmpl"), ShouldEqual, ".tmpl")
+		So(GetExt("test.go.tmpl"), ShouldEqual, ".go.tmpl")
 	})
 }
