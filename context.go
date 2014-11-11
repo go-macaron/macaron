@@ -300,6 +300,16 @@ func (ctx *Context) GetCookie(name string) string {
 	return cookie.Value
 }
 
+// GetCookieInt returns cookie result in int type.
+func (ctx *Context) GetCookieInt(name string) int {
+	return com.StrTo(ctx.GetCookie(name)).MustInt()
+}
+
+// GetCookieInt64 returns cookie result in int64 type.
+func (ctx *Context) GetCookieInt64(name string) int64 {
+	return com.StrTo(ctx.GetCookie(name)).MustInt64()
+}
+
 var defaultCookieSecret string
 
 // SetDefaultCookieSecret sets global default secure cookie secret.

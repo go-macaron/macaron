@@ -167,13 +167,15 @@ func Test_Context(t *testing.T) {
 
 			m.Get("/get", func(ctx *Context) string {
 				ctx.GetCookie("404")
+				So(ctx.GetCookieInt("uid"), ShouldEqual, 1)
+				So(ctx.GetCookieInt64("uid"), ShouldEqual, 1)
 				return ctx.GetCookie("user")
 			})
 
 			resp = httptest.NewRecorder()
 			req, err = http.NewRequest("GET", "/get", nil)
 			So(err, ShouldBeNil)
-			req.Header.Set("Cookie", "user=Unknwon; Path=/; Max-Age=1")
+			req.Header.Set("Cookie", "user=Unknwon; uid=1")
 			m.ServeHTTP(resp, req)
 			So(resp.Body.String(), ShouldEqual, "Unknwon")
 		})
