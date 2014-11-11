@@ -31,6 +31,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Unknwon/com"
+
 	"github.com/Unknwon/macaron/bpool"
 )
 
@@ -69,10 +71,11 @@ func PrepareCharset(charset string) string {
 }
 
 func GetExt(s string) string {
-	if strings.Index(s, ".") == -1 {
+	index := strings.Index(s, ".")
+	if index == -1 {
 		return ""
 	}
-	return "." + strings.Join(strings.Split(s, ".")[1:], ".")
+	return s[index:]
 }
 
 func compile(options *RenderOptions) *template.Template {
@@ -246,25 +249,34 @@ func prepareOptions(options []RenderOptions) RenderOptions {
 	return opt
 }
 
+func ParseTplSet(tplSet string) (tplName string, tplDir string) {
+	tplSet = strings.TrimSpace(tplSet)
+	if len(tplSet) == 0 {
+		panic("empty template set argument")
+	}
+	infos := strings.Split(tplSet, ":")
+	if len(infos) == 1 {
+		tplDir = infos[0]
+		tplName = path.Base(tplDir)
+	} else {
+		tplName = infos[0]
+		tplDir = infos[1]
+	}
+
+	if !com.IsDir(tplDir) {
+		panic("template set path does not exist or is not a directory")
+	}
+	return tplName, tplDir
+}
+
 func renderHandler(opt RenderOptions, tplSets []string) Handler {
 	cs := PrepareCharset(opt.Charset)
 	ts := newTemplateSet()
 	ts.Set(_DEFAULT_TPL_SET_NAME, &opt)
 
-	var (
-		tmpOpt  RenderOptions
-		tplName string
-		tplDir  string
-	)
+	var tmpOpt RenderOptions
 	for _, tplSet := range tplSets {
-		infos := strings.Split(tplSet, ":")
-		if len(infos) == 1 {
-			tplDir = infos[0]
-			tplName = path.Base(tplDir)
-		} else {
-			tplName = infos[0]
-			tplDir = infos[1]
-		}
+		tplName, tplDir := ParseTplSet(tplSet)
 		tmpOpt = opt
 		tmpOpt.Directory = tplDir
 		ts.Set(tplName, &tmpOpt)
