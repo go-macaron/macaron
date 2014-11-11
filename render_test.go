@@ -299,6 +299,28 @@ func Test_Render_HTML(t *testing.T) {
 		So(resp.Code, ShouldEqual, http.StatusInternalServerError)
 		So(resp.Body.String(), ShouldEqual, "html/template: \"nope\" is undefined\n")
 	})
+
+	Convey("Invalid template set", t, func() {
+		Convey("Empty template set argument", func() {
+			defer func() {
+				So(recover(), ShouldNotBeNil)
+			}()
+			m := Classic()
+			m.Use(Renderers(RenderOptions{
+				Directory: "fixtures/basic",
+			}, ""))
+		})
+
+		Convey("Bad template set path", func() {
+			defer func() {
+				So(recover(), ShouldNotBeNil)
+			}()
+			m := Classic()
+			m.Use(Renderers(RenderOptions{
+				Directory: "fixtures/basic",
+			}, "404"))
+		})
+	})
 }
 
 func Test_Render_XHTML(t *testing.T) {
