@@ -365,6 +365,25 @@ func (ctx *Context) GetSuperSecureCookie(Secret, key string) (string, bool) {
 	return string(res), true
 }
 
+// ServeContent serves given content to response.
+func (ctx *Context) ServeContent(name string, r io.ReadSeeker, params ...interface{}) {
+	modtime := time.Now()
+	for _, p := range params {
+		switch v := p.(type) {
+		case time.Time:
+			modtime = v
+		}
+	}
+	ctx.Resp.Header().Set("Content-Description", "File Transfer")
+	ctx.Resp.Header().Set("Content-Type", "application/octet-stream")
+	ctx.Resp.Header().Set("Content-Disposition", "attachment; filename="+name)
+	ctx.Resp.Header().Set("Content-Transfer-Encoding", "binary")
+	ctx.Resp.Header().Set("Expires", "0")
+	ctx.Resp.Header().Set("Cache-Control", "must-revalidate")
+	ctx.Resp.Header().Set("Pragma", "public")
+	http.ServeContent(ctx.Resp, ctx.Req.Request, name, modtime, r)
+}
+
 // ServeFile serves given file to response.
 func (ctx *Context) ServeFile(file string, names ...string) {
 	var name string
