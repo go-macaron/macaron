@@ -123,6 +123,44 @@ func compile(options *RenderOptions) *template.Template {
 	return t
 }
 
+func compileBinData(options *RenderOptions) *template.Template {
+	dir := options.Directory
+	t := template.New(dir)
+	t.Delims(options.Delims.Left, options.Delims.Right)
+	// Parse an initial template in case we don't have any.
+	template.Must(t.Parse("Macaron"))
+
+	for path, _ := range options.BinData {
+		ext := GetExt(path)
+
+		for _, extension := range options.Extensions {
+			if ext == extension {
+
+				f := options.BinData[path]
+
+				buf, err := f()
+				if err != nil {
+					panic(err)
+				}
+
+				name := (path[0 : len(path)-len(ext)])
+				tmpl := t.New(filepath.ToSlash(name))
+
+				// add our funcmaps
+				for _, funcs := range options.Funcs {
+					tmpl.Funcs(funcs)
+				}
+
+				// Bomb out if parse fails. We don't want any silent server starts.
+				template.Must(tmpl.Funcs(helperFuncs).Parse(string(buf)))
+				break
+			}
+		}
+	}
+
+	return t
+}
+
 // templateSet represents a template set of type *template.Template.
 type templateSet struct {
 	lock sync.RWMutex
@@ -138,7 +176,13 @@ func newTemplateSet() *templateSet {
 }
 
 func (ts *templateSet) Set(name string, opt *RenderOptions) *template.Template {
-	t := compile(opt)
+	var t *template.Template
+
+	if len(opt.BinData) > 0 {
+		t = compileBinData(opt)
+	} else {
+		t = compile(opt)
+	}
 
 	ts.lock.Lock()
 	defer ts.lock.Unlock()
@@ -195,6 +239,7 @@ type (
 		PrefixXML []byte
 		// Allows changing of output to XHTML instead of HTML. Default is "text/html"
 		HTMLContentType string
+		BinData         map[string]func() ([]byte, error)
 	}
 
 	// HTMLOptions is a struct for overriding some rendering Options for specific HTML call

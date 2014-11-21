@@ -16,11 +16,14 @@
 package macaron
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"path"
 	"path/filepath"
 	"strings"
+
+	assetfs "github.com/elazarl/go-bindata-assetfs"
 )
 
 // StaticOptions is a struct for specifying configuration options for the macaron.Static middleware.
@@ -34,6 +37,8 @@ type StaticOptions struct {
 	// Expires defines which user-defined function to use for producing a HTTP Expires Header
 	// https://developers.google.com/speed/docs/insights/LeverageBrowserCaching
 	Expires func() string
+
+	BinData map[string]func() ([]byte, error)
 }
 
 func prepareStaticOptions(options []StaticOptions) StaticOptions {
@@ -60,11 +65,50 @@ func prepareStaticOptions(options []StaticOptions) StaticOptions {
 
 // Static returns a middleware handler that serves static files in the given directory.
 func Static(directory string, staticOpt ...StaticOptions) Handler {
+	opt := prepareStaticOptions(staticOpt)
+
+	if len(opt.BinData) > 0 {
+		return func(ctx *Context, log *log.Logger) {
+			file := ctx.Req.URL.Path
+			name := strings.Replace(file, "/", "", 1)
+			f, ok := opt.BinData[name]
+
+			if ok {
+				data, err := f()
+
+				if err != nil {
+					return
+				}
+
+				f := assetfs.NewAssetFile(file, data)
+
+				fi, err := f.Stat()
+				if err != nil {
+					return
+				}
+
+				if !opt.SkipLogging {
+					log.Println("[Static] Serving " + file)
+				}
+
+				// Add an Expires header to the static content
+				if opt.Expires != nil {
+					ctx.Resp.Header().Set("Expires", opt.Expires())
+				}
+
+				http.ServeContent(ctx.Resp, ctx.Req.Request, file, fi.ModTime(), f)
+
+			} else {
+				return
+			}
+
+		}
+	}
+
 	if !filepath.IsAbs(directory) {
 		directory = filepath.Join(Root, directory)
 	}
 	dir := http.Dir(directory)
-	opt := prepareStaticOptions(staticOpt)
 
 	return func(ctx *Context, log *log.Logger) {
 		// FIXME: BUG BUG BUG
@@ -83,6 +127,9 @@ func Static(directory string, staticOpt ...StaticOptions) Handler {
 				return
 			}
 		}
+
+		fmt.Println("RAW FILE::", file)
+
 		f, err := dir.Open(file)
 		if err != nil {
 			// discard the error?
