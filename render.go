@@ -137,27 +137,33 @@ type (
 	}
 )
 
-// templateFile implements TemplateFile interface.
-type templateFile struct {
+// TplFile implements TemplateFile interface.
+type TplFile struct {
 	name string
 	data []byte
 }
 
-func (f *templateFile) Name() string {
+// NewTplFile cerates new template file with given name and data.
+func NewTplFile(name string, data []byte) *TplFile {
+	return &TplFile{name, data}
+}
+
+func (f *TplFile) Name() string {
 	return f.name
 }
 
-func (f *templateFile) Data() []byte {
+func (f *TplFile) Data() []byte {
 	return f.data
 }
 
-// templateFileSystem implements TemplateFileSystem interface.
-type templateFileSystem struct {
+// TplFileSystem implements TemplateFileSystem interface.
+type TplFileSystem struct {
 	files []TemplateFile
 }
 
-func newTemplateFileSystem(opt RenderOptions) templateFileSystem {
-	fs := templateFileSystem{}
+// NewTemplateFileSystem creates new template file system with given options.
+func NewTemplateFileSystem(opt RenderOptions) TplFileSystem {
+	fs := TplFileSystem{}
 	fs.files = make([]TemplateFile, 0, 10)
 
 	if err := filepath.Walk(opt.Directory, func(path string, info os.FileInfo, err error) error {
@@ -176,20 +182,20 @@ func newTemplateFileSystem(opt RenderOptions) templateFileSystem {
 				}
 
 				name := filepath.ToSlash((r[0 : len(r)-len(ext)]))
-				fs.files = append(fs.files, &templateFile{name, data})
+				fs.files = append(fs.files, NewTplFile(name, data))
 				break
 			}
 		}
 
 		return nil
 	}); err != nil {
-		panic("newTemplateFileSystem: " + err.Error())
+		panic("NewTemplateFileSystem: " + err.Error())
 	}
 
 	return fs
 }
 
-func (fs templateFileSystem) ListFiles() []TemplateFile {
+func (fs TplFileSystem) ListFiles() []TemplateFile {
 	return fs.files
 }
 
@@ -217,7 +223,7 @@ func compile(opt RenderOptions) *template.Template {
 	template.Must(t.Parse("Macaron"))
 
 	if opt.TemplateFileSystem == nil {
-		opt.TemplateFileSystem = newTemplateFileSystem(opt)
+		opt.TemplateFileSystem = NewTemplateFileSystem(opt)
 	}
 
 	for _, f := range opt.TemplateFileSystem.ListFiles() {
