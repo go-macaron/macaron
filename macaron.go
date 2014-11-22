@@ -29,7 +29,7 @@ import (
 )
 
 func Version() string {
-	return "0.4.2.1109"
+	return "0.4.3.1121"
 }
 
 // Handler can be any callable function.
@@ -139,7 +139,6 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 		Req:      Request{req},
 		Resp:     NewResponseWriter(rw),
 		Data:     make(map[string]interface{}),
-		statics:  make(map[string]*http.Dir),
 	}
 	c.SetParent(m)
 	c.Map(c)

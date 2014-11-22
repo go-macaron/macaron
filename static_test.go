@@ -163,7 +163,7 @@ func Test_Static_Options(t *testing.T) {
 	Convey("Serve static files with options prefix", t, func() {
 		var buf bytes.Buffer
 		m := NewWithLogger(&buf)
-		opt := StaticOptions{Prefix: "/public"}
+		opt := StaticOptions{Prefix: "public"}
 		m.Use(Static(currentRoot, opt))
 
 		resp := httptest.NewRecorder()
