@@ -16,11 +16,13 @@
 package macaron
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 // StaticOptions is a struct for specifying configuration options for the macaron.Static middleware.
@@ -34,9 +36,59 @@ type StaticOptions struct {
 	// Expires defines which user-defined function to use for producing a HTTP Expires Header
 	// https://developers.google.com/speed/docs/insights/LeverageBrowserCaching
 	Expires func() string
+	// FileSystem is the interface for supporting any implmentation of file system.
+	FileSystem http.FileSystem
 }
 
-func prepareStaticOptions(options []StaticOptions) StaticOptions {
+type staticMap struct {
+	lock sync.RWMutex
+	data map[string]*http.Dir
+}
+
+func (sm *staticMap) Set(dir *http.Dir) {
+	sm.lock.Lock()
+	defer sm.lock.Unlock()
+
+	sm.data[string(*dir)] = dir
+}
+
+func (sm *staticMap) Get(name string) *http.Dir {
+	sm.lock.RLock()
+	defer sm.lock.RUnlock()
+
+	return sm.data[name]
+}
+
+func (sm *staticMap) Delete(name string) {
+	sm.lock.Lock()
+	defer sm.lock.Unlock()
+
+	delete(sm.data, name)
+}
+
+var statics = staticMap{sync.RWMutex{}, map[string]*http.Dir{}}
+
+var ErrMissingTrailingSlash = errors.New("Request missing trailing slash")
+
+// staticFileSystem implements http.FileSystem interface.
+type staticFileSystem struct {
+	dir *http.Dir
+}
+
+func newStaticFileSystem(directory string) staticFileSystem {
+	if !filepath.IsAbs(directory) {
+		directory = filepath.Join(Root, directory)
+	}
+	dir := http.Dir(directory)
+	statics.Set(&dir)
+	return staticFileSystem{&dir}
+}
+
+func (fs staticFileSystem) Open(name string) (http.File, error) {
+	return fs.dir.Open(name)
+}
+
+func prepareStaticOptions(dir string, options []StaticOptions) StaticOptions {
 	var opt StaticOptions
 	if len(options) > 0 {
 		opt = options[0]
@@ -55,20 +107,23 @@ func prepareStaticOptions(options []StaticOptions) StaticOptions {
 		// Remove any trailing '/'
 		opt.Prefix = strings.TrimRight(opt.Prefix, "/")
 	}
+	if opt.FileSystem == nil {
+		opt.FileSystem = newStaticFileSystem(dir)
+	}
 	return opt
 }
 
 // Static returns a middleware handler that serves static files in the given directory.
 func Static(directory string, staticOpt ...StaticOptions) Handler {
-	if !filepath.IsAbs(directory) {
-		directory = filepath.Join(Root, directory)
-	}
-	dir := http.Dir(directory)
-	opt := prepareStaticOptions(staticOpt)
+	// if !filepath.IsAbs(directory) {
+	// 	directory = filepath.Join(Root, directory)
+	// }
+	// dir := http.Dir(directory)
+	opt := prepareStaticOptions(directory, staticOpt)
 
 	return func(ctx *Context, log *log.Logger) {
 		// FIXME: BUG BUG BUG
-		ctx.statics[string(dir)] = &dir
+		// ctx.statics[string(dir)] = &dir
 		if ctx.Req.Method != "GET" && ctx.Req.Method != "HEAD" {
 			return
 		}
@@ -83,9 +138,10 @@ func Static(directory string, staticOpt ...StaticOptions) Handler {
 				return
 			}
 		}
-		f, err := dir.Open(file)
+
+		f, err := opt.FileSystem.Open(file)
 		if err != nil {
-			// discard the error?
+			// FIXME: discard the error?
 			return
 		}
 		defer f.Close()
@@ -95,23 +151,25 @@ func Static(directory string, staticOpt ...StaticOptions) Handler {
 			return
 		}
 
-		// try to serve index file
+		// Try to serve index file
 		if fi.IsDir() {
-			// redirect if missing trailing slash
+			// Redirect if missing trailing slash.
 			if !strings.HasSuffix(ctx.Req.URL.Path, "/") {
 				http.Redirect(ctx.Resp, ctx.Req.Request, ctx.Req.URL.Path+"/", http.StatusFound)
 				return
 			}
 
 			file = path.Join(file, opt.IndexFile)
-			f, err = dir.Open(file)
+			f, err = opt.FileSystem.Open(file)
 			if err != nil {
+				// FIXME: discard the error?
 				return
 			}
 			defer f.Close()
 
 			fi, err = f.Stat()
 			if err != nil || fi.IsDir() {
+				// FIXME: discard the error?
 				return
 			}
 		}

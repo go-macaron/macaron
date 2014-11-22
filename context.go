@@ -83,8 +83,7 @@ type Context struct {
 	params Params
 	Render // Not nil only if you use macaran.Render middleware.
 	Locale
-	Data    map[string]interface{}
-	statics map[string]*http.Dir // Registered static paths.
+	Data map[string]interface{}
 }
 
 func (c *Context) handler() Handler {
@@ -407,14 +406,14 @@ func (ctx *Context) ChangeStaticPath(oldPath, newPath string) {
 	if !filepath.IsAbs(oldPath) {
 		oldPath = filepath.Join(Root, oldPath)
 	}
-	if _, ok := ctx.statics[oldPath]; ok {
-		dir := ctx.statics[oldPath]
-		delete(ctx.statics, oldPath)
+	dir := statics.Get(oldPath)
+	if dir != nil {
+		statics.Delete(oldPath)
 
 		if !filepath.IsAbs(newPath) {
 			newPath = filepath.Join(Root, newPath)
 		}
 		*dir = http.Dir(newPath)
-		ctx.statics[newPath] = dir
+		statics.Set(dir)
 	}
 }

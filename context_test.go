@@ -22,6 +22,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Unknwon/com"
 
@@ -227,6 +228,46 @@ func Test_Context(t *testing.T) {
 			m.ServeHTTP(resp, req)
 			So(resp.Body.String(), ShouldEqual, "{{ myCustomFunc }}")
 		})
+
+		Convey("Serve content", func() {
+			m.Get("/content", func(ctx *Context) {
+				ctx.ServeContent("content1", bytes.NewReader([]byte("Hello world!")))
+			})
+
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "/content", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+			So(resp.Body.String(), ShouldEqual, "Hello world!")
+
+			m.Get("/content2", func(ctx *Context) {
+				ctx.ServeContent("content1", bytes.NewReader([]byte("Hello world!")), time.Now())
+			})
+
+			resp = httptest.NewRecorder()
+			req, err = http.NewRequest("GET", "/content2", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+			So(resp.Body.String(), ShouldEqual, "Hello world!")
+		})
+	})
+}
+
+func Test_Context_Render(t *testing.T) {
+	Convey("Invalid render", t, func() {
+		defer func() {
+			So(recover(), ShouldNotBeNil)
+		}()
+
+		m := New()
+		m.Get("/", func(ctx *Context) {
+			ctx.HTML(200, "hey")
+		})
+
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
 	})
 }
 
@@ -240,10 +281,9 @@ func Test_Context_Redirect(t *testing.T) {
 			URL:    url,
 		}
 		ctx := &Context{
-			Req:     Request{&req},
-			Resp:    NewResponseWriter(resp),
-			Data:    make(map[string]interface{}),
-			statics: make(map[string]*http.Dir),
+			Req:  Request{&req},
+			Resp: NewResponseWriter(resp),
+			Data: make(map[string]interface{}),
 		}
 		ctx.Redirect("two")
 
@@ -260,10 +300,9 @@ func Test_Context_Redirect(t *testing.T) {
 			URL:    url,
 		}
 		ctx := &Context{
-			Req:     Request{&req},
-			Resp:    NewResponseWriter(resp),
-			Data:    make(map[string]interface{}),
-			statics: make(map[string]*http.Dir),
+			Req:  Request{&req},
+			Resp: NewResponseWriter(resp),
+			Data: make(map[string]interface{}),
 		}
 		ctx.Redirect("two", 307)
 
