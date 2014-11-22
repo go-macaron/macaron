@@ -16,7 +16,6 @@
 package macaron
 
 import (
-	"errors"
 	"log"
 	"net/http"
 	"path"
@@ -40,6 +39,7 @@ type StaticOptions struct {
 	FileSystem http.FileSystem
 }
 
+// FIXME: to be deleted.
 type staticMap struct {
 	lock sync.RWMutex
 	data map[string]*http.Dir
@@ -67,8 +67,6 @@ func (sm *staticMap) Delete(name string) {
 }
 
 var statics = staticMap{sync.RWMutex{}, map[string]*http.Dir{}}
-
-var ErrMissingTrailingSlash = errors.New("Request missing trailing slash")
 
 // staticFileSystem implements http.FileSystem interface.
 type staticFileSystem struct {
@@ -115,10 +113,6 @@ func prepareStaticOptions(dir string, options []StaticOptions) StaticOptions {
 
 // Static returns a middleware handler that serves static files in the given directory.
 func Static(directory string, staticOpt ...StaticOptions) Handler {
-	// if !filepath.IsAbs(directory) {
-	// 	directory = filepath.Join(Root, directory)
-	// }
-	// dir := http.Dir(directory)
 	opt := prepareStaticOptions(directory, staticOpt)
 
 	return func(ctx *Context, log *log.Logger) {
