@@ -62,107 +62,17 @@ var (
 	}
 )
 
-func PrepareCharset(charset string) string {
-	if len(charset) != 0 {
-		return "; charset=" + charset
-	}
-
-	return "; charset=" + defaultCharset
-}
-
-func GetExt(s string) string {
-	index := strings.Index(s, ".")
-	if index == -1 {
-		return ""
-	}
-	return s[index:]
-}
-
-func compile(options *RenderOptions) *template.Template {
-	dir := options.Directory
-	t := template.New(dir)
-	t.Delims(options.Delims.Left, options.Delims.Right)
-	// Parse an initial template in case we don't have any.
-	template.Must(t.Parse("Macaron"))
-
-	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		r, err := filepath.Rel(dir, path)
-		if err != nil {
-			return err
-		}
-
-		ext := GetExt(r)
-
-		for _, extension := range options.Extensions {
-			if ext == extension {
-
-				buf, err := ioutil.ReadFile(path)
-				if err != nil {
-					panic(err)
-				}
-
-				name := (r[0 : len(r)-len(ext)])
-				tmpl := t.New(filepath.ToSlash(name))
-
-				// add our funcmaps
-				for _, funcs := range options.Funcs {
-					tmpl.Funcs(funcs)
-				}
-
-				// Bomb out if parse fails. We don't want any silent server starts.
-				template.Must(tmpl.Funcs(helperFuncs).Parse(string(buf)))
-				break
-			}
-		}
-
-		return nil
-	}); err != nil {
-		panic("fail to walk templates directory: " + err.Error())
-	}
-
-	return t
-}
-
-// templateSet represents a template set of type *template.Template.
-type templateSet struct {
-	lock sync.RWMutex
-	sets map[string]*template.Template
-	dirs map[string]string
-}
-
-func newTemplateSet() *templateSet {
-	return &templateSet{
-		sets: make(map[string]*template.Template),
-		dirs: make(map[string]string),
-	}
-}
-
-func (ts *templateSet) Set(name string, opt *RenderOptions) *template.Template {
-	t := compile(opt)
-
-	ts.lock.Lock()
-	defer ts.lock.Unlock()
-
-	ts.sets[name] = t
-	ts.dirs[name] = opt.Directory
-	return t
-}
-
-func (ts *templateSet) Get(name string) *template.Template {
-	ts.lock.RLock()
-	defer ts.lock.RUnlock()
-
-	return ts.sets[name]
-}
-
-func (ts *templateSet) GetDir(name string) string {
-	ts.lock.RLock()
-	defer ts.lock.RUnlock()
-
-	return ts.dirs[name]
-}
-
 type (
+	// TemplateFile represents a interface of template file that has name and can be read.
+	TemplateFile interface {
+		Name() string
+		Data() []byte
+	}
+	// TemplateFileSystem represents a interface of template file system that able to list all files.
+	TemplateFileSystem interface {
+		ListFiles() []TemplateFile
+	}
+
 	// Delims represents a set of Left and Right delimiters for HTML template rendering
 	Delims struct {
 		// Left delimiter, defaults to {{
@@ -195,6 +105,8 @@ type (
 		PrefixXML []byte
 		// Allows changing of output to XHTML instead of HTML. Default is "text/html"
 		HTMLContentType string
+		// TemplateFileSystem is the interface for supporting any implmentation of template file system.
+		TemplateFileSystem
 	}
 
 	// HTMLOptions is a struct for overriding some rendering Options for specific HTML call
@@ -202,32 +114,166 @@ type (
 		// Layout template name. Overrides Options.Layout.
 		Layout string
 	}
+
+	Render interface {
+		http.ResponseWriter
+		RW() http.ResponseWriter
+
+		JSON(int, interface{})
+		JSONString(interface{}) (string, error)
+		RawData(int, []byte)
+		RenderData(int, []byte)
+		HTML(int, string, interface{}, ...HTMLOptions)
+		HTMLSet(int, string, string, interface{}, ...HTMLOptions)
+		HTMLSetString(string, string, interface{}, ...HTMLOptions) (string, error)
+		HTMLString(string, interface{}, ...HTMLOptions) (string, error)
+		HTMLSetBytes(string, string, interface{}, ...HTMLOptions) ([]byte, error)
+		HTMLBytes(string, interface{}, ...HTMLOptions) ([]byte, error)
+		XML(int, interface{})
+		Error(int, ...string)
+		Status(int)
+		SetTemplatePath(string, string)
+		HasTemplateSet(string) bool
+	}
 )
 
-type Render interface {
-	http.ResponseWriter
-	RW() http.ResponseWriter
+// templateFile implements TemplateFile interface.
+type templateFile struct {
+	name string
+	data []byte
+}
 
-	JSON(int, interface{})
-	JSONString(interface{}) (string, error)
-	RawData(int, []byte)
-	RenderData(int, []byte)
-	HTML(int, string, interface{}, ...HTMLOptions)
-	HTMLSet(int, string, string, interface{}, ...HTMLOptions)
-	HTMLSetString(string, string, interface{}, ...HTMLOptions) (string, error)
-	HTMLString(string, interface{}, ...HTMLOptions) (string, error)
-	HTMLSetBytes(string, string, interface{}, ...HTMLOptions) ([]byte, error)
-	HTMLBytes(string, interface{}, ...HTMLOptions) ([]byte, error)
-	XML(int, interface{})
-	Error(int, ...string)
-	Status(int)
-	SetTemplatePath(string, string)
-	HasTemplateSet(string) bool
+func (f *templateFile) Name() string {
+	return f.name
+}
+
+func (f *templateFile) Data() []byte {
+	return f.data
+}
+
+// templateFileSystem implements TemplateFileSystem interface.
+type templateFileSystem struct {
+	files []TemplateFile
+}
+
+func newTemplateFileSystem(opt RenderOptions) templateFileSystem {
+	fs := templateFileSystem{}
+	fs.files = make([]TemplateFile, 0, 10)
+
+	if err := filepath.Walk(opt.Directory, func(path string, info os.FileInfo, err error) error {
+		r, err := filepath.Rel(opt.Directory, path)
+		if err != nil {
+			return err
+		}
+
+		ext := GetExt(r)
+
+		for _, extension := range opt.Extensions {
+			if ext == extension {
+				data, err := ioutil.ReadFile(path)
+				if err != nil {
+					return err
+				}
+
+				name := filepath.ToSlash((r[0 : len(r)-len(ext)]))
+				fs.files = append(fs.files, &templateFile{name, data})
+				break
+			}
+		}
+
+		return nil
+	}); err != nil {
+		panic("newTemplateFileSystem: " + err.Error())
+	}
+
+	return fs
+}
+
+func (fs templateFileSystem) ListFiles() []TemplateFile {
+	return fs.files
+}
+
+func PrepareCharset(charset string) string {
+	if len(charset) != 0 {
+		return "; charset=" + charset
+	}
+
+	return "; charset=" + defaultCharset
+}
+
+func GetExt(s string) string {
+	index := strings.Index(s, ".")
+	if index == -1 {
+		return ""
+	}
+	return s[index:]
+}
+
+func compile(opt RenderOptions) *template.Template {
+	dir := opt.Directory
+	t := template.New(dir)
+	t.Delims(opt.Delims.Left, opt.Delims.Right)
+	// Parse an initial template in case we don't have any.
+	template.Must(t.Parse("Macaron"))
+
+	if opt.TemplateFileSystem == nil {
+		opt.TemplateFileSystem = newTemplateFileSystem(opt)
+	}
+
+	for _, f := range opt.TemplateFileSystem.ListFiles() {
+		tmpl := t.New(f.Name())
+		for _, funcs := range opt.Funcs {
+			tmpl.Funcs(funcs)
+		}
+		// Bomb out if parse fails. We don't want any silent server starts.
+		template.Must(tmpl.Funcs(helperFuncs).Parse(string(f.Data())))
+	}
+
+	return t
 }
 
 const (
 	_DEFAULT_TPL_SET_NAME = "DEFAULT"
 )
+
+// templateSet represents a template set of type *template.Template.
+type templateSet struct {
+	lock sync.RWMutex
+	sets map[string]*template.Template
+	dirs map[string]string
+}
+
+func newTemplateSet() *templateSet {
+	return &templateSet{
+		sets: make(map[string]*template.Template),
+		dirs: make(map[string]string),
+	}
+}
+
+func (ts *templateSet) Set(name string, opt *RenderOptions) *template.Template {
+	t := compile(*opt)
+
+	ts.lock.Lock()
+	defer ts.lock.Unlock()
+
+	ts.sets[name] = t
+	ts.dirs[name] = opt.Directory
+	return t
+}
+
+func (ts *templateSet) Get(name string) *template.Template {
+	ts.lock.RLock()
+	defer ts.lock.RUnlock()
+
+	return ts.sets[name]
+}
+
+func (ts *templateSet) GetDir(name string) string {
+	ts.lock.RLock()
+	defer ts.lock.RUnlock()
+
+	return ts.dirs[name]
+}
 
 func prepareOptions(options []RenderOptions) RenderOptions {
 	var opt RenderOptions
@@ -245,6 +291,9 @@ func prepareOptions(options []RenderOptions) RenderOptions {
 	if len(opt.HTMLContentType) == 0 {
 		opt.HTMLContentType = ContentHTML
 	}
+	// if opt.TemplateFileSystem == nil {
+	// 	opt.TemplateFileSystem = newTemplateFileSystem(opt)
+	// }
 
 	return opt
 }
