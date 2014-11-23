@@ -501,7 +501,7 @@ func Test_Render_BinaryData(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusOK)
-		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML)
+		So(resp.Header().Get(ContentType), ShouldEqual, CONTENT_PLAIN)
 		So(resp.Body.String(), ShouldEqual, "hello there")
 	})
 
