@@ -169,7 +169,7 @@ type TplFileSystem struct {
 }
 
 // NewTemplateFileSystem creates new template file system with given options.
-func NewTemplateFileSystem(opt RenderOptions) TplFileSystem {
+func NewTemplateFileSystem(opt RenderOptions, omitData bool) TplFileSystem {
 	fs := TplFileSystem{}
 	fs.files = make([]TemplateFile, 0, 10)
 
@@ -183,9 +183,12 @@ func NewTemplateFileSystem(opt RenderOptions) TplFileSystem {
 
 		for _, extension := range opt.Extensions {
 			if ext == extension {
-				data, err := ioutil.ReadFile(path)
-				if err != nil {
-					return err
+				var data []byte
+				if !omitData {
+					data, err = ioutil.ReadFile(path)
+					if err != nil {
+						return err
+					}
 				}
 
 				name := filepath.ToSlash((r[0 : len(r)-len(ext)]))
@@ -230,7 +233,7 @@ func compile(opt RenderOptions) *template.Template {
 	template.Must(t.Parse("Macaron"))
 
 	if opt.TemplateFileSystem == nil {
-		opt.TemplateFileSystem = NewTemplateFileSystem(opt)
+		opt.TemplateFileSystem = NewTemplateFileSystem(opt, false)
 	}
 
 	for _, f := range opt.TemplateFileSystem.ListFiles() {
