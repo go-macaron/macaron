@@ -68,6 +68,7 @@ type (
 	TemplateFile interface {
 		Name() string
 		Data() []byte
+		Ext() string
 	}
 	// TemplateFileSystem represents a interface of template file system that able to list all files.
 	TemplateFileSystem interface {
@@ -142,11 +143,12 @@ type (
 type TplFile struct {
 	name string
 	data []byte
+	ext  string
 }
 
 // NewTplFile cerates new template file with given name and data.
-func NewTplFile(name string, data []byte) *TplFile {
-	return &TplFile{name, data}
+func NewTplFile(name string, data []byte, ext string) *TplFile {
+	return &TplFile{name, data, ext}
 }
 
 func (f *TplFile) Name() string {
@@ -155,6 +157,10 @@ func (f *TplFile) Name() string {
 
 func (f *TplFile) Data() []byte {
 	return f.data
+}
+
+func (f *TplFile) Ext() string {
+	return f.ext
 }
 
 // TplFileSystem implements TemplateFileSystem interface.
@@ -183,7 +189,7 @@ func NewTemplateFileSystem(opt RenderOptions) TplFileSystem {
 				}
 
 				name := filepath.ToSlash((r[0 : len(r)-len(ext)]))
-				fs.files = append(fs.files, NewTplFile(name, data))
+				fs.files = append(fs.files, NewTplFile(name, data, ext))
 				break
 			}
 		}
