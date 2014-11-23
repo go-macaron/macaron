@@ -86,12 +86,7 @@ func (fs staticFileSystem) Open(name string) (http.File, error) {
 	return fs.dir.Open(name)
 }
 
-func prepareStaticOptions(dir string, options []StaticOptions) StaticOptions {
-	var opt StaticOptions
-	if len(options) > 0 {
-		opt = options[0]
-	}
-
+func prepareStaticOption(dir string, opt StaticOptions) StaticOptions {
 	// Defaults
 	if len(opt.IndexFile) == 0 {
 		opt.IndexFile = "index.html"
@@ -111,72 +106,99 @@ func prepareStaticOptions(dir string, options []StaticOptions) StaticOptions {
 	return opt
 }
 
+func prepareStaticOptions(dir string, options []StaticOptions) StaticOptions {
+	var opt StaticOptions
+	if len(options) > 0 {
+		opt = options[0]
+	}
+	return prepareStaticOption(dir, opt)
+}
+
+func staticHandler(ctx *Context, log *log.Logger, opt StaticOptions) bool {
+	if ctx.Req.Method != "GET" && ctx.Req.Method != "HEAD" {
+		return true
+	}
+
+	file := ctx.Req.URL.Path
+	// if we have a prefix, filter requests by stripping the prefix
+	if opt.Prefix != "" {
+		if !strings.HasPrefix(file, opt.Prefix) {
+			return false
+		}
+		file = file[len(opt.Prefix):]
+		if file != "" && file[0] != '/' {
+			return false
+		}
+	}
+
+	f, err := opt.FileSystem.Open(file)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+
+	fi, err := f.Stat()
+	if err != nil {
+		return true // File exists but fail to open.
+	}
+
+	// Try to serve index file
+	if fi.IsDir() {
+		// Redirect if missing trailing slash.
+		if !strings.HasSuffix(ctx.Req.URL.Path, "/") {
+			http.Redirect(ctx.Resp, ctx.Req.Request, ctx.Req.URL.Path+"/", http.StatusFound)
+			return true
+		}
+
+		file = path.Join(file, opt.IndexFile)
+		f, err = opt.FileSystem.Open(file)
+		if err != nil {
+			return false // Discard error.
+		}
+		defer f.Close()
+
+		fi, err = f.Stat()
+		if err != nil || fi.IsDir() {
+			return true
+		}
+	}
+
+	if !opt.SkipLogging {
+		log.Println("[Static] Serving " + file)
+	}
+
+	// Add an Expires header to the static content
+	if opt.Expires != nil {
+		ctx.Resp.Header().Set("Expires", opt.Expires())
+	}
+
+	http.ServeContent(ctx.Resp, ctx.Req.Request, file, fi.ModTime(), f)
+	return true
+}
+
 // Static returns a middleware handler that serves static files in the given directory.
 func Static(directory string, staticOpt ...StaticOptions) Handler {
 	opt := prepareStaticOptions(directory, staticOpt)
 
 	return func(ctx *Context, log *log.Logger) {
-		// FIXME: BUG BUG BUG
-		// ctx.statics[string(dir)] = &dir
-		if ctx.Req.Method != "GET" && ctx.Req.Method != "HEAD" {
-			return
-		}
-		file := ctx.Req.URL.Path
-		// if we have a prefix, filter requests by stripping the prefix
-		if opt.Prefix != "" {
-			if !strings.HasPrefix(file, opt.Prefix) {
-				return
-			}
-			file = file[len(opt.Prefix):]
-			if file != "" && file[0] != '/' {
-				return
-			}
-		}
+		staticHandler(ctx, log, opt)
+	}
+}
 
-		f, err := opt.FileSystem.Open(file)
-		if err != nil {
-			// FIXME: discard the error?
-			return
-		}
-		defer f.Close()
+func Statics(opt StaticOptions, dirs ...string) Handler {
+	if len(dirs) == 0 {
+		panic("no static directory is given")
+	}
+	opts := make([]StaticOptions, len(dirs))
+	for i := range dirs {
+		opts[i] = prepareStaticOption(dirs[i], opt)
+	}
 
-		fi, err := f.Stat()
-		if err != nil {
-			return
-		}
-
-		// Try to serve index file
-		if fi.IsDir() {
-			// Redirect if missing trailing slash.
-			if !strings.HasSuffix(ctx.Req.URL.Path, "/") {
-				http.Redirect(ctx.Resp, ctx.Req.Request, ctx.Req.URL.Path+"/", http.StatusFound)
-				return
-			}
-
-			file = path.Join(file, opt.IndexFile)
-			f, err = opt.FileSystem.Open(file)
-			if err != nil {
-				// FIXME: discard the error?
-				return
-			}
-			defer f.Close()
-
-			fi, err = f.Stat()
-			if err != nil || fi.IsDir() {
-				// FIXME: discard the error?
+	return func(ctx *Context, log *log.Logger) {
+		for i := range opts {
+			if staticHandler(ctx, log, opts[i]) {
 				return
 			}
 		}
-
-		if !opt.SkipLogging {
-			log.Println("[Static] Serving " + file)
-		}
-
-		// Add an Expires header to the static content
-		if opt.Expires != nil {
-			ctx.Resp.Header().Set("Expires", opt.Expires())
-		}
-
-		http.ServeContent(ctx.Resp, ctx.Req.Request, file, fi.ModTime(), f)
 	}
 }
