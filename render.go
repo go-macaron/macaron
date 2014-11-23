@@ -42,6 +42,7 @@ const (
 	ContentBinary  = "application/octet-stream"
 	ContentJSON    = "application/json"
 	ContentHTML    = "text/html"
+	CONTENT_PLAIN  = "text/plain"
 	ContentXHTML   = "application/xhtml+xml"
 	ContentXML     = "text/xml"
 	defaultCharset = "UTF-8"
@@ -455,7 +456,7 @@ func (r *TplRender) RawData(status int, v []byte) {
 }
 
 func (r *TplRender) RenderData(status int, v []byte) {
-	r.data(status, ContentHTML, v)
+	r.data(status, CONTENT_PLAIN, v)
 }
 
 func (r *TplRender) execute(t *template.Template, name string, data interface{}) (*bytes.Buffer, error) {
