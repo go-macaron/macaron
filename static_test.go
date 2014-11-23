@@ -204,3 +204,43 @@ func Test_Static_Redirect(t *testing.T) {
 		So(resp.Header().Get("Location"), ShouldEqual, "/public/")
 	})
 }
+
+func Test_Statics(t *testing.T) {
+	Convey("Serve multiple static routers", t, func() {
+		Convey("Register empty directory", func() {
+			defer func() {
+				So(recover(), ShouldNotBeNil)
+			}()
+
+			m := New()
+			m.Use(Statics(StaticOptions{}))
+
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "http://localhost:4000/", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+		})
+
+		Convey("Serve normally", func() {
+			var buf bytes.Buffer
+			m := NewWithLogger(&buf)
+			m.Use(Statics(StaticOptions{}, currentRoot, currentRoot+"/inject"))
+
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "http://localhost:4000/macaron.go", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+
+			So(resp.Code, ShouldEqual, http.StatusOK)
+			So(buf.String(), ShouldEqual, "[Macaron] [Static] Serving /macaron.go\n")
+
+			resp = httptest.NewRecorder()
+			req, err = http.NewRequest("GET", "http://localhost:4000/inject/inject.go", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+
+			So(resp.Code, ShouldEqual, http.StatusOK)
+			So(buf.String(), ShouldEndWith, "[Macaron] [Static] Serving /inject/inject.go\n")
+		})
+	})
+}
