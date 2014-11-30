@@ -36,6 +36,7 @@ func main() {
 - Unlimited nested group routers.
 - Directly integrate with existing services.
 - Dynamically change template files at runtime.
+- Allow to use in-memory template and static files.
 - Easy to plugin/unplugin features with modular design.
 - Handy dependency injection powered by [inject](https://github.com/codegangsta/inject).
 - Better router layer and less reflection make faster speed.
@@ -54,7 +55,9 @@ There are already many [middlewares](https://github.com/macaron-contrib) to simp
 - [captcha](https://github.com/macaron-contrib/captcha) - Captcha service
 - [pongo2](https://github.com/macaron-contrib/pongo2) - Pongo2 template engine support
 - [sockets](https://github.com/macaron-contrib/sockets) - WebSockets channels binding
+- [bindata](https://github.com/macaron-contrib/bindata) - Embed binary data as static and template files
 - [toolbox](https://github.com/macaron-contrib/toolbox) - Health check, pprof, profile and statistic services
+- [oauth2](https://github.com/macaron-contrib/oauth2) - OAuth 2.0 backend
 - [switcher](https://github.com/macaron-contrib/switcher) - Multiple-site support
 - [renders](https://github.com/macaron-contrib/renders) - Beego-like render engine(Macaron has built-in template engine, this is another option)
 
