@@ -29,7 +29,7 @@ import (
 )
 
 func Version() string {
-	return "0.4.5.1122"
+	return "0.4.6.1204"
 }
 
 // Handler can be any callable function.
@@ -39,9 +39,17 @@ type Handler interface{}
 
 // validateHandler makes sure a handler is a callable function,
 // and panics if it is not.
-func validateHandler(handler Handler) {
-	if reflect.TypeOf(handler).Kind() != reflect.Func {
-		panic("mocaron handler must be a callable function")
+func validateHandler(h Handler) {
+	if reflect.TypeOf(h).Kind() != reflect.Func {
+		panic("Macaron handler must be a callable function")
+	}
+}
+
+// validateHandlers makes sure handlers are callable functions,
+// and panics if any of them is not.
+func validateHandlers(handlers []Handler) {
+	for _, h := range handlers {
+		validateHandler(h)
 	}
 }
 

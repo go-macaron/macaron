@@ -171,11 +171,14 @@ func Test_Macaron_Written(t *testing.T) {
 func Test_Macaron_Basic_NoRace(t *testing.T) {
 	Convey("Make sure no race between requests", t, func() {
 		m := New()
+		handlers := []Handler{func() {}, func() {}}
+		// Ensure append will not realloc to trigger the race condition
+		m.handlers = handlers[:1]
 		m.Get("/", func() {})
+		req, _ := http.NewRequest("GET", "/", nil)
 		for i := 0; i < 2; i++ {
 			go func() {
 				resp := httptest.NewRecorder()
-				req, _ := http.NewRequest("GET", "/", nil)
 				m.ServeHTTP(resp, req)
 			}()
 		}

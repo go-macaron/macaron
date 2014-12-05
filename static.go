@@ -116,7 +116,7 @@ func prepareStaticOptions(dir string, options []StaticOptions) StaticOptions {
 
 func staticHandler(ctx *Context, log *log.Logger, opt StaticOptions) bool {
 	if ctx.Req.Method != "GET" && ctx.Req.Method != "HEAD" {
-		return true
+		return false
 	}
 
 	file := ctx.Req.URL.Path
