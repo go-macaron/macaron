@@ -5,7 +5,7 @@ Macaron [![Build Status](https://drone.io/github.com/Unknwon/macaron/status.png)
 
 Package macaron is a high productive and modular design web framework in Go.
 
-##### Current version: 0.4.5
+##### Current version: 0.4.7
 
 ## Getting Started
 
@@ -47,6 +47,9 @@ Middlewares allow you easily plugin/unplugin features for your Macaron applicati
 
 There are already many [middlewares](https://github.com/macaron-contrib) to simplify your work:
 
+- gzip - Gzip compression to all requests
+- render - Go template engine
+- static - Serves static files
 - [binding](https://github.com/macaron-contrib/binding) - Request data binding and validation
 - [i18n](https://github.com/macaron-contrib/i18n) - Internationalization and Localization
 - [cache](https://github.com/macaron-contrib/cache) - Cache manager
