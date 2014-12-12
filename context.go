@@ -42,25 +42,28 @@ type Locale interface {
 	Tr(string, ...interface{}) string
 }
 
-// Body is the request's body.
+// RequestBody represents a request body.
 type RequestBody struct {
 	reader io.ReadCloser
 }
 
+// Bytes reads and returns content of request body in bytes.
 func (rb *RequestBody) Bytes() ([]byte, error) {
 	return ioutil.ReadAll(rb.reader)
 }
 
+// String reads and returns content of request body in string.
 func (rb *RequestBody) String() (string, error) {
 	data, err := rb.Bytes()
 	return string(data), err
 }
 
+// ReadCloser returns a ReadCloser for request body.
 func (rb *RequestBody) ReadCloser() io.ReadCloser {
 	return rb.reader
 }
 
-// A Request represents an HTTP request received by a server or to be sent by a client.
+// Request represents an HTTP request received by a server or to be sent by a client.
 type Request struct {
 	*http.Request
 }
