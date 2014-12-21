@@ -34,7 +34,7 @@ func Logger() Handler {
 	return func(ctx *Context, log *log.Logger) {
 		start := time.Now()
 
-		log.Printf("Started %s %s for %s", ctx.Req.Method, ctx.Req.URL.Path, ctx.RemoteAddr())
+		log.Printf("Started %s %s for %s", ctx.Req.Method,ctx.Req.RequestURI, ctx.RemoteAddr())
 
 		rw := ctx.Resp.(ResponseWriter)
 		ctx.Next()
