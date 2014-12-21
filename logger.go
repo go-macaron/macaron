@@ -34,12 +34,12 @@ func Logger() Handler {
 	return func(ctx *Context, log *log.Logger) {
 		start := time.Now()
 
-		log.Printf("Started %s %s for %s", ctx.Req.Method, ctx.Req.URL.Path, ctx.RemoteAddr())
+		log.Printf("Started %s %s for %s", ctx.Req.Method,ctx.Req.RequestURI, ctx.RemoteAddr())
 
 		rw := ctx.Resp.(ResponseWriter)
 		ctx.Next()
 
-		content := fmt.Sprintf("Completed %s %v %s in %v", ctx.Req.URL.Path, rw.Status(), http.StatusText(rw.Status()), time.Since(start))
+		content := fmt.Sprintf("Completed %s %v %s in %v",  ctx.Req.RequestURI, rw.Status(), http.StatusText(rw.Status()), time.Since(start))
 		if !isWindows {
 			switch rw.Status() {
 			case 200, 201, 202:
