@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -239,7 +240,7 @@ func (ctx *Context) GetFile(name string) (multipart.File, *multipart.FileHeader,
 func (ctx *Context) SetCookie(name string, value string, others ...interface{}) {
 	cookie := http.Cookie{}
 	cookie.Name = name
-	cookie.Value = value
+	cookie.Value = url.QueryEscape(value)
 
 	if len(others) > 0 {
 		switch v := others[0].(type) {
