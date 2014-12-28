@@ -25,6 +25,12 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+func Test_Version(t *testing.T) {
+	Convey("Get version", t, func() {
+		So(Version(), ShouldEqual, _VERSION)
+	})
+}
+
 func Test_New(t *testing.T) {
 	Convey("Initialize a new instance", t, func() {
 		So(New(), ShouldNotBeNil)
@@ -202,8 +208,10 @@ func Test_SetENV(t *testing.T) {
 	})
 }
 
-func Test_Version(t *testing.T) {
-	Convey("Get version", t, func() {
-		Version()
+func Test_Config(t *testing.T) {
+	Convey("Set and get configuration object", t, func() {
+		So(Config(), ShouldBeNil)
+		So(SetConfig([]byte("")), ShouldBeNil)
+		So(Config(), ShouldNotBeNil)
 	})
 }
