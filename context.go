@@ -15,10 +15,8 @@
 package macaron
 
 import (
-	"crypto/hmac"
-	"crypto/sha1"
-	"encoding/base64"
-	"fmt"
+	"crypto/md5"
+	"encoding/hex"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -27,7 +25,6 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
@@ -330,41 +327,32 @@ func (ctx *Context) GetSecureCookie(key string) (string, bool) {
 }
 
 // SetSuperSecureCookie sets given cookie value to response header with secret string.
-func (ctx *Context) SetSuperSecureCookie(Secret, name, value string, others ...interface{}) {
-	vs := base64.URLEncoding.EncodeToString([]byte(value))
-	timestamp := strconv.FormatInt(time.Now().UnixNano(), 10)
-	h := hmac.New(sha1.New, []byte(Secret))
-	fmt.Fprintf(h, "%s%s", vs, timestamp)
-	sig := fmt.Sprintf("%02x", h.Sum(nil))
-	cookie := strings.Join([]string{vs, timestamp, sig}, "|")
-	ctx.SetCookie(name, cookie, others...)
+func (ctx *Context) SetSuperSecureCookie(secret, name, value string, others ...interface{}) {
+	m := md5.Sum([]byte(secret))
+	secret = hex.EncodeToString(m[:])
+	text, err := com.AESEncrypt([]byte(secret), []byte(value))
+	if err != nil {
+		panic("error encrypting cookie: " + err.Error())
+	}
+	ctx.SetCookie(name, hex.EncodeToString(text), others...)
 }
 
 // GetSuperSecureCookie returns given cookie value from request header with secret string.
-func (ctx *Context) GetSuperSecureCookie(Secret, key string) (string, bool) {
+func (ctx *Context) GetSuperSecureCookie(secret, key string) (string, bool) {
 	val := ctx.GetCookie(key)
 	if val == "" {
 		return "", false
 	}
 
-	parts := strings.SplitN(val, "|", 3)
-
-	if len(parts) != 3 {
+	data, err := hex.DecodeString(val)
+	if err != nil {
 		return "", false
 	}
 
-	vs := parts[0]
-	timestamp := parts[1]
-	sig := parts[2]
-
-	h := hmac.New(sha1.New, []byte(Secret))
-	fmt.Fprintf(h, "%s%s", vs, timestamp)
-
-	if fmt.Sprintf("%02x", h.Sum(nil)) != sig {
-		return "", false
-	}
-	res, _ := base64.URLEncoding.DecodeString(vs)
-	return string(res), true
+	m := md5.Sum([]byte(secret))
+	secret = hex.EncodeToString(m[:])
+	text, err := com.AESDecrypt([]byte(secret), data)
+	return string(text), err == nil
 }
 
 // ServeContent serves given content to response.
