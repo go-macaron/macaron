@@ -297,7 +297,8 @@ func (ctx *Context) GetCookie(name string) string {
 	if err != nil {
 		return ""
 	}
-	return cookie.Value
+	val, _ := url.QueryUnescape(cookie.Value)
+	return val
 }
 
 // GetCookieInt returns cookie result in int type.
