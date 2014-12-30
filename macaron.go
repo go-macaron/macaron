@@ -24,7 +24,7 @@ import (
 	"strings"
 
 	"github.com/Unknwon/com"
-	"gopkg.in/ini.v0"
+	"gopkg.in/ini.v1"
 
 	"github.com/Unknwon/macaron/inject"
 )
