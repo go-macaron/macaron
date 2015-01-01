@@ -29,7 +29,7 @@ import (
 	"github.com/Unknwon/macaron/inject"
 )
 
-const _VERSION = "0.4.9.1229"
+const _VERSION = "0.4.9.0102"
 
 func Version() string {
 	return _VERSION
@@ -260,7 +260,7 @@ func init() {
 // SetConfig sets data sources for configuration.
 func SetConfig(source interface{}, others ...interface{}) (_ *ini.File, err error) {
 	cfg, err = ini.Load(source, others...)
-	return cfg, err
+	return Config(), err
 }
 
 // Config returns configuration convention object.
