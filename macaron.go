@@ -258,9 +258,9 @@ func init() {
 }
 
 // SetConfig sets data sources for configuration.
-func SetConfig(source interface{}, others ...interface{}) (err error) {
+func SetConfig(source interface{}, others ...interface{}) (_ *ini.File, err error) {
 	cfg, err = ini.Load(source, others...)
-	return err
+	return cfg, err
 }
 
 // Config returns configuration convention object.
