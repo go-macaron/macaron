@@ -212,21 +212,25 @@ func (ctx *Context) QueryInt64(name string) int64 {
 }
 
 // Params returns value of given param name.
+// e.g. ctx.Params(":uid")
 func (ctx *Context) Params(name string) string {
 	return ctx.params[name]
 }
 
 // ParamsEscape returns escapred params result.
+// e.g. ctx.ParamsEscape(":uname")
 func (ctx *Context) ParamsEscape(name string) string {
 	return template.HTMLEscapeString(ctx.Params(name))
 }
 
 // ParamsInt returns params result in int type.
+// e.g. ctx.ParamsInt(":uid")
 func (ctx *Context) ParamsInt(name string) int {
 	return com.StrTo(ctx.Params(name)).MustInt()
 }
 
 // ParamsInt64 returns params result in int64 type.
+// e.g. ctx.ParamsInt64(":uid")
 func (ctx *Context) ParamsInt64(name string) int64 {
 	return com.StrTo(ctx.Params(name)).MustInt64()
 }
