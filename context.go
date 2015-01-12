@@ -217,6 +217,11 @@ func (ctx *Context) Params(name string) string {
 	return ctx.params[name]
 }
 
+// SetParams sets value of param with given name.
+func (ctx *Context) SetParams(name, val string) {
+	ctx.params[name] = val
+}
+
 // ParamsEscape returns escapred params result.
 // e.g. ctx.ParamsEscape(":uname")
 func (ctx *Context) ParamsEscape(name string) string {
