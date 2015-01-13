@@ -219,6 +219,9 @@ func (ctx *Context) Params(name string) string {
 
 // SetParams sets value of param with given name.
 func (ctx *Context) SetParams(name, val string) {
+	if !strings.HasPrefix(name, ":") {
+		name = ":" + name
+	}
 	ctx.params[name] = val
 }
 
