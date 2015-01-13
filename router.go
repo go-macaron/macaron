@@ -152,7 +152,8 @@ func (r *Router) Handle(method string, pattern string, handlers []Handler) {
 	r.handle(method, pattern, func(resp http.ResponseWriter, req *http.Request, params Params) {
 		c := r.m.createContext(resp, req)
 		c.params = params
-		c.handlers = append(r.m.handlers, handlers...)
+		c.handlers = append(c.handlers, r.m.handlers...)
+		c.handlers = append(c.handlers, handlers...)
 		c.run()
 	})
 }
