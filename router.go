@@ -149,11 +149,14 @@ func (r *Router) Handle(method string, pattern string, handlers []Handler) {
 	}
 	validateHandlers(handlers)
 
+	contextHandlers := make([]Handler, 0)
+	contextHandlers = append(contextHandlers, r.m.handlers...)
+	contextHandlers = append(contextHandlers, handlers...)
+
 	r.handle(method, pattern, func(resp http.ResponseWriter, req *http.Request, params Params) {
 		c := r.m.createContext(resp, req)
 		c.params = params
-		c.handlers = append(c.handlers, r.m.handlers...)
-		c.handlers = append(c.handlers, handlers...)
+		c.handlers = contextHandlers
 		c.run()
 	})
 }
