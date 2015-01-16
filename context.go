@@ -149,7 +149,9 @@ func (ctx *Context) renderHTML(status int, setName, tplName string, data ...inte
 	if len(data) == 0 {
 		ctx.Render.HTMLSet(status, setName, tplName, ctx.Data)
 	} else {
-		ctx.Render.HTMLSet(status, setName, tplName, data[0])
+		if len(data) == 1 {
+			ctx.Render.HTMLSet(status, setName, tplName, data[0])
+		}
 		if len(data) > 1 {
 			ctx.Render.HTMLSet(status, setName, tplName, data[0], data[1].(HTMLOptions))
 		}
