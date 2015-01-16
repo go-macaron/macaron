@@ -146,15 +146,12 @@ func (ctx *Context) renderHTML(status int, setName, tplName string, data ...inte
 	if ctx.Render == nil {
 		panic("renderer middleware hasn't been registered")
 	}
-	if len(data) == 0 {
+	if len(data) <= 0 {
 		ctx.Render.HTMLSet(status, setName, tplName, ctx.Data)
+	} else if len(data) == 1 {
+		ctx.Render.HTMLSet(status, setName, tplName, data[0])
 	} else {
-		if len(data) == 1 {
-			ctx.Render.HTMLSet(status, setName, tplName, data[0])
-		}
-		if len(data) > 1 {
-			ctx.Render.HTMLSet(status, setName, tplName, data[0], data[1].(HTMLOptions))
-		}
+		ctx.Render.HTMLSet(status, setName, tplName, data[0], data[1].(HTMLOptions))
 	}
 }
 
