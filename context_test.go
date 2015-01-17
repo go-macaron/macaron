@@ -105,6 +105,7 @@ func Test_Context(t *testing.T) {
 				buf.WriteString(ctx.QueryEscape("name") + " ")
 				buf.WriteString(com.ToStr(ctx.QueryInt("int")) + " ")
 				buf.WriteString(com.ToStr(ctx.QueryInt64("int64")) + " ")
+				buf.WriteString(com.ToStr(ctx.QueryFloat64("float64")) + " ")
 				return buf.String()
 			})
 			m.Get("/query2", func(ctx *Context) string {
@@ -115,10 +116,10 @@ func Test_Context(t *testing.T) {
 			})
 
 			resp := httptest.NewRecorder()
-			req, err := http.NewRequest("GET", "/query?name=Unknwon&int=12&int64=123", nil)
+			req, err := http.NewRequest("GET", "/query?name=Unknwon&int=12&int64=123&float64=1.25", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, "Unknwon Unknwon 12 123 ")
+			So(resp.Body.String(), ShouldEqual, "Unknwon Unknwon 12 123 1.25 ")
 
 			resp = httptest.NewRecorder()
 			req, err = http.NewRequest("GET", "/query2?list=item1&list=item2", nil)
@@ -128,21 +129,23 @@ func Test_Context(t *testing.T) {
 		})
 
 		Convey("URL parameter", func() {
-			m.Get("/:name/:int/:int64", func(ctx *Context) string {
+			m.Get("/:name/:int/:int64/:float64", func(ctx *Context) string {
 				var buf bytes.Buffer
-				ctx.SetParams(":name", ctx.Params(":name"))
+				ctx.SetParams("name", ctx.Params("name"))
+				buf.WriteString(ctx.Params(""))
 				buf.WriteString(ctx.Params(":name") + " ")
 				buf.WriteString(ctx.ParamsEscape(":name") + " ")
 				buf.WriteString(com.ToStr(ctx.ParamsInt(":int")) + " ")
 				buf.WriteString(com.ToStr(ctx.ParamsInt64(":int64")) + " ")
+				buf.WriteString(com.ToStr(ctx.ParamsFloat64(":float64")) + " ")
 				return buf.String()
 			})
 
 			resp := httptest.NewRecorder()
-			req, err := http.NewRequest("GET", "/user/1/13", nil)
+			req, err := http.NewRequest("GET", "/user/1/13/1.24", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, "user user 1 13 ")
+			So(resp.Body.String(), ShouldEqual, "user user 1 13 1.24 ")
 		})
 
 		Convey("Get file", func() {
@@ -171,13 +174,14 @@ func Test_Context(t *testing.T) {
 				ctx.GetCookie("404")
 				So(ctx.GetCookieInt("uid"), ShouldEqual, 1)
 				So(ctx.GetCookieInt64("uid"), ShouldEqual, 1)
+				So(ctx.GetCookieFloat64("balance"), ShouldEqual, 1.25)
 				return ctx.GetCookie("user")
 			})
 
 			resp = httptest.NewRecorder()
 			req, err = http.NewRequest("GET", "/get", nil)
 			So(err, ShouldBeNil)
-			req.Header.Set("Cookie", "user=Unknwon; uid=1")
+			req.Header.Set("Cookie", "user=Unknwon; uid=1; balance=1.25")
 			m.ServeHTTP(resp, req)
 			So(resp.Body.String(), ShouldEqual, "Unknwon")
 		})
