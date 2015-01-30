@@ -76,26 +76,43 @@ func Test_Context(t *testing.T) {
 		})
 
 		Convey("Render HTML", func() {
-			m.Get("/html", func(ctx *Context) {
-				ctx.HTML(304, "hello", "Unknwon") // 304 for logger test.
+
+			Convey("Normal HTML", func() {
+				m.Get("/html", func(ctx *Context) {
+					ctx.HTML(304, "hello", "Unknwon") // 304 for logger test.
+				})
+
+				resp := httptest.NewRecorder()
+				req, err := http.NewRequest("GET", "/html", nil)
+				So(err, ShouldBeNil)
+				m.ServeHTTP(resp, req)
+				So(resp.Body.String(), ShouldEqual, "<h1>Hello Unknwon</h1>")
 			})
 
-			resp := httptest.NewRecorder()
-			req, err := http.NewRequest("GET", "/html", nil)
-			So(err, ShouldBeNil)
-			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, "<h1>Hello Unknwon</h1>")
+			Convey("HTML template set", func() {
+				m.Get("/html2", func(ctx *Context) {
+					ctx.Data["Name"] = "Unknwon"
+					ctx.HTMLSet(200, "basic2", "hello2")
+				})
 
-			m.Get("/html2", func(ctx *Context) {
-				ctx.Data["Name"] = "Unknwon"
-				ctx.HTMLSet(200, "basic2", "hello2")
+				resp := httptest.NewRecorder()
+				req, err := http.NewRequest("GET", "/html2", nil)
+				So(err, ShouldBeNil)
+				m.ServeHTTP(resp, req)
+				So(resp.Body.String(), ShouldEqual, "<h1>Hello Unknwon</h1>")
 			})
 
-			resp = httptest.NewRecorder()
-			req, err = http.NewRequest("GET", "/html2", nil)
-			So(err, ShouldBeNil)
-			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, "<h1>Hello Unknwon</h1>")
+			Convey("With layout", func() {
+				m.Get("/layout", func(ctx *Context) {
+					ctx.HTML(200, "hello", "Unknwon", HTMLOptions{"layout"})
+				})
+
+				resp := httptest.NewRecorder()
+				req, err := http.NewRequest("GET", "/layout", nil)
+				So(err, ShouldBeNil)
+				m.ServeHTTP(resp, req)
+				So(resp.Body.String(), ShouldEqual, "head<h1>Hello Unknwon</h1>foot")
+			})
 		})
 
 		Convey("Parse from and query", func() {
@@ -161,14 +178,16 @@ func Test_Context(t *testing.T) {
 
 		Convey("Set and get cookie", func() {
 			m.Get("/set", func(ctx *Context) {
-				ctx.SetCookie("user", "Unknwon", 1)
+				ctx.SetCookie("user", "Unknwon", 1, "/", "localhost", true, true)
+				ctx.SetCookie("user", "Unknwon", int32(1), "/", "localhost", 1)
+				ctx.SetCookie("user", "Unknwon", int64(1))
 			})
 
 			resp := httptest.NewRecorder()
 			req, err := http.NewRequest("GET", "/set", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Header().Get("Set-Cookie"), ShouldEqual, "user=Unknwon; Path=/; Max-Age=1")
+			So(resp.Header().Get("Set-Cookie"), ShouldEqual, "user=Unknwon; Path=/; Domain=localhost; Max-Age=1; HttpOnly; Secure")
 
 			m.Get("/get", func(ctx *Context) string {
 				ctx.GetCookie("404")

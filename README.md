@@ -1,7 +1,7 @@
 Macaron [![Build Status](https://drone.io/github.com/Unknwon/macaron/status.png)](https://drone.io/github.com/Unknwon/macaron/latest) [![](http://gocover.io/_badge/github.com/Unknwon/macaron)](http://gocover.io/github.com/Unknwon/macaron)
 =======================
 
-![Macaron Logo](macaronlogo.png)
+![Macaron Logo](https://github.com/Unknwon/macaron/blob/master/macaronlogo.png)
 
 Package macaron is a high productive and modular design web framework in Go.
 
@@ -41,7 +41,7 @@ func main() {
 - Handy dependency injection powered by [inject](https://github.com/codegangsta/inject).
 - Better router layer and less reflection make faster speed.
 
-## Middlewares 
+## Middlewares
 
 Middlewares allow you easily plugin/unplugin features for your Macaron applications.
 
@@ -70,6 +70,7 @@ There are already many [middlewares](https://github.com/macaron-contrib) to simp
 
 - [Gogs](https://github.com/gogits/gogs): Go Git Service
 - [Gogs Web](https://github.com/gogits/gogsweb): Gogs official website
+- [Go Walker](https://gowalker.org): Go online API documentation
 - [Switch](https://github.com/gpmgo/switch): Gopm registry
 - [YouGam](http://yougam.com): Online Forum
 - [Car Girl](http://qcnl.gzsy.com/): Online campaign
