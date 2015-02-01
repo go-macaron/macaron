@@ -1,11 +1,11 @@
 Macaron [![Build Status](https://drone.io/github.com/Unknwon/macaron/status.png)](https://drone.io/github.com/Unknwon/macaron/latest) [![](http://gocover.io/_badge/github.com/Unknwon/macaron)](http://gocover.io/github.com/Unknwon/macaron)
 =======================
 
-![Macaron Logo](https://github.com/Unknwon/macaron/blob/master/macaronlogo.png)
+![Macaron Logo](https://raw.githubusercontent.com/Unknwon/macaron/master/macaronlogo.png)
 
 Package macaron is a high productive and modular design web framework in Go.
 
-##### Current version: 0.5.0
+##### Current version: 0.5.1
 
 ## Getting Started
 
