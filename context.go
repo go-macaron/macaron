@@ -268,6 +268,7 @@ func (ctx *Context) GetFile(name string) (multipart.File, *multipart.FileHeader,
 }
 
 // SetCookie sets given cookie value to response header.
+// FIXME: IE support? http://golanghome.com/post/620#reply2
 func (ctx *Context) SetCookie(name string, value string, others ...interface{}) {
 	cookie := http.Cookie{}
 	cookie.Name = name
