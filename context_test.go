@@ -118,7 +118,7 @@ func Test_Context(t *testing.T) {
 		Convey("Parse from and query", func() {
 			m.Get("/query", func(ctx *Context) string {
 				var buf bytes.Buffer
-				buf.WriteString(ctx.Query("name") + " ")
+				buf.WriteString(ctx.QueryTirm("name") + " ")
 				buf.WriteString(ctx.QueryEscape("name") + " ")
 				buf.WriteString(com.ToStr(ctx.QueryInt("int")) + " ")
 				buf.WriteString(com.ToStr(ctx.QueryInt64("int64")) + " ")
