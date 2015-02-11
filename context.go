@@ -183,8 +183,8 @@ func (ctx *Context) Query(name string) string {
 	return ctx.Req.Form.Get(name)
 }
 
-// QueryTirm querys and trims spaces form parameter.
-func (ctx *Context) QueryTirm(name string) string {
+// QueryTrim querys and trims spaces form parameter.
+func (ctx *Context) QueryTrim(name string) string {
 	return strings.TrimSpace(ctx.Query(name))
 }
 
