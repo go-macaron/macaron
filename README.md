@@ -1,6 +1,8 @@
 Macaron [![Build Status](https://drone.io/github.com/Unknwon/macaron/status.png)](https://drone.io/github.com/Unknwon/macaron/latest) [![](http://gocover.io/_badge/github.com/Unknwon/macaron)](http://gocover.io/github.com/Unknwon/macaron)
 =======================
 
+[![Join the chat at https://gitter.im/Unknwon/macaron](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Unknwon/macaron?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ![Macaron Logo](https://raw.githubusercontent.com/Unknwon/macaron/master/macaronlogo.png)
 
 Package macaron is a high productive and modular design web framework in Go.
