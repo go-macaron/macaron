@@ -422,8 +422,10 @@ func (r *TplRender) RW() http.ResponseWriter {
 }
 
 func (r *TplRender) JSON(status int, v interface{}) {
-	var result []byte
-	var err error
+	var (
+		result []byte
+		err    error
+	)
 	if r.Opt.IndentJSON {
 		result, err = json.MarshalIndent(v, "", "  ")
 	} else {
