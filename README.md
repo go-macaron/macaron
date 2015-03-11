@@ -74,12 +74,14 @@ There are already many [middlewares](https://github.com/macaron-contrib) to simp
 - [Switch](https://github.com/gpmgo/switch): Gopm registry
 - [YouGam](http://yougam.com): Online Forum
 - [Car Girl](http://qcnl.gzsy.com/): Online campaign
+- [Critical Stack Intel](https://intel.criticalstack.com/): A 100% free intel marketplace from Critical Stack, Inc.
 
 ## Getting Help
 
 - [API Reference](https://gowalker.org/github.com/Unknwon/macaron)
 - [Documentation](http://macaron.gogs.io)
 - [FAQs](http://macaron.gogs.io/docs/faqs)
+- [![Join the chat at https://gitter.im/Unknwon/macaron](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Unknwon/macaron?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Credits
 
