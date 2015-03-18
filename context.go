@@ -23,6 +23,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -395,6 +396,14 @@ func (ctx *Context) GetSuperSecureCookie(secret, key string) (string, bool) {
 	return string(text), err == nil
 }
 
+func (ctx *Context) setRawContentHeader() {
+	ctx.Resp.Header().Set("Content-Description", "Raw content")
+	ctx.Resp.Header().Set("Content-Type", "text/plain")
+	ctx.Resp.Header().Set("Expires", "0")
+	ctx.Resp.Header().Set("Cache-Control", "must-revalidate")
+	ctx.Resp.Header().Set("Pragma", "public")
+}
+
 // ServeContent serves given content to response.
 func (ctx *Context) ServeContent(name string, r io.ReadSeeker, params ...interface{}) {
 	modtime := time.Now()
@@ -404,12 +413,33 @@ func (ctx *Context) ServeContent(name string, r io.ReadSeeker, params ...interfa
 			modtime = v
 		}
 	}
-	ctx.Resp.Header().Set("Content-Description", "Raw content")
-	ctx.Resp.Header().Set("Content-Type", "text/plain")
-	ctx.Resp.Header().Set("Expires", "0")
-	ctx.Resp.Header().Set("Cache-Control", "must-revalidate")
-	ctx.Resp.Header().Set("Pragma", "public")
+
+	ctx.setRawContentHeader()
 	http.ServeContent(ctx.Resp, ctx.Req.Request, name, modtime, r)
+}
+
+// ServeFileContent serves given file as content to response.
+func (ctx *Context) ServeFileContent(file string, names ...string) {
+	var name string
+	if len(names) > 0 {
+		name = names[0]
+	} else {
+		name = path.Base(file)
+	}
+
+	f, err := os.Open(file)
+	if err != nil {
+		if Env == PROD {
+			http.Error(ctx.Resp, "Internal Server Error", 500)
+		} else {
+			http.Error(ctx.Resp, err.Error(), 500)
+		}
+		return
+	}
+	defer f.Close()
+
+	ctx.setRawContentHeader()
+	http.ServeContent(ctx.Resp, ctx.Req.Request, name, time.Now(), f)
 }
 
 // ServeFile serves given file to response.

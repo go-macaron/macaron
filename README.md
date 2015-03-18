@@ -5,7 +5,7 @@ Macaron [![Build Status](https://drone.io/github.com/Unknwon/macaron/status.png)
 
 Package macaron is a high productive and modular design web framework in Go.
 
-##### Current version: 0.5.3
+##### Current version: 0.5.4
 
 ## Getting Started
 

@@ -254,6 +254,39 @@ func Test_Context(t *testing.T) {
 			So(resp.Body.String(), ShouldEqual, "{{ myCustomFunc }}")
 		})
 
+		Convey("Serve file content", func() {
+			m.Get("/file", func(ctx *Context) {
+				ctx.ServeFileContent("fixtures/custom_funcs/index.tmpl")
+			})
+
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "/file", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+			So(resp.Body.String(), ShouldEqual, "{{ myCustomFunc }}")
+
+			m.Get("/file2", func(ctx *Context) {
+				ctx.ServeFileContent("fixtures/custom_funcs/index.tmpl", "ok.tmpl")
+			})
+
+			resp = httptest.NewRecorder()
+			req, err = http.NewRequest("GET", "/file2", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+			So(resp.Body.String(), ShouldEqual, "{{ myCustomFunc }}")
+
+			m.Get("/file3", func(ctx *Context) {
+				ctx.ServeFileContent("404.tmpl")
+			})
+
+			resp = httptest.NewRecorder()
+			req, err = http.NewRequest("GET", "/file3", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+			So(resp.Body.String(), ShouldEqual, "open 404.tmpl: no such file or directory\n")
+			So(resp.Code, ShouldEqual, 500)
+		})
+
 		Convey("Serve content", func() {
 			m.Get("/content", func(ctx *Context) {
 				ctx.ServeContent("content1", bytes.NewReader([]byte("Hello world!")))
