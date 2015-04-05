@@ -165,9 +165,10 @@ func (r *Router) Group(pattern string, fn func(), h ...Handler) {
 	r.groups = r.groups[:len(r.groups)-1]
 }
 
-// Get is a shortcut for r.Handle("GET", pattern, handlers)
+// Get is a shortcut for r.Handle("GET", pattern, handlers) and r.Handle("HEAD", pattern, handlers)
 func (r *Router) Get(pattern string, h ...Handler) {
 	r.Handle("GET", pattern, h)
+	r.Handle("HEAD", pattern, h)
 }
 
 // Patch is a shortcut for r.Handle("PATCH", pattern, handlers)
