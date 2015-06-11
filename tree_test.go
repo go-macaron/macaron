@@ -106,6 +106,8 @@ func Test_Tree_Match(t *testing.T) {
 					So(ok, ShouldBeTrue)
 					So(vv, ShouldEqual, v)
 				}
+
+				So(MatchTest(c.pattern, c.reqUrl), ShouldBeTrue)
 			}
 		}
 	})

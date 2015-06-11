@@ -419,3 +419,11 @@ func (t *Tree) Match(pattern string) (Handle, Params) {
 
 	return t.match(splitPath(pattern), nil)
 }
+
+// MatchTest returns true if given URL is matched by given pattern.
+func MatchTest(pattern, url string) bool {
+	t := NewTree()
+	t.AddRouter(pattern, nil)
+	_, params := t.Match(url)
+	return params != nil
+}
