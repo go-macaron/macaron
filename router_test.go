@@ -107,6 +107,33 @@ func Test_Router_Handle(t *testing.T) {
 		So(resp.Body.String(), ShouldEqual, "ROUTE")
 	})
 
+	Convey("Register with or without auto head", t, func() {
+		Convey("Without auto head", func() {
+			m := New()
+			m.Get("/", func() string {
+				return "GET"
+			})
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest("HEAD", "/", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+			So(resp.Code, ShouldEqual, 404)
+		})
+
+		Convey("With auto head", func() {
+			m := New()
+			m.SetAutoHead(true)
+			m.Get("/", func() string {
+				return "GET"
+			})
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest("HEAD", "/", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+			So(resp.Code, ShouldEqual, 200)
+		})
+	})
+
 	Convey("Register all HTTP methods routes with combo", t, func() {
 		m := Classic()
 		m.SetURLPrefix("/prefix")
