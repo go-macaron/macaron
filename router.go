@@ -75,8 +75,9 @@ type group struct {
 
 // Router represents a Macaron router layer.
 type Router struct {
-	m       *Macaron
-	routers map[string]*Tree
+	m        *Macaron
+	autoHead bool
+	routers  map[string]*Tree
 	*routeMap
 
 	groups   []group
@@ -88,6 +89,12 @@ func NewRouter() *Router {
 		routers:  make(map[string]*Tree),
 		routeMap: NewRouteMap(),
 	}
+}
+
+// SetAutoHead sets the value who determines whether add HEAD method automatically
+// when GET method is added. Combo router will not be affected by this value.
+func (r *Router) SetAutoHead(v bool) {
+	r.autoHead = v
 }
 
 type Params map[string]string
@@ -168,6 +175,9 @@ func (r *Router) Group(pattern string, fn func(), h ...Handler) {
 // Get is a shortcut for r.Handle("GET", pattern, handlers)
 func (r *Router) Get(pattern string, h ...Handler) {
 	r.Handle("GET", pattern, h)
+	if r.autoHead {
+		r.Head(pattern, h...)
+	}
 }
 
 // Patch is a shortcut for r.Handle("PATCH", pattern, handlers)
