@@ -75,6 +75,7 @@ func Test_Tree_Match(t *testing.T) {
 			t := NewTree()
 			So(t.Add("/?:user", "", nil), ShouldBeFalse)
 			So(t.Add("/user/?:name", "", nil), ShouldBeFalse)
+			So(t.Add("/user/list/?:page:int", "", nil), ShouldBeFalse)
 
 			_, params, ok := t.Match("/")
 			So(ok, ShouldBeTrue)
@@ -89,6 +90,13 @@ func Test_Tree_Match(t *testing.T) {
 			_, params, ok = t.Match("/user/unknwon")
 			So(ok, ShouldBeTrue)
 			So(params[":name"], ShouldEqual, "unknwon")
+
+			_, params, ok = t.Match("/user/list/")
+			So(ok, ShouldBeTrue)
+			So(params[":page"], ShouldBeEmpty)
+			_, params, ok = t.Match("/user/list/123")
+			So(ok, ShouldBeTrue)
+			So(params[":page"], ShouldEqual, "123")
 		})
 
 		Convey("Match with regexp", func() {
