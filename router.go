@@ -18,8 +18,6 @@ import (
 	"net/http"
 	"strings"
 	"sync"
-
-	"github.com/Unknwon/com"
 )
 
 var (
@@ -130,10 +128,10 @@ func (r *Router) handle(method, pattern string, handle Handle) {
 	// Add to router tree.
 	for m := range methods {
 		if t, ok := r.routers[m]; ok {
-			t.AddRouter(pattern, handle)
+			t.Add(pattern, "", handle)
 		} else {
 			t := NewTree()
-			t.AddRouter(pattern, handle)
+			t.Add(pattern, "", handle)
 			r.routers[m] = t
 		}
 		r.add(m, pattern)
@@ -243,14 +241,10 @@ func (r *Router) NotFound(handlers ...Handler) {
 
 func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if t, ok := r.routers[req.Method]; ok {
-		h, p := t.Match(req.URL.Path)
-		if h != nil {
-			if splat, ok := p[":splat"]; ok {
-				p["*"] = p[":splat"] // Better name.
-				splatlist := strings.Split(splat, "/")
-				for k, v := range splatlist {
-					p[com.ToStr(k)] = v
-				}
+		h, p, ok := t.Match(req.URL.Path)
+		if ok {
+			if splat, ok := p["*0"]; ok {
+				p["*"] = splat // Easy name.
 			}
 			h(rw, req, p)
 			return

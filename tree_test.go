@@ -1,4 +1,4 @@
-// Copyright 2014 Unknwon
+// Copyright 2015 Unknwon
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -15,100 +15,185 @@
 package macaron
 
 import (
-	// "net/http"
 	"strings"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func Test_splitSegment(t *testing.T) {
+func Test_getWildcards(t *testing.T) {
 	type result struct {
-		Ok    bool
-		Parts []string
-		Regex string
+		pattern   string
+		wildcards string
 	}
 	cases := map[string]result{
-		"admin":              result{false, nil, ""},
-		":id":                result{true, []string{":id"}, ""},
-		"?:id":               result{true, []string{":", ":id"}, ""},
-		":id:int":            result{true, []string{":id"}, "([0-9]+)"},
-		":name:string":       result{true, []string{":name"}, `([\w]+)`},
-		":id([0-9]+)":        result{true, []string{":id"}, "([0-9]+)"},
-		":id([0-9]+)_:name":  result{true, []string{":id", ":name"}, "([0-9]+)_(.+)"},
-		"cms_:id_:page.html": result{true, []string{":id", ":page"}, "cms_(.+)_(.+).html"},
-		"*":                  result{true, []string{":splat"}, ""},
-		"*.*":                result{true, []string{".", ":path", ":ext"}, ""},
+		"admin":                  result{"admin", ""},
+		":id":                    result{"(.+)", ":id"},
+		"?:id":                   result{"?(.+)", ":id"},
+		":id:int":                result{"([0-9]+)", ":id"},
+		":id([0-9]+)":            result{"([0-9]+)", ":id"},
+		":id([0-9]+)_:name":      result{"([0-9]+)_(.+)", ":id :name"},
+		"cms_:id_:page.html":     result{"cms_(.+)_(.+).html", ":id :page"},
+		"cms_:id:int_:page.html": result{"cms_([0-9]+)_(.+).html", ":id :page"},
+		"*":   result{"*", ""},
+		"*.*": result{"*.*", ""},
 	}
-	Convey("Splits segment into parts", t, func() {
+	Convey("Get wildcards", t, func() {
 		for key, result := range cases {
-			ok, parts, regex := splitSegment(key)
-			So(ok, ShouldEqual, result.Ok)
-			if result.Parts == nil {
-				So(parts, ShouldBeNil)
-			} else {
-				So(parts, ShouldNotBeNil)
-				So(strings.Join(parts, " "), ShouldEqual, strings.Join(result.Parts, " "))
-			}
-			So(regex, ShouldEqual, result.Regex)
+			pattern, wildcards := getWildcards(key)
+			So(pattern, ShouldEqual, result.pattern)
+			So(strings.Join(wildcards, " "), ShouldEqual, result.wildcards)
 		}
 	})
 }
 
 func Test_Tree_Match(t *testing.T) {
-	type result struct {
-		pattern string
-		reqUrl  string
-		params  map[string]string
-	}
-
-	cases := []result{
-		{"/:id", "/123", map[string]string{":id": "123"}},
-		{"/hello/?:id", "/hello", map[string]string{":id": ""}},
-		{"/", "/", nil},
-		{"", "", nil},
-		{"/customer/login", "/customer/login", nil},
-		{"/customer/login", "/customer/login.json", map[string]string{":ext": "json"}},
-		{"/*", "/customer/123", map[string]string{":splat": "customer/123"}},
-		{"/*", "/customer/2009/12/11", map[string]string{":splat": "customer/2009/12/11"}},
-		{"/aa/*/bb", "/aa/2009/bb", map[string]string{":splat": "2009"}},
-		{"/cc/*/dd", "/cc/2009/11/dd", map[string]string{":splat": "2009/11"}},
-		{"/ee/:year/*/ff", "/ee/2009/11/ff", map[string]string{":year": "2009", ":splat": "11"}},
-		{"/thumbnail/:size/uploads/*", "/thumbnail/100x100/uploads/items/2014/04/20/dPRCdChkUd651t1Hvs18.jpg",
-			map[string]string{":size": "100x100", ":splat": "items/2014/04/20/dPRCdChkUd651t1Hvs18.jpg"}},
-		{"/*.*", "/nice/api.json", map[string]string{":path": "nice/api", ":ext": "json"}},
-		{"/:name/*.*", "/nice/api.json", map[string]string{":name": "nice", ":path": "api", ":ext": "json"}},
-		{"/:name/test/*.*", "/nice/test/api.json", map[string]string{":name": "nice", ":path": "api", ":ext": "json"}},
-		{"/dl/:width:int/:height:int/*.*", "/dl/48/48/05ac66d9bda00a3acf948c43e306fc9a.jpg",
-			map[string]string{":width": "48", ":height": "48", ":ext": "jpg", ":path": "05ac66d9bda00a3acf948c43e306fc9a"}},
-		{"/v1/shop/:id:int", "/v1/shop/123", map[string]string{":id": "123"}},
-		{"/:year:int/:month:int/:id/:endid", "/1111/111/aaa/aaa", map[string]string{":year": "1111", ":month": "111", ":id": "aaa", ":endid": "aaa"}},
-		{"/v1/shop/:id/:name", "/v1/shop/123/nike", map[string]string{":id": "123", ":name": "nike"}},
-		{"/v1/shop/:id/account", "/v1/shop/123/account", map[string]string{":id": "123"}},
-		{"/v1/shop/:name:string", "/v1/shop/nike", map[string]string{":name": "nike"}},
-		{"/v1/shop/:id([0-9]+)", "/v1/shop//123", map[string]string{":id": "123"}},
-		{"/v1/shop/:id([0-9]+)_:name", "/v1/shop/123_nike", map[string]string{":id": "123", ":name": "nike"}},
-		{"/v1/shop/:id(.+)_cms.html", "/v1/shop/123_cms.html", map[string]string{":id": "123"}},
-		{"/v1/shop/cms_:id(.+)_:page(.+).html", "/v1/shop/cms_123_1.html", map[string]string{":id": "123", ":page": "1"}},
-		{"/v1/:v/cms/aaa_:id(.+)_:page(.+).html", "/v1/2/cms/aaa_123_1.html", map[string]string{":v": "2", ":id": "123", ":page": "1"}},
-		{"/v1/:v/cms_:id(.+)_:page(.+).html", "/v1/2/cms_123_1.html", map[string]string{":v": "2", ":id": "123", ":page": "1"}},
-		{"/v1/:v(.+)_cms/ttt_:id(.+)_:page(.+).html", "/v1/2_cms/ttt_123_1.html", map[string]string{":v": "2", ":id": "123", ":page": "1"}},
-	}
-
-	Convey("Match routers in tree", t, func() {
-		for _, c := range cases {
+	Convey("Match route in tree", t, func() {
+		Convey("Match static routes", func() {
 			t := NewTree()
-			t.AddRouter(c.pattern, nil)
-			_, params := t.Match(c.reqUrl)
-			if params != nil {
-				for k, v := range c.params {
-					vv, ok := params[k]
-					So(ok, ShouldBeTrue)
-					So(vv, ShouldEqual, v)
-				}
+			So(t.Add("/", "", nil), ShouldBeFalse)
+			So(t.Add("/user", "", nil), ShouldBeFalse)
+			So(t.Add("/user/unknwon", "", nil), ShouldBeFalse)
+			So(t.Add("/user/unknwon/profile", "", nil), ShouldBeFalse)
 
-				So(MatchTest(c.pattern, c.reqUrl), ShouldBeTrue)
-			}
-		}
+			So(t.Add("/", "/", nil), ShouldBeTrue)
+
+			_, _, ok := t.Match("/")
+			So(ok, ShouldBeTrue)
+			_, _, ok = t.Match("/user")
+			So(ok, ShouldBeTrue)
+			_, _, ok = t.Match("/user/unknwon")
+			So(ok, ShouldBeTrue)
+			_, _, ok = t.Match("/user/unknwon/profile")
+			So(ok, ShouldBeTrue)
+
+			_, _, ok = t.Match("/404")
+			So(ok, ShouldBeFalse)
+		})
+
+		Convey("Match optional routes", func() {
+			t := NewTree()
+			So(t.Add("/?:user", "", nil), ShouldBeFalse)
+			So(t.Add("/user/?:name", "", nil), ShouldBeFalse)
+
+			_, params, ok := t.Match("/")
+			So(ok, ShouldBeTrue)
+			So(params[":user"], ShouldBeEmpty)
+			_, params, ok = t.Match("/unknwon")
+			So(ok, ShouldBeTrue)
+			So(params[":user"], ShouldEqual, "unknwon")
+
+			_, params, ok = t.Match("/user")
+			So(ok, ShouldBeTrue)
+			So(params[":name"], ShouldBeEmpty)
+			_, params, ok = t.Match("/user/unknwon")
+			So(ok, ShouldBeTrue)
+			So(params[":name"], ShouldEqual, "unknwon")
+		})
+
+		Convey("Match with regexp", func() {
+			t := NewTree()
+			So(t.Add("/v1/:year:int/6/23", "", nil), ShouldBeFalse)
+			So(t.Add("/v2/2015/:month:int/23", "", nil), ShouldBeFalse)
+			So(t.Add("/v3/2015/6/:day:int", "", nil), ShouldBeFalse)
+
+			_, params, ok := t.Match("/v1/2015/6/23")
+			So(ok, ShouldBeTrue)
+			So(params[":year"], ShouldEqual, "2015")
+			_, _, ok = t.Match("/v1/year/6/23")
+			So(ok, ShouldBeFalse)
+
+			_, params, ok = t.Match("/v2/2015/6/23")
+			So(ok, ShouldBeTrue)
+			So(params[":month"], ShouldEqual, "6")
+			_, _, ok = t.Match("/v2/2015/month/23")
+			So(ok, ShouldBeFalse)
+
+			_, params, ok = t.Match("/v3/2015/6/23")
+			So(ok, ShouldBeTrue)
+			So(params[":day"], ShouldEqual, "23")
+			_, _, ok = t.Match("/v2/2015/6/day")
+			So(ok, ShouldBeFalse)
+
+			So(t.Add("/v1/shop/cms_:id(.+)_:page(.+).html", "", nil), ShouldBeFalse)
+			So(t.Add("/v1/:v/cms/aaa_:id(.+)_:page(.+).html", "", nil), ShouldBeFalse)
+			So(t.Add("/v1/:v/cms_:id(.+)_:page(.+).html", "", nil), ShouldBeFalse)
+			So(t.Add("/v1/:v(.+)_cms/ttt_:id(.+)_:page(.+).html", "", nil), ShouldBeFalse)
+
+			_, params, ok = t.Match("/v1/shop/cms_123_1.html")
+			So(ok, ShouldBeTrue)
+			So(params[":id"], ShouldEqual, "123")
+			So(params[":page"], ShouldEqual, "1")
+
+			_, params, ok = t.Match("/v1/2/cms/aaa_124_2.html")
+			So(ok, ShouldBeTrue)
+			So(params[":v"], ShouldEqual, "2")
+			So(params[":id"], ShouldEqual, "124")
+			So(params[":page"], ShouldEqual, "2")
+
+			_, params, ok = t.Match("/v1/3/cms_125_3.html")
+			So(ok, ShouldBeTrue)
+			So(params[":v"], ShouldEqual, "3")
+			So(params[":id"], ShouldEqual, "125")
+			So(params[":page"], ShouldEqual, "3")
+
+			_, params, ok = t.Match("/v1/4_cms/ttt_126_4.html")
+			So(ok, ShouldBeTrue)
+			So(params[":v"], ShouldEqual, "4")
+			So(params[":id"], ShouldEqual, "126")
+			So(params[":page"], ShouldEqual, "4")
+		})
+
+		Convey("Match with path and extension", func() {
+			t := NewTree()
+			So(t.Add("/*.*", "", nil), ShouldBeFalse)
+			So(t.Add("/docs/*.*", "", nil), ShouldBeFalse)
+
+			_, params, ok := t.Match("/profile.html")
+			So(ok, ShouldBeTrue)
+			So(params[":path"], ShouldEqual, "profile")
+			So(params[":ext"], ShouldEqual, "html")
+
+			_, params, ok = t.Match("/profile")
+			So(ok, ShouldBeTrue)
+			So(params[":path"], ShouldEqual, "profile")
+			So(params[":ext"], ShouldBeEmpty)
+
+			_, params, ok = t.Match("/docs/framework/manual.html")
+			So(ok, ShouldBeTrue)
+			So(params[":path"], ShouldEqual, "framework/manual")
+			So(params[":ext"], ShouldEqual, "html")
+
+			_, params, ok = t.Match("/docs/framework/manual")
+			So(ok, ShouldBeTrue)
+			So(params[":path"], ShouldEqual, "framework/manual")
+			So(params[":ext"], ShouldBeEmpty)
+		})
+
+		Convey("Match all", func() {
+			t := NewTree()
+			So(t.Add("/*", "", nil), ShouldBeFalse)
+			So(t.Add("/*/123", "", nil), ShouldBeFalse)
+			So(t.Add("/*/123/*", "", nil), ShouldBeFalse)
+			So(t.Add("/*/*/123", "", nil), ShouldBeFalse)
+
+			_, params, ok := t.Match("/1/2/3")
+			So(ok, ShouldBeTrue)
+			So(params["*0"], ShouldEqual, "1/2/3")
+
+			_, params, ok = t.Match("/4/123")
+			So(ok, ShouldBeTrue)
+			So(params["*0"], ShouldEqual, "4")
+
+			_, params, ok = t.Match("/5/123/6")
+			So(ok, ShouldBeTrue)
+			So(params["*0"], ShouldEqual, "5")
+			So(params["*1"], ShouldEqual, "6")
+
+			_, params, ok = t.Match("/7/8/123")
+			So(ok, ShouldBeTrue)
+			So(params["*0"], ShouldEqual, "7")
+			So(params["*1"], ShouldEqual, "8")
+		})
 	})
 }
