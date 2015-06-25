@@ -229,7 +229,7 @@ func (ctx *Context) Params(name string) string {
 	if len(name) == 0 {
 		return ""
 	}
-	if name[0] != '*' && name[0] != ':' {
+	if len(name) > 1 && name[0] != ':' {
 		name = ":" + name
 	}
 	return ctx.params[name]
