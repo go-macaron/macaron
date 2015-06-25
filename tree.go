@@ -27,6 +27,7 @@ const (
 	_PATTERN_STATIC patternType = iota
 	_PATTERN_REGEXP
 	_PATTERN_PATH_EXT
+	_PATTERN_HOLDER
 	_PATTERN_MATCH_ALL
 )
 
@@ -43,10 +44,7 @@ type Leaf struct {
 	handle Handle
 }
 
-var (
-	wildcardPattern = regexp.MustCompile(`:[a-zA-Z0-9]+`)
-	stringPattern   = regexp.MustCompile(`(.+)`)
-)
+var wildcardPattern = regexp.MustCompile(`:[a-zA-Z0-9]+`)
 
 // getNextWildcard tries to find next wildcard and update pattern with corresponding regexp.
 func getNextWildcard(pattern string) (wildcard string, _ string) {
@@ -98,7 +96,7 @@ func checkPattern(pattern string) (typ patternType, wildcards []string, reg *reg
 		typ = _PATTERN_REGEXP
 		pattern, wildcards = getWildcards(pattern)
 		if pattern == "(.+)" {
-			reg = stringPattern // Most common pattern only use one reference
+			typ = _PATTERN_HOLDER
 		} else {
 			reg = regexp.MustCompile(pattern)
 		}
@@ -236,6 +234,9 @@ func (t *Tree) matchLeaf(globLevel int, url string, params Params) (Handle, bool
 				params[":path"] = url
 			}
 			return t.leaves[i].handle, true
+		case _PATTERN_HOLDER:
+			params[t.leaves[i].wildcards[0]] = url
+			return t.leaves[i].handle, true
 		case _PATTERN_MATCH_ALL:
 			params["*"+com.ToStr(globLevel)] = url
 			return t.leaves[i].handle, true
@@ -263,6 +264,11 @@ func (t *Tree) matchSubtree(globLevel int, segment, url string, params Params) (
 				params[t.subtrees[i].wildcards[j]] = results[j+1]
 			}
 			if handle, ok := t.subtrees[i].matchNextSegment(globLevel, url, params); ok {
+				return handle, true
+			}
+		case _PATTERN_HOLDER:
+			if handle, ok := t.subtrees[i].matchNextSegment(globLevel+1, url, params); ok {
+				params[t.subtrees[i].wildcards[0]] = segment
 				return handle, true
 			}
 		case _PATTERN_MATCH_ALL:
@@ -294,7 +300,6 @@ func (t *Tree) matchSubtree(globLevel int, segment, url string, params Params) (
 }
 
 func (t *Tree) matchNextSegment(globLevel int, url string, params Params) (Handle, bool) {
-	url = strings.TrimPrefix(url, "/")
 	i := strings.Index(url, "/")
 	if i == -1 {
 		return t.matchLeaf(globLevel, url, params)
@@ -303,6 +308,7 @@ func (t *Tree) matchNextSegment(globLevel int, url string, params Params) (Handl
 }
 
 func (t *Tree) Match(url string) (Handle, Params, bool) {
+	url = strings.TrimPrefix(url, "/")
 	url = strings.TrimSuffix(url, "/")
 	params := make(Params)
 	handle, ok := t.matchNextSegment(0, url, params)

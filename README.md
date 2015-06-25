@@ -86,7 +86,6 @@ There are already many [middlewares](https://github.com/macaron-contrib) to simp
 ## Credits
 
 - Basic design of [Martini](https://github.com/go-martini/martini).
-- Router layer of [beego](https://github.com/astaxie/beego).
 - Logo is modified by [@insionng](https://github.com/insionng) based on [Tribal Dragon](http://xtremeyamazaki.deviantart.com/art/Tribal-Dragon-27005087).
 
 ## License
