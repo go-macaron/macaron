@@ -107,9 +107,11 @@ func Test_Tree_Match(t *testing.T) {
 
 			_, params, ok := t.Match("/v1/2015/6/23")
 			So(ok, ShouldBeTrue)
+			So(MatchTest("/v1/:year:int/6/23", "/v1/2015/6/23"), ShouldBeTrue)
 			So(params[":year"], ShouldEqual, "2015")
 			_, _, ok = t.Match("/v1/year/6/23")
 			So(ok, ShouldBeFalse)
+			So(MatchTest("/v1/:year:int/6/23", "/v1/year/6/23"), ShouldBeFalse)
 
 			_, params, ok = t.Match("/v2/2015/6/23")
 			So(ok, ShouldBeTrue)

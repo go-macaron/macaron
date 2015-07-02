@@ -314,3 +314,11 @@ func (t *Tree) Match(url string) (Handle, Params, bool) {
 	handle, ok := t.matchNextSegment(0, url, params)
 	return handle, params, ok
 }
+
+// MatchTest returns true if given URL is matched by given pattern.
+func MatchTest(pattern, url string) bool {
+	t := NewTree()
+	t.Add(pattern, "", nil)
+	_, _, ok := t.Match(url)
+	return ok
+}
