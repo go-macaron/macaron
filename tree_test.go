@@ -27,14 +27,14 @@ func Test_getWildcards(t *testing.T) {
 		wildcards string
 	}
 	cases := map[string]result{
-		"admin":                  result{"admin", ""},
-		":id":                    result{"(.+)", ":id"},
-		"?:id":                   result{"?(.+)", ":id"},
-		":id:int":                result{"([0-9]+)", ":id"},
-		":id([0-9]+)":            result{"([0-9]+)", ":id"},
-		":id([0-9]+)_:name":      result{"([0-9]+)_(.+)", ":id :name"},
-		"cms_:id_:page.html":     result{"cms_(.+)_(.+).html", ":id :page"},
-		"cms_:id:int_:page.html": result{"cms_([0-9]+)_(.+).html", ":id :page"},
+		"admin":                         result{"admin", ""},
+		":id":                           result{"(.+)", ":id"},
+		"?:id":                          result{"?(.+)", ":id"},
+		":id:int":                       result{"([0-9]+)", ":id"},
+		":id([0-9]+)":                   result{"([0-9]+)", ":id"},
+		":id([0-9]+)_:name":             result{"([0-9]+)_(.+)", ":id :name"},
+		"cms_:id_:page.html":            result{"cms_(.+)_(.+).html", ":id :page"},
+		"cms_:id:int_:page:string.html": result{"cms_([0-9]+)_([\\w]+).html", ":id :page"},
 		"*":   result{"*", ""},
 		"*.*": result{"*.*", ""},
 	}
@@ -128,7 +128,7 @@ func Test_Tree_Match(t *testing.T) {
 			So(t.Add("/v1/shop/cms_:id(.+)_:page(.+).html", "", nil), ShouldBeFalse)
 			So(t.Add("/v1/:v/cms/aaa_:id(.+)_:page(.+).html", "", nil), ShouldBeFalse)
 			So(t.Add("/v1/:v/cms_:id(.+)_:page(.+).html", "", nil), ShouldBeFalse)
-			So(t.Add("/v1/:v(.+)_cms/ttt_:id(.+)_:page(.+).html", "", nil), ShouldBeFalse)
+			So(t.Add("/v1/:v(.+)_cms/ttt_:id(.+)_:page:string.html", "", nil), ShouldBeFalse)
 
 			_, params, ok = t.Match("/v1/shop/cms_123_1.html")
 			So(ok, ShouldBeTrue)

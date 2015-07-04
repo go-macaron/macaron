@@ -58,9 +58,12 @@ func getNextWildcard(pattern string) (wildcard string, _ string) {
 	if len(pattern) == pos[1] {
 		return wildcard, strings.Replace(pattern, wildcard, `(.+)`, 1)
 	} else if pattern[pos[1]] != '(' {
-		if len(pattern) >= pos[1]+4 && pattern[pos[1]:pos[1]+4] == ":int" {
+		switch {
+		case len(pattern) >= pos[1]+4 && pattern[pos[1]:pos[1]+4] == ":int":
 			pattern = strings.Replace(pattern, ":int", "([0-9]+)", -1)
-		} else {
+		case len(pattern) >= pos[1]+7 && pattern[pos[1]:pos[1]+7] == ":string":
+			pattern = strings.Replace(pattern, ":string", "([\\w]+)", -1)
+		default:
 			return wildcard, strings.Replace(pattern, wildcard, `(.+)`, 1)
 		}
 	}
