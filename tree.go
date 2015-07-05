@@ -60,9 +60,9 @@ func getNextWildcard(pattern string) (wildcard string, _ string) {
 	} else if pattern[pos[1]] != '(' {
 		switch {
 		case len(pattern) >= pos[1]+4 && pattern[pos[1]:pos[1]+4] == ":int":
-			pattern = strings.Replace(pattern, ":int", "([0-9]+)", -1)
+			pattern = strings.Replace(pattern, ":int", "([0-9]+)", 1)
 		case len(pattern) >= pos[1]+7 && pattern[pos[1]:pos[1]+7] == ":string":
-			pattern = strings.Replace(pattern, ":string", "([\\w]+)", -1)
+			pattern = strings.Replace(pattern, ":string", "([\\w]+)", 1)
 		default:
 			return wildcard, strings.Replace(pattern, wildcard, `(.+)`, 1)
 		}
@@ -241,6 +241,7 @@ func (t *Tree) matchLeaf(globLevel int, url string, params Params) (Handle, bool
 			params[t.leaves[i].wildcards[0]] = url
 			return t.leaves[i].handle, true
 		case _PATTERN_MATCH_ALL:
+			params["*"] = url
 			params["*"+com.ToStr(globLevel)] = url
 			return t.leaves[i].handle, true
 		}
@@ -295,6 +296,7 @@ func (t *Tree) matchSubtree(globLevel int, segment, url string, params Params) (
 			}
 			return leaf.handle, true
 		} else if leaf.typ == _PATTERN_MATCH_ALL {
+			params["*"] = segment + "/" + url
 			params["*"+com.ToStr(globLevel)] = segment + "/" + url
 			return leaf.handle, true
 		}

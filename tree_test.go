@@ -205,5 +205,14 @@ func Test_Tree_Match(t *testing.T) {
 			So(params["*0"], ShouldEqual, "7")
 			So(params["*1"], ShouldEqual, "8")
 		})
+
+		Convey("Complex tests", func() {
+			t := NewTree()
+			So(t.Add("/:username/:reponame/commit/*", "", nil), ShouldBeFalse)
+
+			_, params, ok := t.Match("/unknwon/com/commit/d855b6c9dea98c619925b7b112f3c4e64b17bfa8")
+			So(ok, ShouldBeTrue)
+			So(params["*"], ShouldEqual, "d855b6c9dea98c619925b7b112f3c4e64b17bfa8")
+		})
 	})
 }
