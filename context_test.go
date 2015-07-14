@@ -166,13 +166,15 @@ func Test_Context(t *testing.T) {
 		})
 
 		Convey("Get file", func() {
-			m.Get("/getfile", func(ctx *Context) {
+			m.Post("/getfile", func(ctx *Context) {
+				ctx.Query("")
 				ctx.GetFile("hi")
 			})
 
 			resp := httptest.NewRecorder()
-			req, err := http.NewRequest("GET", "/getfile", nil)
+			req, err := http.NewRequest("POST", "/getfile", nil)
 			So(err, ShouldBeNil)
+			req.Header.Set("Content-Type", "multipart/form-data")
 			m.ServeHTTP(resp, req)
 		})
 
