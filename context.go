@@ -176,11 +176,27 @@ func (ctx *Context) Redirect(location string, status ...int) {
 	http.Redirect(ctx.Resp, ctx.Req.Request, location, code)
 }
 
-// Query querys form parameter.
-func (ctx *Context) Query(name string) string {
-	if ctx.Req.Form == nil {
+// Maximum amount of memory to use when parsing a multipart form.
+// Set this to whatever value you prefer; default is 10 MB.
+var MaxMemory = int64(1024 * 1024 * 10)
+
+func (ctx *Context) parseForm() {
+	if ctx.Req.Form != nil {
+		return
+	}
+
+	contentType := ctx.Req.Header.Get("Content-Type")
+	if (ctx.Req.Method == "POST" || ctx.Req.Method == "PUT") &&
+		len(contentType) > 0 && strings.Contains(contentType, "multipart/form-data") {
+		ctx.Req.ParseMultipartForm(MaxMemory)
+	} else {
 		ctx.Req.ParseForm()
 	}
+}
+
+// Query querys form parameter.
+func (ctx *Context) Query(name string) string {
+	ctx.parseForm()
 	return ctx.Req.Form.Get(name)
 }
 
@@ -191,9 +207,7 @@ func (ctx *Context) QueryTrim(name string) string {
 
 // QueryStrings returns a list of results by given query name.
 func (ctx *Context) QueryStrings(name string) []string {
-	if ctx.Req.Form == nil {
-		ctx.Req.ParseForm()
-	}
+	ctx.parseForm()
 
 	vals, ok := ctx.Req.Form[name]
 	if !ok {
