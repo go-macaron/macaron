@@ -32,10 +32,35 @@ const (
 	HeaderVary            = "Vary"
 )
 
+// GzipOptions represents a struct for specifying configuration options for the GZip middleware.
+type GzipOptions struct {
+	// Compression level. Can be DefaultCompression or any integer value between BestSpeed and BestCompression inclusive.
+	CompressionLevel int
+}
+
+func isCompressionLevelValid(level int) bool {
+	return level == gzip.DefaultCompression ||
+		(gzip.BestSpeed <= level && level <= gzip.BestCompression)
+}
+
+func prepareGzipOptions(options []GzipOptions) GzipOptions {
+	var opt GzipOptions
+	if len(options) > 0 {
+		opt = options[0]
+	}
+
+	if !isCompressionLevelValid(opt.CompressionLevel) {
+		opt.CompressionLevel = gzip.DefaultCompression
+	}
+	return opt
+}
+
 // Gziper returns a Handler that adds gzip compression to all requests.
 // Make sure to include the Gzip middleware above other middleware
 // that alter the response body (like the render middleware).
-func Gziper() Handler {
+func Gziper(options ...GzipOptions) Handler {
+	opt := prepareGzipOptions(options)
+
 	return func(ctx *Context) {
 		if !strings.Contains(ctx.Req.Header.Get(HeaderAcceptEncoding), "gzip") {
 			return
@@ -45,7 +70,9 @@ func Gziper() Handler {
 		headers.Set(HeaderContentEncoding, "gzip")
 		headers.Set(HeaderVary, HeaderAcceptEncoding)
 
-		gz := gzip.NewWriter(ctx.Resp)
+		// We've made sure compression level is valid in prepareGzipOptions,
+		// no need to check same error again.
+		gz, _ := gzip.NewWriterLevel(ctx.Resp, opt.CompressionLevel)
 		defer gz.Close()
 
 		gzw := gzipResponseWriter{gz, ctx.Resp}

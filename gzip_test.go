@@ -29,7 +29,7 @@ func Test_Gzip(t *testing.T) {
 		before := false
 
 		m := New()
-		m.Use(Gziper())
+		m.Use(Gziper(GzipOptions{-10}))
 		m.Use(func(r http.ResponseWriter) {
 			r.(ResponseWriter).Before(func(rw ResponseWriter) {
 				before = true

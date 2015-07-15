@@ -321,7 +321,7 @@ func (ts *templateSet) GetDir(name string) string {
 	return ts.dirs[name]
 }
 
-func prepareOptions(options []RenderOptions) RenderOptions {
+func prepareRenderOptions(options []RenderOptions) RenderOptions {
 	var opt RenderOptions
 	if len(options) > 0 {
 		opt = options[0]
@@ -401,11 +401,11 @@ func renderHandler(opt RenderOptions, tplSets []string) Handler {
 // If MACARON_ENV is set to "" or "development" then templates will be recompiled on every request. For more performance, set the
 // MACARON_ENV environment variable to "production".
 func Renderer(options ...RenderOptions) Handler {
-	return renderHandler(prepareOptions(options), []string{})
+	return renderHandler(prepareRenderOptions(options), []string{})
 }
 
 func Renderers(options RenderOptions, tplSets ...string) Handler {
-	return renderHandler(prepareOptions([]RenderOptions{options}), tplSets)
+	return renderHandler(prepareRenderOptions([]RenderOptions{options}), tplSets)
 }
 
 type TplRender struct {
