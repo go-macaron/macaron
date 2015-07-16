@@ -178,6 +178,69 @@ func Test_Router_Handle(t *testing.T) {
 	})
 }
 
+func Test_Route_Name(t *testing.T) {
+	Convey("Set route name", t, func() {
+		m := New()
+		m.Get("/", func() {}).Name("home")
+
+		defer func() {
+			So(recover(), ShouldNotBeNil)
+		}()
+		m.Get("/", func() {}).Name("home")
+	})
+
+	Convey("Set combo router name", t, func() {
+		m := New()
+		m.Combo("/").Get(func() {}).Name("home")
+
+		defer func() {
+			So(recover(), ShouldNotBeNil)
+		}()
+		m.Combo("/").Name("home")
+	})
+}
+
+func Test_Router_URLFor(t *testing.T) {
+	Convey("Build URL path", t, func() {
+		m := New()
+		m.Get("/user/:id", func() {}).Name("user_id")
+		m.Get("/user/:id/:name", func() {}).Name("user_id_name")
+		m.Get("cms_:id_:page.html", func() {}).Name("id_page")
+
+		So(m.URLFor("user_id", "id", "12"), ShouldEqual, "/user/12")
+		So(m.URLFor("user_id_name", "id", "12", "name", "unknwon"), ShouldEqual, "/user/12/unknwon")
+		So(m.URLFor("id_page", "id", "12", "page", "profile"), ShouldEqual, "/cms_12_profile.html")
+
+		Convey("Number of pair values does not match", func() {
+			defer func() {
+				So(recover(), ShouldNotBeNil)
+			}()
+			m.URLFor("user_id", "id")
+		})
+
+		Convey("Empty pair value", func() {
+			defer func() {
+				So(recover(), ShouldNotBeNil)
+			}()
+			m.URLFor("user_id", "", "")
+		})
+
+		Convey("Empty route name", func() {
+			defer func() {
+				So(recover(), ShouldNotBeNil)
+			}()
+			m.Get("/user/:id", func() {}).Name("")
+		})
+
+		Convey("Invalid route name", func() {
+			defer func() {
+				So(recover(), ShouldNotBeNil)
+			}()
+			m.URLFor("404")
+		})
+	})
+}
+
 func Test_Router_Group(t *testing.T) {
 	Convey("Register route group", t, func() {
 		m := Classic()

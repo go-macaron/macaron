@@ -29,7 +29,6 @@ func Test_getWildcards(t *testing.T) {
 	cases := map[string]result{
 		"admin":                         result{"admin", ""},
 		":id":                           result{"(.+)", ":id"},
-		"?:id":                          result{"?(.+)", ":id"},
 		":id:int":                       result{"([0-9]+)", ":id"},
 		":id([0-9]+)":                   result{"([0-9]+)", ":id"},
 		":id([0-9]+)_:name":             result{"([0-9]+)_(.+)", ":id :name"},
@@ -47,16 +46,36 @@ func Test_getWildcards(t *testing.T) {
 	})
 }
 
+func Test_getRawPattern(t *testing.T) {
+	cases := map[string]string{
+		"admin":                              "admin",
+		":id":                                ":id",
+		":id:int":                            ":id",
+		":id([0-9]+)":                        ":id",
+		":id([0-9]+)_:name":                  ":id_:name",
+		"cms_:id_:page.html":                 "cms_:id_:page.html",
+		"cms_:id:int_:page:string.html":      "cms_:id_:page.html",
+		"cms_:id([0-9]+)_:page([\\w]+).html": "cms_:id_:page.html",
+		"*":   "*",
+		"*.*": "*.*",
+	}
+	Convey("Get raw pattern", t, func() {
+		for k, v := range cases {
+			So(getRawPattern(k), ShouldEqual, v)
+		}
+	})
+}
+
 func Test_Tree_Match(t *testing.T) {
 	Convey("Match route in tree", t, func() {
 		Convey("Match static routes", func() {
 			t := NewTree()
-			So(t.Add("/", "", nil), ShouldBeFalse)
-			So(t.Add("/user", "", nil), ShouldBeFalse)
-			So(t.Add("/user/unknwon", "", nil), ShouldBeFalse)
-			So(t.Add("/user/unknwon/profile", "", nil), ShouldBeFalse)
+			So(t.Add("/", nil), ShouldNotBeNil)
+			So(t.Add("/user", nil), ShouldNotBeNil)
+			So(t.Add("/user/unknwon", nil), ShouldNotBeNil)
+			So(t.Add("/user/unknwon/profile", nil), ShouldNotBeNil)
 
-			So(t.Add("/", "/", nil), ShouldBeTrue)
+			So(t.Add("/", nil), ShouldNotBeNil)
 
 			_, _, ok := t.Match("/")
 			So(ok, ShouldBeTrue)
@@ -73,9 +92,9 @@ func Test_Tree_Match(t *testing.T) {
 
 		Convey("Match optional routes", func() {
 			t := NewTree()
-			So(t.Add("/?:user", "", nil), ShouldBeFalse)
-			So(t.Add("/user/?:name", "", nil), ShouldBeFalse)
-			So(t.Add("/user/list/?:page:int", "", nil), ShouldBeFalse)
+			So(t.Add("/?:user", nil), ShouldNotBeNil)
+			So(t.Add("/user/?:name", nil), ShouldNotBeNil)
+			So(t.Add("/user/list/?:page:int", nil), ShouldNotBeNil)
 
 			_, params, ok := t.Match("/")
 			So(ok, ShouldBeTrue)
@@ -101,9 +120,9 @@ func Test_Tree_Match(t *testing.T) {
 
 		Convey("Match with regexp", func() {
 			t := NewTree()
-			So(t.Add("/v1/:year:int/6/23", "", nil), ShouldBeFalse)
-			So(t.Add("/v2/2015/:month:int/23", "", nil), ShouldBeFalse)
-			So(t.Add("/v3/2015/6/:day:int", "", nil), ShouldBeFalse)
+			So(t.Add("/v1/:year:int/6/23", nil), ShouldNotBeNil)
+			So(t.Add("/v2/2015/:month:int/23", nil), ShouldNotBeNil)
+			So(t.Add("/v3/2015/6/:day:int", nil), ShouldNotBeNil)
 
 			_, params, ok := t.Match("/v1/2015/6/23")
 			So(ok, ShouldBeTrue)
@@ -125,10 +144,10 @@ func Test_Tree_Match(t *testing.T) {
 			_, _, ok = t.Match("/v2/2015/6/day")
 			So(ok, ShouldBeFalse)
 
-			So(t.Add("/v1/shop/cms_:id(.+)_:page(.+).html", "", nil), ShouldBeFalse)
-			So(t.Add("/v1/:v/cms/aaa_:id(.+)_:page(.+).html", "", nil), ShouldBeFalse)
-			So(t.Add("/v1/:v/cms_:id(.+)_:page(.+).html", "", nil), ShouldBeFalse)
-			So(t.Add("/v1/:v(.+)_cms/ttt_:id(.+)_:page:string.html", "", nil), ShouldBeFalse)
+			So(t.Add("/v1/shop/cms_:id(.+)_:page(.+).html", nil), ShouldNotBeNil)
+			So(t.Add("/v1/:v/cms/aaa_:id(.+)_:page(.+).html", nil), ShouldNotBeNil)
+			So(t.Add("/v1/:v/cms_:id(.+)_:page(.+).html", nil), ShouldNotBeNil)
+			So(t.Add("/v1/:v(.+)_cms/ttt_:id(.+)_:page:string.html", nil), ShouldNotBeNil)
 
 			_, params, ok = t.Match("/v1/shop/cms_123_1.html")
 			So(ok, ShouldBeTrue)
@@ -156,8 +175,8 @@ func Test_Tree_Match(t *testing.T) {
 
 		Convey("Match with path and extension", func() {
 			t := NewTree()
-			So(t.Add("/*.*", "", nil), ShouldBeFalse)
-			So(t.Add("/docs/*.*", "", nil), ShouldBeFalse)
+			So(t.Add("/*.*", nil), ShouldNotBeNil)
+			So(t.Add("/docs/*.*", nil), ShouldNotBeNil)
 
 			_, params, ok := t.Match("/profile.html")
 			So(ok, ShouldBeTrue)
@@ -182,10 +201,10 @@ func Test_Tree_Match(t *testing.T) {
 
 		Convey("Match all", func() {
 			t := NewTree()
-			So(t.Add("/*", "", nil), ShouldBeFalse)
-			So(t.Add("/*/123", "", nil), ShouldBeFalse)
-			So(t.Add("/*/123/*", "", nil), ShouldBeFalse)
-			So(t.Add("/*/*/123", "", nil), ShouldBeFalse)
+			So(t.Add("/*", nil), ShouldNotBeNil)
+			So(t.Add("/*/123", nil), ShouldNotBeNil)
+			So(t.Add("/*/123/*", nil), ShouldNotBeNil)
+			So(t.Add("/*/*/123", nil), ShouldNotBeNil)
 
 			_, params, ok := t.Match("/1/2/3")
 			So(ok, ShouldBeTrue)
@@ -208,7 +227,7 @@ func Test_Tree_Match(t *testing.T) {
 
 		Convey("Complex tests", func() {
 			t := NewTree()
-			So(t.Add("/:username/:reponame/commit/*", "", nil), ShouldBeFalse)
+			So(t.Add("/:username/:reponame/commit/*", nil), ShouldNotBeNil)
 
 			_, params, ok := t.Match("/unknwon/com/commit/d855b6c9dea98c619925b7b112f3c4e64b17bfa8")
 			So(ok, ShouldBeTrue)

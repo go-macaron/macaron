@@ -36,22 +36,22 @@ var (
 // routeMap represents a thread-safe map for route tree.
 type routeMap struct {
 	lock   sync.RWMutex
-	routes map[string]map[string]bool
+	routes map[string]map[string]*Leaf
 }
 
 // NewRouteMap initializes and returns a new routeMap.
 func NewRouteMap() *routeMap {
 	rm := &routeMap{
-		routes: make(map[string]map[string]bool),
+		routes: make(map[string]map[string]*Leaf),
 	}
 	for m := range _HTTP_METHODS {
-		rm.routes[m] = make(map[string]bool)
+		rm.routes[m] = make(map[string]*Leaf)
 	}
 	return rm
 }
 
-// isExist returns true if a route has been registered.
-func (rm *routeMap) isExist(method, pattern string) bool {
+// getLeaf returns Leaf object if a route has been registered.
+func (rm *routeMap) getLeaf(method, pattern string) *Leaf {
 	rm.lock.RLock()
 	defer rm.lock.RUnlock()
 
@@ -59,11 +59,11 @@ func (rm *routeMap) isExist(method, pattern string) bool {
 }
 
 // add adds new route to route tree map.
-func (rm *routeMap) add(method, pattern string) {
+func (rm *routeMap) add(method, pattern string, leaf *Leaf) {
 	rm.lock.Lock()
 	defer rm.lock.Unlock()
 
-	rm.routes[method][pattern] = true
+	rm.routes[method][pattern] = leaf
 }
 
 type group struct {
@@ -77,6 +77,7 @@ type Router struct {
 	autoHead bool
 	routers  map[string]*Tree
 	*routeMap
+	namedRoutes map[string]*Leaf
 
 	groups   []group
 	notFound http.HandlerFunc
@@ -84,8 +85,9 @@ type Router struct {
 
 func NewRouter() *Router {
 	return &Router{
-		routers:  make(map[string]*Tree),
-		routeMap: NewRouteMap(),
+		routers:     make(map[string]*Tree),
+		routeMap:    NewRouteMap(),
+		namedRoutes: make(map[string]*Leaf),
 	}
 }
 
@@ -101,13 +103,30 @@ type Params map[string]string
 // Like http.HandlerFunc, but has a third parameter for the values of wildcards (variables).
 type Handle func(http.ResponseWriter, *http.Request, Params)
 
+// Route represents a wrapper of leaf route and upper level router.
+type Route struct {
+	router *Router
+	leaf   *Leaf
+}
+
+// Name sets name of route.
+func (r *Route) Name(name string) {
+	if len(name) == 0 {
+		panic("route name cannot be empty")
+	} else if r.router.namedRoutes[name] != nil {
+		panic("route with given name already exists")
+	}
+	r.router.namedRoutes[name] = r.leaf
+}
+
 // handle adds new route to the router tree.
-func (r *Router) handle(method, pattern string, handle Handle) {
+func (r *Router) handle(method, pattern string, handle Handle) *Route {
 	method = strings.ToUpper(method)
 
+	var leaf *Leaf
 	// Prevent duplicate routes.
-	if r.isExist(method, pattern) {
-		return
+	if leaf = r.getLeaf(method, pattern); leaf != nil {
+		return &Route{r, leaf}
 	}
 
 	// Validate HTTP methods.
@@ -128,18 +147,19 @@ func (r *Router) handle(method, pattern string, handle Handle) {
 	// Add to router tree.
 	for m := range methods {
 		if t, ok := r.routers[m]; ok {
-			t.Add(pattern, "", handle)
+			leaf = t.Add(pattern, handle)
 		} else {
 			t := NewTree()
-			t.Add(pattern, "", handle)
+			leaf = t.Add(pattern, handle)
 			r.routers[m] = t
 		}
-		r.add(m, pattern)
+		r.add(m, pattern, leaf)
 	}
+	return &Route{r, leaf}
 }
 
 // Handle registers a new request handle with the given pattern, method and handlers.
-func (r *Router) Handle(method string, pattern string, handlers []Handler) {
+func (r *Router) Handle(method string, pattern string, handlers []Handler) *Route {
 	if len(r.groups) > 0 {
 		groupPattern := ""
 		h := make([]Handler, 0)
@@ -154,7 +174,7 @@ func (r *Router) Handle(method string, pattern string, handlers []Handler) {
 	}
 	validateHandlers(handlers)
 
-	r.handle(method, pattern, func(resp http.ResponseWriter, req *http.Request, params Params) {
+	return r.handle(method, pattern, func(resp http.ResponseWriter, req *http.Request, params Params) {
 		c := r.m.createContext(resp, req)
 		c.params = params
 		c.handlers = make([]Handler, 0, len(r.m.handlers)+len(handlers))
@@ -171,61 +191,63 @@ func (r *Router) Group(pattern string, fn func(), h ...Handler) {
 }
 
 // Get is a shortcut for r.Handle("GET", pattern, handlers)
-func (r *Router) Get(pattern string, h ...Handler) {
-	r.Handle("GET", pattern, h)
+func (r *Router) Get(pattern string, h ...Handler) (leaf *Route) {
+	leaf = r.Handle("GET", pattern, h)
 	if r.autoHead {
 		r.Head(pattern, h...)
 	}
+	return leaf
 }
 
 // Patch is a shortcut for r.Handle("PATCH", pattern, handlers)
-func (r *Router) Patch(pattern string, h ...Handler) {
-	r.Handle("PATCH", pattern, h)
+func (r *Router) Patch(pattern string, h ...Handler) *Route {
+	return r.Handle("PATCH", pattern, h)
 }
 
 // Post is a shortcut for r.Handle("POST", pattern, handlers)
-func (r *Router) Post(pattern string, h ...Handler) {
-	r.Handle("POST", pattern, h)
+func (r *Router) Post(pattern string, h ...Handler) *Route {
+	return r.Handle("POST", pattern, h)
 }
 
 // Put is a shortcut for r.Handle("PUT", pattern, handlers)
-func (r *Router) Put(pattern string, h ...Handler) {
-	r.Handle("PUT", pattern, h)
+func (r *Router) Put(pattern string, h ...Handler) *Route {
+	return r.Handle("PUT", pattern, h)
 }
 
 // Delete is a shortcut for r.Handle("DELETE", pattern, handlers)
-func (r *Router) Delete(pattern string, h ...Handler) {
-	r.Handle("DELETE", pattern, h)
+func (r *Router) Delete(pattern string, h ...Handler) *Route {
+	return r.Handle("DELETE", pattern, h)
 }
 
 // Options is a shortcut for r.Handle("OPTIONS", pattern, handlers)
-func (r *Router) Options(pattern string, h ...Handler) {
-	r.Handle("OPTIONS", pattern, h)
+func (r *Router) Options(pattern string, h ...Handler) *Route {
+	return r.Handle("OPTIONS", pattern, h)
 }
 
 // Head is a shortcut for r.Handle("HEAD", pattern, handlers)
-func (r *Router) Head(pattern string, h ...Handler) {
-	r.Handle("HEAD", pattern, h)
+func (r *Router) Head(pattern string, h ...Handler) *Route {
+	return r.Handle("HEAD", pattern, h)
 }
 
 // Any is a shortcut for r.Handle("*", pattern, handlers)
-func (r *Router) Any(pattern string, h ...Handler) {
-	r.Handle("*", pattern, h)
+func (r *Router) Any(pattern string, h ...Handler) *Route {
+	return r.Handle("*", pattern, h)
 }
 
 // Route is a shortcut for same handlers but different HTTP methods.
 //
 // Example:
 // 		m.Route("/", "GET,POST", h)
-func (r *Router) Route(pattern, methods string, h ...Handler) {
+func (r *Router) Route(pattern, methods string, h ...Handler) (route *Route) {
 	for _, m := range strings.Split(methods, ",") {
-		r.Handle(strings.TrimSpace(m), pattern, h)
+		route = r.Handle(strings.TrimSpace(m), pattern, h)
 	}
+	return route
 }
 
 // Combo returns a combo router.
 func (r *Router) Combo(pattern string, h ...Handler) *ComboRouter {
-	return &ComboRouter{r, pattern, h, map[string]bool{}}
+	return &ComboRouter{r, pattern, h, map[string]bool{}, nil}
 }
 
 // Configurable http.HandlerFunc which is called when no matching route is
@@ -254,12 +276,23 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	r.notFound(rw, req)
 }
 
+// URLFor builds path part of URL by given pair values.
+func (r *Router) URLFor(name string, pairs ...string) string {
+	leaf, ok := r.namedRoutes[name]
+	if !ok {
+		panic("route with given name does not exists: " + name)
+	}
+	return leaf.URLPath(pairs...)
+}
+
 // ComboRouter represents a combo router.
 type ComboRouter struct {
 	router   *Router
 	pattern  string
 	handlers []Handler
 	methods  map[string]bool // Registered methods.
+
+	lastRoute *Route
 }
 
 func (cr *ComboRouter) checkMethod(name string) {
@@ -269,9 +302,9 @@ func (cr *ComboRouter) checkMethod(name string) {
 	cr.methods[name] = true
 }
 
-func (cr *ComboRouter) route(fn func(string, ...Handler), method string, h ...Handler) *ComboRouter {
+func (cr *ComboRouter) route(fn func(string, ...Handler) *Route, method string, h ...Handler) *ComboRouter {
 	cr.checkMethod(method)
-	fn(cr.pattern, append(cr.handlers, h...)...)
+	cr.lastRoute = fn(cr.pattern, append(cr.handlers, h...)...)
 	return cr
 }
 
@@ -301,4 +334,12 @@ func (cr *ComboRouter) Options(h ...Handler) *ComboRouter {
 
 func (cr *ComboRouter) Head(h ...Handler) *ComboRouter {
 	return cr.route(cr.router.Head, "HEAD", h...)
+}
+
+// Name sets name of ComboRouter route.
+func (cr *ComboRouter) Name(name string) {
+	if cr.lastRoute == nil {
+		panic("no corresponding route to be named")
+	}
+	cr.lastRoute.Name(name)
 }
