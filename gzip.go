@@ -34,7 +34,7 @@ const (
 
 // GzipOptions represents a struct for specifying configuration options for the GZip middleware.
 type GzipOptions struct {
-	// Compression level. Can be DefaultCompression or any integer value between BestSpeed and BestCompression inclusive.
+	// Compression level. Can be DefaultCompression(-1) or any integer value between BestSpeed(1) and BestCompression(9) inclusive.
 	CompressionLevel int
 }
 
