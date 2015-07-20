@@ -98,7 +98,6 @@ func (grw gzipResponseWriter) Write(p []byte) (int, error) {
 	if len(grw.Header().Get(HeaderContentType)) == 0 {
 		grw.Header().Set(HeaderContentType, http.DetectContentType(p))
 	}
-	fmt.Println("fuck")
 	return grw.w.Write(p)
 }
 
