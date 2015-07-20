@@ -40,7 +40,7 @@ type GzipOptions struct {
 
 func isCompressionLevelValid(level int) bool {
 	return level == gzip.DefaultCompression ||
-		(gzip.BestSpeed >= level && level <= gzip.BestCompression)
+		(level >= gzip.BestSpeed && level <= gzip.BestCompression)
 }
 
 func prepareGzipOptions(options []GzipOptions) GzipOptions {
@@ -72,7 +72,10 @@ func Gziper(options ...GzipOptions) Handler {
 
 		// We've made sure compression level is valid in prepareGzipOptions,
 		// no need to check same error again.
-		gz, _ := gzip.NewWriterLevel(ctx.Resp, opt.CompressionLevel)
+		gz, err := gzip.NewWriterLevel(ctx.Resp, opt.CompressionLevel)
+		if err != nil {
+			panic(err.Error())
+		}
 		defer gz.Close()
 
 		gzw := gzipResponseWriter{gz, ctx.Resp}

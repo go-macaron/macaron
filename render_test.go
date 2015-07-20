@@ -197,6 +197,7 @@ func Test_Render_HTML(t *testing.T) {
 			Directory: "fixtures/basic",
 		}, "fixtures/basic2"))
 		m.Get("/foobar", func(r Render) {
+			r.SetResponseWriter(r.RW())
 			r.HTML(200, "hello", "jeremy")
 			r.SetTemplatePath("", "fixtures/basic2")
 		})
