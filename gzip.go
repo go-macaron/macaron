@@ -40,7 +40,7 @@ type GzipOptions struct {
 
 func isCompressionLevelValid(level int) bool {
 	return level == gzip.DefaultCompression ||
-		(gzip.BestSpeed <= level && level <= gzip.BestCompression)
+		(gzip.BestSpeed >= level && level <= gzip.BestCompression)
 }
 
 func prepareGzipOptions(options []GzipOptions) GzipOptions {
@@ -78,6 +78,9 @@ func Gziper(options ...GzipOptions) Handler {
 		gzw := gzipResponseWriter{gz, ctx.Resp}
 		ctx.Resp = gzw
 		ctx.MapTo(gzw, (*http.ResponseWriter)(nil))
+		if ctx.Render != nil {
+			ctx.Render.SetResponseWriter(gzw)
+		}
 
 		ctx.Next()
 
@@ -95,7 +98,7 @@ func (grw gzipResponseWriter) Write(p []byte) (int, error) {
 	if len(grw.Header().Get(HeaderContentType)) == 0 {
 		grw.Header().Set(HeaderContentType, http.DetectContentType(p))
 	}
-
+	fmt.Println("fuck")
 	return grw.w.Write(p)
 }
 
