@@ -149,6 +149,7 @@ type (
 
 	Render interface {
 		http.ResponseWriter
+		SetResponseWriter(http.ResponseWriter)
 		RW() http.ResponseWriter
 
 		JSON(int, interface{})
@@ -415,6 +416,10 @@ type TplRender struct {
 	CompiledCharset string
 
 	startTime time.Time
+}
+
+func (r *TplRender) SetResponseWriter(rw http.ResponseWriter) {
+	r.ResponseWriter = rw
 }
 
 func (r *TplRender) RW() http.ResponseWriter {

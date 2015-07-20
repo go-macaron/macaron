@@ -157,7 +157,7 @@ func (l *Leaf) URLPath(pairs ...string) string {
 	for i := 0; i < len(pairs); i += 2 {
 		if len(pairs[i]) == 0 {
 			panic("pair value cannot be empty: " + com.ToStr(i))
-		} else if pairs[i] != "*" && pairs[i] != "*.*" && pairs[i][0] != ':' {
+		} else if pairs[i][0] != ':' && pairs[i] != "*" && pairs[i] != "*.*" {
 			pairs[i] = ":" + pairs[i]
 		}
 		urlPath = strings.Replace(urlPath, pairs[i], pairs[i+1], 1)
