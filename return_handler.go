@@ -52,7 +52,7 @@ func defaultReturnHandler() ReturnHandler {
 		} else if len(vals) > 0 {
 			respVal = vals[0]
 			if isError(respVal) {
-				ctx.internalServerError(ctx.Resp, ctx.Req.Request, respVal.Interface().(error))
+				ctx.internalServerError(ctx, respVal.Interface().(error))
 				return
 			}
 		}
