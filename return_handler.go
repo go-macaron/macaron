@@ -51,9 +51,17 @@ func defaultReturnHandler() ReturnHandler {
 			respVal = vals[1]
 		} else if len(vals) > 0 {
 			respVal = vals[0]
+
 			if isError(respVal) {
-				ctx.internalServerError(ctx, respVal.Interface().(error))
+				err := respVal.Interface().(error)
+				if err != nil {
+					ctx.internalServerError(ctx, err)
+				}
 				return
+			} else if canDeref(respVal) {
+				if respVal.IsNil() {
+					return // Ignore nil error
+				}
 			}
 		}
 		if canDeref(respVal) {

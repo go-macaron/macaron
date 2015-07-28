@@ -52,6 +52,23 @@ func Test_Return_Handler(t *testing.T) {
 
 		So(resp.Code, ShouldEqual, http.StatusInternalServerError)
 		So(resp.Body.String(), ShouldEqual, "what the hell!!!\n")
+
+		Convey("Return with nil error", func() {
+			m := New()
+			m.Get("/", func() error {
+				return nil
+			}, func() (int, string) {
+				return 200, "Awesome"
+			})
+
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "/", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+
+			So(resp.Code, ShouldEqual, http.StatusOK)
+			So(resp.Body.String(), ShouldEqual, "Awesome")
+		})
 	})
 
 	Convey("Return with pointer", t, func() {
