@@ -15,6 +15,7 @@
 package macaron
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -24,7 +25,7 @@ import (
 
 func Test_Return_Handler(t *testing.T) {
 	Convey("Return with status and body", t, func() {
-		m := Classic()
+		m := New()
 		m.Get("/", func() (int, string) {
 			return 418, "i'm a teapot"
 		})
@@ -38,8 +39,23 @@ func Test_Return_Handler(t *testing.T) {
 		So(resp.Body.String(), ShouldEqual, "i'm a teapot")
 	})
 
+	Convey("Return with error", t, func() {
+		m := New()
+		m.Get("/", func() error {
+			return errors.New("what the hell!!!")
+		})
+
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+		So(resp.Body.String(), ShouldEqual, "what the hell!!!\n")
+	})
+
 	Convey("Return with pointer", t, func() {
-		m := Classic()
+		m := New()
 		m.Get("/", func() *string {
 			str := "hello world"
 			return &str
@@ -54,7 +70,7 @@ func Test_Return_Handler(t *testing.T) {
 	})
 
 	Convey("Return with byte slice", t, func() {
-		m := Classic()
+		m := New()
 		m.Get("/", func() []byte {
 			return []byte("hello world")
 		})

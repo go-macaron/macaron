@@ -79,8 +79,9 @@ type Router struct {
 	*routeMap
 	namedRoutes map[string]*Leaf
 
-	groups   []group
-	notFound http.HandlerFunc
+	groups              []group
+	notFound            http.HandlerFunc
+	internalServerError func(http.ResponseWriter, *http.Request, error)
 }
 
 func NewRouter() *Router {
@@ -257,6 +258,18 @@ func (r *Router) NotFound(handlers ...Handler) {
 	r.notFound = func(rw http.ResponseWriter, req *http.Request) {
 		c := r.m.createContext(rw, req)
 		c.handlers = append(r.m.handlers, handlers...)
+		c.run()
+	}
+}
+
+// Configurable handler which is called when route handler returns
+// error. If it is not set, default handler is used.
+// Be sure to set 500 response code in your handler.
+func (r *Router) InternalServerError(handlers ...Handler) {
+	r.internalServerError = func(rw http.ResponseWriter, req *http.Request, err error) {
+		c := r.m.createContext(rw, req)
+		c.handlers = append(r.m.handlers, handlers...)
+		c.Map(err)
 		c.run()
 	}
 }

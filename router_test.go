@@ -15,6 +15,7 @@
 package macaron
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -24,7 +25,7 @@ import (
 
 func Test_Router_Handle(t *testing.T) {
 	Convey("Register all HTTP methods routes", t, func() {
-		m := Classic()
+		m := New()
 		m.Get("/get", func() string {
 			return "GET"
 		})
@@ -135,7 +136,7 @@ func Test_Router_Handle(t *testing.T) {
 	})
 
 	Convey("Register all HTTP methods routes with combo", t, func() {
-		m := Classic()
+		m := New()
 		m.SetURLPrefix("/prefix")
 		m.Use(Renderer())
 		m.Combo("/", func(ctx *Context) {
@@ -243,7 +244,7 @@ func Test_Router_URLFor(t *testing.T) {
 
 func Test_Router_Group(t *testing.T) {
 	Convey("Register route group", t, func() {
-		m := Classic()
+		m := New()
 		m.Group("/api", func() {
 			m.Group("/v1", func() {
 				m.Get("/list", func() string {
@@ -261,7 +262,7 @@ func Test_Router_Group(t *testing.T) {
 
 func Test_Router_NotFound(t *testing.T) {
 	Convey("Custom not found handler", t, func() {
-		m := Classic()
+		m := New()
 		m.Get("/", func() {})
 		m.NotFound(func() string {
 			return "Custom not found"
@@ -274,9 +275,28 @@ func Test_Router_NotFound(t *testing.T) {
 	})
 }
 
+func Test_Router_InternalServerError(t *testing.T) {
+	Convey("Custom internal server error handler", t, func() {
+		m := New()
+		m.Get("/", func() error {
+			return errors.New("Custom internal server error")
+		})
+		m.InternalServerError(func(rw http.ResponseWriter, err error) {
+			rw.WriteHeader(500)
+			rw.Write([]byte(err.Error()))
+		})
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+		So(resp.Code, ShouldEqual, 500)
+		So(resp.Body.String(), ShouldEqual, "Custom internal server error")
+	})
+}
+
 func Test_Router_splat(t *testing.T) {
 	Convey("Register router with glob", t, func() {
-		m := Classic()
+		m := New()
 		m.Get("/*", func(ctx *Context) string {
 			return ctx.Params("*")
 		})
