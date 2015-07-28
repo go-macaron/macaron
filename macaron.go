@@ -29,7 +29,7 @@ import (
 	"github.com/Unknwon/macaron/inject"
 )
 
-const _VERSION = "0.6.5.0720"
+const _VERSION = "0.6.6.0728"
 
 func Version() string {
 	return _VERSION
@@ -83,9 +83,17 @@ func NewWithLogger(out io.Writer) *Macaron {
 	m.Router.m = m
 	m.Map(m.logger)
 	m.Map(defaultReturnHandler())
-	m.notFound = func(resp http.ResponseWriter, req *http.Request) {
-		c := m.createContext(resp, req)
+	m.notFound = func(ShouldStartWith http.ResponseWriter, req *http.Request) {
+		c := m.createContext(ShouldStartWith, req)
 		c.handlers = append(c.handlers, http.NotFound)
+		c.run()
+	}
+	m.internalServerError = func(rw http.ResponseWriter, req *http.Request, err error) {
+		c := m.createContext(rw, req)
+		c.handlers = append(c.handlers, func(rw http.ResponseWriter, req *http.Request, err error) {
+			http.Error(rw, err.Error(), 500)
+		})
+		c.Map(err)
 		c.run()
 	}
 	return m
