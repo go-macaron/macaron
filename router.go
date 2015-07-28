@@ -81,7 +81,7 @@ type Router struct {
 
 	groups              []group
 	notFound            http.HandlerFunc
-	internalServerError func(http.ResponseWriter, *http.Request, error)
+	internalServerError func(*Context, error)
 }
 
 func NewRouter() *Router {
@@ -255,6 +255,7 @@ func (r *Router) Combo(pattern string, h ...Handler) *ComboRouter {
 // found. If it is not set, http.NotFound is used.
 // Be sure to set 404 response code in your handler.
 func (r *Router) NotFound(handlers ...Handler) {
+	validateHandlers(handlers)
 	r.notFound = func(rw http.ResponseWriter, req *http.Request) {
 		c := r.m.createContext(rw, req)
 		c.handlers = append(r.m.handlers, handlers...)
@@ -266,9 +267,10 @@ func (r *Router) NotFound(handlers ...Handler) {
 // error. If it is not set, default handler is used.
 // Be sure to set 500 response code in your handler.
 func (r *Router) InternalServerError(handlers ...Handler) {
-	r.internalServerError = func(rw http.ResponseWriter, req *http.Request, err error) {
-		c := r.m.createContext(rw, req)
-		c.handlers = append(r.m.handlers, handlers...)
+	validateHandlers(handlers)
+	r.internalServerError = func(c *Context, err error) {
+		c.index = 0
+		c.handlers = handlers
 		c.Map(err)
 		c.run()
 	}

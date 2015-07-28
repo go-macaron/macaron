@@ -83,19 +83,10 @@ func NewWithLogger(out io.Writer) *Macaron {
 	m.Router.m = m
 	m.Map(m.logger)
 	m.Map(defaultReturnHandler())
-	m.notFound = func(ShouldStartWith http.ResponseWriter, req *http.Request) {
-		c := m.createContext(ShouldStartWith, req)
-		c.handlers = append(c.handlers, http.NotFound)
-		c.run()
-	}
-	m.internalServerError = func(rw http.ResponseWriter, req *http.Request, err error) {
-		c := m.createContext(rw, req)
-		c.handlers = append(c.handlers, func(rw http.ResponseWriter, req *http.Request, err error) {
-			http.Error(rw, err.Error(), 500)
-		})
-		c.Map(err)
-		c.run()
-	}
+	m.NotFound(http.NotFound)
+	m.InternalServerError(func(rw http.ResponseWriter, err error) {
+		http.Error(rw, err.Error(), 500)
+	})
 	return m
 }
 
