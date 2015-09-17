@@ -287,6 +287,24 @@ func (ctx *Context) GetFile(name string) (multipart.File, *multipart.FileHeader,
 	return ctx.Req.FormFile(name)
 }
 
+// SaveToFile reads a file from request by field name and saves to given path.
+func (ctx *Context) SaveToFile(name, savePath string) error {
+	fr, _, err := ctx.GetFile(name)
+	if err != nil {
+		return err
+	}
+	defer fr.Close()
+
+	fw, err := os.OpenFile(savePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		return err
+	}
+	defer fw.Close()
+
+	_, err = io.Copy(fw, fr)
+	return err
+}
+
 // SetCookie sets given cookie value to response header.
 // FIXME: IE support? http://golanghome.com/post/620#reply2
 func (ctx *Context) SetCookie(name string, value string, others ...interface{}) {
