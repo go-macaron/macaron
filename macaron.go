@@ -29,7 +29,7 @@ import (
 	"github.com/Unknwon/macaron/inject"
 )
 
-const _VERSION = "0.6.6.0728"
+const _VERSION = "0.6.7.0916"
 
 func Version() string {
 	return _VERSION
