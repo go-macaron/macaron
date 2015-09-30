@@ -1,4 +1,4 @@
-// Copyright 2013 Martini Authors
+// Copyright 2013 Jeremy Saenz
 // Copyright 2014 Unknwon
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
