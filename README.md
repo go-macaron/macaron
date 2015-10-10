@@ -80,8 +80,8 @@ There are already many [middlewares](https://github.com/macaron-contrib) to simp
 ## Getting Help
 
 - [API Reference](https://gowalker.org/github.com/Unknwon/macaron)
-- [Documentation](http://macaron.gogs.io)
-- [FAQs](http://macaron.gogs.io/docs/faqs)
+- [Documentation](http://go-macaron.com)
+- [FAQs](http://go-macaron.com/docs/faqs)
 - [![Join the chat at https://gitter.im/Unknwon/macaron](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Unknwon/macaron?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Credits
