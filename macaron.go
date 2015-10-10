@@ -66,7 +66,8 @@ type Macaron struct {
 	handlers []Handler
 	action   Handler
 
-	urlPrefix string // For suburl support.
+	hasURLPrefix bool
+	urlPrefix    string // For suburl support.
 	*Router
 
 	logger *log.Logger
@@ -163,7 +164,9 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 // Useful if you want to control your own HTTP server.
 // Be aware that none of middleware will run without registering any router.
 func (m *Macaron) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	req.URL.Path = strings.TrimPrefix(req.URL.Path, m.urlPrefix)
+	if m.hasURLPrefix {
+		req.URL.Path = strings.TrimPrefix(req.URL.Path, m.urlPrefix)
+	}
 	for _, h := range m.befores {
 		if h(rw, req) {
 			return
@@ -212,6 +215,7 @@ func (m *Macaron) Run(args ...interface{}) {
 // SetURLPrefix sets URL prefix of router layer, so that it support suburl.
 func (m *Macaron) SetURLPrefix(prefix string) {
 	m.urlPrefix = prefix
+	m.hasURLPrefix = len(m.urlPrefix) > 0
 }
 
 // ____   ____            .__      ___.   .__
