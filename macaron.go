@@ -1,3 +1,5 @@
+// +build go1.3
+
 // Copyright 2014 Unknwon
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
@@ -12,7 +14,7 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-// Package macaron is a high productive and modular design web framework in Go.
+// Package macaron is a high productive and modular web framework in Go.
 package macaron
 
 import (
@@ -29,7 +31,7 @@ import (
 	"github.com/Unknwon/macaron/inject"
 )
 
-const _VERSION = "0.6.7.0916"
+const _VERSION = "0.6.8.1010"
 
 func Version() string {
 	return _VERSION

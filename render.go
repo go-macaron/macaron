@@ -1,5 +1,4 @@
 // Copyright 2013 Martini Authors
-// Copyright 2013 oxtoacart
 // Copyright 2014 Unknwon
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
@@ -22,7 +21,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"html/template"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -34,37 +32,6 @@ import (
 
 	"github.com/Unknwon/com"
 )
-
-// BufferPool implements a pool of bytes.Buffers in the form of a bounded channel.
-type BufferPool struct {
-	c chan *bytes.Buffer
-}
-
-// NewBufferPool creates a new BufferPool bounded to the given size.
-func NewBufferPool(size int) (bp *BufferPool) {
-	return &BufferPool{
-		c: make(chan *bytes.Buffer, size),
-	}
-}
-
-// Get gets a Buffer from the BufferPool, or creates a new one if none are available
-// in the pool.
-func (bp *BufferPool) Get() (b *bytes.Buffer) {
-	select {
-	case b = <-bp.c:
-	// reuse existing buffer
-	default:
-		// create new buffer
-		b = bytes.NewBuffer([]byte{})
-	}
-	return
-}
-
-// Put returns the given Buffer to the BufferPool.
-func (bp *BufferPool) Put(b *bytes.Buffer) {
-	b.Reset()
-	bp.c <- b
-}
 
 const (
 	ContentType    = "Content-Type"
@@ -80,7 +47,9 @@ const (
 
 var (
 	// Provides a temporary buffer to execute templates into and catch errors.
-	bufpool = NewBufferPool(64)
+	bufpool = sync.Pool{
+		New: func() interface{} { return new(bytes.Buffer) },
+	}
 
 	// Included helper functions for use when rendering html
 	helperFuncs = template.FuncMap{
@@ -503,7 +472,7 @@ func (r *TplRender) RenderData(status int, v []byte) {
 }
 
 func (r *TplRender) execute(t *template.Template, name string, data interface{}) (*bytes.Buffer, error) {
-	buf := bufpool.Get()
+	buf := bufpool.Get().(*bytes.Buffer)
 	return buf, t.ExecuteTemplate(buf, name, data)
 }
 
@@ -559,7 +528,7 @@ func (r *TplRender) renderHTML(status int, setName, tplName string, data interfa
 	r.Header().Set(ContentType, r.Opt.HTMLContentType+r.CompiledCharset)
 	r.WriteHeader(status)
 
-	io.Copy(r, out)
+	out.WriteTo(r)
 	bufpool.Put(out)
 }
 
