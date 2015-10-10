@@ -3,11 +3,13 @@ Macaron [![Build Status](https://drone.io/github.com/Unknwon/macaron/status.png)
 
 ![Macaron Logo](https://raw.githubusercontent.com/Unknwon/macaron/master/macaronlogo.png)
 
-Package macaron is a high productive and modular design web framework in Go.
+Package macaron is a high productive and modular web framework in Go.
 
-##### Current version: 0.6.7
+##### Current version: 0.6.8
 
 ## Getting Started
+
+The minimum requirement of Go is **1.3**.
 
 To install Macaron:
 
@@ -68,12 +70,11 @@ There are already many [middlewares](https://github.com/macaron-contrib) to simp
 
 ## Use Cases
 
-- [Gogs](https://github.com/gogits/gogs): Go Git Service
-- [Gogs Web](https://github.com/gogits/gogsweb): Gogs official website
+- [Gogs](http://gogs.io): A painless self-hosted Git Service
+- [Peach](http://peachdocs.org): A modern web documentation server
 - [Go Walker](https://gowalker.org): Go online API documentation
-- [Switch](https://github.com/gpmgo/switch): Gopm registry
+- [Switch](http://gopm.io): Gopm registry
 - [YouGam](http://yougam.com): Online Forum
-- [Car Girl](http://qcnl.gzsy.com/): Online campaign
 - [Critical Stack Intel](https://intel.criticalstack.com/): A 100% free intel marketplace from Critical Stack, Inc.
 
 ## Getting Help
