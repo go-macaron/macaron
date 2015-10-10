@@ -181,9 +181,9 @@ func Test_Macaron_Basic_NoRace(t *testing.T) {
 		// Ensure append will not realloc to trigger the race condition
 		m.handlers = handlers[:1]
 		m.Get("/", func() {})
-		req, _ := http.NewRequest("GET", "/", nil)
 		for i := 0; i < 2; i++ {
 			go func() {
+				req, _ := http.NewRequest("GET", "/", nil)
 				resp := httptest.NewRecorder()
 				m.ServeHTTP(resp, req)
 			}()
