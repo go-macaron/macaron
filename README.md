@@ -1,7 +1,7 @@
-Macaron [![Build Status](https://travis-ci.org/go-macaron/macaron.svg?branch=master)](https://travis-ci.org/go-macaron/macaron) [![](http://gocover.io/_badge/github.com/Unknwon/macaron)](http://gocover.io/github.com/Unknwon/macaron)
+Macaron [![Build Status](https://travis-ci.org/go-macaron/macaron.svg?branch=v1)](https://travis-ci.org/go-macaron/macaron) [![](http://gocover.io/_badge/github.com/Unknwon/macaron)](http://gocover.io/github.com/Unknwon/macaron)
 =======================
 
-![Macaron Logo](https://raw.githubusercontent.com/Unknwon/macaron/master/macaronlogo.png)
+![Macaron Logo](https://raw.githubusercontent.com/go-macaron/macaron/v1/macaronlogo.png)
 
 Package macaron is a high productive and modular web framework in Go.
 
