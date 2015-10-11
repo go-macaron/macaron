@@ -17,8 +17,8 @@ package macaron
 
 import (
 	"bufio"
-	"compress/gzip"
 	"fmt"
+	"github.com/klauspost/compress/gzip"
 	"net"
 	"net/http"
 	"strings"
@@ -34,12 +34,14 @@ const (
 
 // GzipOptions represents a struct for specifying configuration options for the GZip middleware.
 type GzipOptions struct {
-	// Compression level. Can be DefaultCompression(-1) or any integer value between BestSpeed(1) and BestCompression(9) inclusive.
+	// Compression level. Can be DefaultCompression(-1), ConstantCompression(-2)
+	// or any integer value between BestSpeed(1) and BestCompression(9) inclusive.
 	CompressionLevel int
 }
 
 func isCompressionLevelValid(level int) bool {
 	return level == gzip.DefaultCompression ||
+		level == gzip.ConstantCompression ||
 		(level >= gzip.BestSpeed && level <= gzip.BestCompression)
 }
 
@@ -50,7 +52,8 @@ func prepareGzipOptions(options []GzipOptions) GzipOptions {
 	}
 
 	if !isCompressionLevelValid(opt.CompressionLevel) {
-		opt.CompressionLevel = gzip.DefaultCompression
+		// For web content, level 4 seems to be a sweet spot.
+		opt.CompressionLevel = 4
 	}
 	return opt
 }
