@@ -1,4 +1,4 @@
-Macaron [![Build Status](https://travis-ci.org/go-macaron/macaron.svg?branch=v1)](https://travis-ci.org/go-macaron/macaron) [![](http://gocover.io/_badge/github.com/Unknwon/macaron)](http://gocover.io/github.com/Unknwon/macaron)
+Macaron [![Build Status](https://travis-ci.org/go-macaron/macaron.svg?branch=v1)](https://travis-ci.org/go-macaron/macaron) [![](http://gocover.io/_badge/github.com/go-macaron/macaron)](http://gocover.io/github.com/go-macaron/macaron)
 =======================
 
 ![Macaron Logo](https://raw.githubusercontent.com/go-macaron/macaron/v1/macaronlogo.png)
@@ -79,7 +79,7 @@ There are already many [middlewares](https://github.com/go-macaron) to simplify 
 
 ## Getting Help
 
-- [API Reference](https://gowalker.org/github.com/Unknwon/macaron)
+- [API Reference](https://gowalker.org/github.com/go-macaron/macaron)
 - [Documentation](http://go-macaron.com)
 - [FAQs](http://go-macaron.com/docs/faqs)
 - [![Join the chat at https://gitter.im/Unknwon/macaron](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Unknwon/macaron?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
