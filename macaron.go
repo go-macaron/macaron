@@ -28,7 +28,7 @@ import (
 	"github.com/Unknwon/com"
 	"gopkg.in/ini.v1"
 
-	"github.com/Unknwon/macaron/inject"
+	"github.com/go-macaron/inject"
 )
 
 const _VERSION = "0.6.8.1010"

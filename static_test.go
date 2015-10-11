@@ -46,7 +46,7 @@ func Test_Static(t *testing.T) {
 
 		Convey("Change static path", func() {
 			m.Get("/", func(ctx *Context) {
-				ctx.ChangeStaticPath("./", "inject")
+				ctx.ChangeStaticPath("./", "fixtures/basic2")
 			})
 
 			resp := httptest.NewRecorder()
@@ -56,7 +56,7 @@ func Test_Static(t *testing.T) {
 
 			resp = httptest.NewRecorder()
 			resp.Body = new(bytes.Buffer)
-			req, err = http.NewRequest("GET", "http://localhost:4000/inject.go", nil)
+			req, err = http.NewRequest("GET", "http://localhost:4000/hello.tmpl", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
 			So(resp.Code, ShouldEqual, http.StatusOK)
@@ -224,7 +224,7 @@ func Test_Statics(t *testing.T) {
 		Convey("Serve normally", func() {
 			var buf bytes.Buffer
 			m := NewWithLogger(&buf)
-			m.Use(Statics(StaticOptions{}, currentRoot, currentRoot+"/inject"))
+			m.Use(Statics(StaticOptions{}, currentRoot, currentRoot+"/fixtures/basic"))
 
 			resp := httptest.NewRecorder()
 			req, err := http.NewRequest("GET", "http://localhost:4000/macaron.go", nil)
@@ -235,12 +235,12 @@ func Test_Statics(t *testing.T) {
 			So(buf.String(), ShouldEqual, "[Macaron] [Static] Serving /macaron.go\n")
 
 			resp = httptest.NewRecorder()
-			req, err = http.NewRequest("GET", "http://localhost:4000/inject/inject.go", nil)
+			req, err = http.NewRequest("GET", "http://localhost:4000/admin/index.tmpl", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
 
 			So(resp.Code, ShouldEqual, http.StatusOK)
-			So(buf.String(), ShouldEndWith, "[Macaron] [Static] Serving /inject/inject.go\n")
+			So(buf.String(), ShouldEndWith, "[Macaron] [Static] Serving /admin/index.tmpl\n")
 		})
 	})
 }

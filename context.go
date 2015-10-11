@@ -33,7 +33,7 @@ import (
 
 	"github.com/Unknwon/com"
 
-	"github.com/Unknwon/macaron/inject"
+	"github.com/go-macaron/inject"
 )
 
 // Locale reprents a localization interface.
