@@ -23,7 +23,7 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/Unknwon/macaron/inject"
+	"github.com/go-macaron/inject"
 )
 
 const (
