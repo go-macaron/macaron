@@ -1,11 +1,11 @@
-Macaron [![Build Status](https://drone.io/github.com/Unknwon/macaron/status.png)](https://drone.io/github.com/Unknwon/macaron/latest) [![](http://gocover.io/_badge/github.com/Unknwon/macaron)](http://gocover.io/github.com/Unknwon/macaron)
+Macaron [![Build Status](https://travis-ci.org/go-macaron/macaron.svg?branch=master)](https://travis-ci.org/go-macaron/macaron) [![](http://gocover.io/_badge/github.com/Unknwon/macaron)](http://gocover.io/github.com/Unknwon/macaron)
 =======================
 
 ![Macaron Logo](https://raw.githubusercontent.com/Unknwon/macaron/master/macaronlogo.png)
 
 Package macaron is a high productive and modular web framework in Go.
 
-##### Current version: 0.6.8
+##### Current version: 0.7.0
 
 ## Getting Started
 
@@ -13,14 +13,14 @@ The minimum requirement of Go is **1.3**.
 
 To install Macaron:
 
-	go get github.com/Unknwon/macaron
+	go get gopkg.in/macaron.v1
 
 The very basic usage of Macaron:
 
 ```go
 package main
 
-import "github.com/Unknwon/macaron"
+import "gopkg.in/macaron.v1"
 
 func main() {
 	m := macaron.Classic()
@@ -47,11 +47,11 @@ func main() {
 
 Middlewares allow you easily plugin/unplugin features for your Macaron applications.
 
-There are already many [middlewares](https://github.com/macaron-contrib) to simplify your work:
+There are already many [middlewares](https://github.com/go-macaron) to simplify your work:
 
-- gzip - Gzip compression to all requests
 - render - Go template engine
 - static - Serves static files
+- [gzip](https://github.com/go-macaron/gzip) - Gzip compression to all requests
 - [binding](https://github.com/macaron-contrib/binding) - Request data binding and validation
 - [i18n](https://github.com/macaron-contrib/i18n) - Internationalization and Localization
 - [cache](https://github.com/macaron-contrib/cache) - Cache manager
