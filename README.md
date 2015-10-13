@@ -52,7 +52,7 @@ There are already many [middlewares](https://github.com/go-macaron) to simplify 
 - render - Go template engine
 - static - Serves static files
 - [gzip](https://github.com/go-macaron/gzip) - Gzip compression to all responses
-- [binding](https://github.com/macaron-contrib/binding) - Request data binding and validation
+- [binding](https://github.com/go-macaron/binding) - Request data binding and validation
 - [i18n](https://github.com/macaron-contrib/i18n) - Internationalization and Localization
 - [cache](https://github.com/macaron-contrib/cache) - Cache manager
 - [session](https://github.com/macaron-contrib/session) - Session manager
