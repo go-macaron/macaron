@@ -1,5 +1,5 @@
 // Copyright 2013 Martini Authors
-// Copyright 2014 Unknwon
+// Copyright 2014 The Macaron Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -34,15 +34,15 @@ import (
 )
 
 const (
-	ContentType    = "Content-Type"
-	ContentLength  = "Content-Length"
-	ContentBinary  = "application/octet-stream"
-	ContentJSON    = "application/json"
-	ContentHTML    = "text/html"
-	CONTENT_PLAIN  = "text/plain"
-	ContentXHTML   = "application/xhtml+xml"
-	ContentXML     = "text/xml"
-	defaultCharset = "UTF-8"
+	_CONTENT_TYPE    = "Content-Type"
+	_CONTENT_LENGTH  = "Content-Length"
+	_CONTENT_BINARY  = "application/octet-stream"
+	_CONTENT_JSON    = "application/json"
+	_CONTENT_HTML    = "text/html"
+	_CONTENT_PLAIN   = "text/plain"
+	_CONTENT_XHTML   = "application/xhtml+xml"
+	_CONTENT_XML     = "text/xml"
+	_DEFAULT_CHARSET = "UTF-8"
 )
 
 var (
@@ -119,12 +119,11 @@ type (
 	Render interface {
 		http.ResponseWriter
 		SetResponseWriter(http.ResponseWriter)
-		RW() http.ResponseWriter
 
 		JSON(int, interface{})
 		JSONString(interface{}) (string, error)
-		RawData(int, []byte)
-		RenderData(int, []byte)
+		RawData(int, []byte)   // Serve content as binary
+		PlainText(int, []byte) // Serve content as plain text
 		HTML(int, string, interface{}, ...HTMLOptions)
 		HTMLSet(int, string, string, interface{}, ...HTMLOptions)
 		HTMLSetString(string, string, interface{}, ...HTMLOptions) (string, error)
@@ -214,7 +213,7 @@ func PrepareCharset(charset string) string {
 		return "; charset=" + charset
 	}
 
-	return "; charset=" + defaultCharset
+	return "; charset=" + _DEFAULT_CHARSET
 }
 
 func GetExt(s string) string {
@@ -305,7 +304,7 @@ func prepareRenderOptions(options []RenderOptions) RenderOptions {
 		opt.Extensions = []string{".tmpl", ".html"}
 	}
 	if len(opt.HTMLContentType) == 0 {
-		opt.HTMLContentType = ContentHTML
+		opt.HTMLContentType = _CONTENT_HTML
 	}
 
 	return opt
@@ -391,10 +390,6 @@ func (r *TplRender) SetResponseWriter(rw http.ResponseWriter) {
 	r.ResponseWriter = rw
 }
 
-func (r *TplRender) RW() http.ResponseWriter {
-	return r.ResponseWriter
-}
-
 func (r *TplRender) JSON(status int, v interface{}) {
 	var (
 		result []byte
@@ -411,7 +406,7 @@ func (r *TplRender) JSON(status int, v interface{}) {
 	}
 
 	// json rendered fine, write out the result
-	r.Header().Set(ContentType, ContentJSON+r.CompiledCharset)
+	r.Header().Set(_CONTENT_TYPE, _CONTENT_JSON+r.CompiledCharset)
 	r.WriteHeader(status)
 	if len(r.Opt.PrefixJSON) > 0 {
 		r.Write(r.Opt.PrefixJSON)
@@ -447,7 +442,7 @@ func (r *TplRender) XML(status int, v interface{}) {
 	}
 
 	// XML rendered fine, write out the result
-	r.Header().Set(ContentType, ContentXML+r.CompiledCharset)
+	r.Header().Set(_CONTENT_TYPE, _CONTENT_XML+r.CompiledCharset)
 	r.WriteHeader(status)
 	if len(r.Opt.PrefixXML) > 0 {
 		r.Write(r.Opt.PrefixXML)
@@ -456,19 +451,19 @@ func (r *TplRender) XML(status int, v interface{}) {
 }
 
 func (r *TplRender) data(status int, contentType string, v []byte) {
-	if r.Header().Get(ContentType) == "" {
-		r.Header().Set(ContentType, contentType)
+	if r.Header().Get(_CONTENT_TYPE) == "" {
+		r.Header().Set(_CONTENT_TYPE, contentType)
 	}
 	r.WriteHeader(status)
 	r.Write(v)
 }
 
 func (r *TplRender) RawData(status int, v []byte) {
-	r.data(status, ContentBinary, v)
+	r.data(status, _CONTENT_BINARY, v)
 }
 
-func (r *TplRender) RenderData(status int, v []byte) {
-	r.data(status, CONTENT_PLAIN, v)
+func (r *TplRender) PlainText(status int, v []byte) {
+	r.data(status, _CONTENT_PLAIN, v)
 }
 
 func (r *TplRender) execute(t *template.Template, name string, data interface{}) (*bytes.Buffer, error) {
@@ -525,7 +520,7 @@ func (r *TplRender) renderHTML(status int, setName, tplName string, data interfa
 		return
 	}
 
-	r.Header().Set(ContentType, r.Opt.HTMLContentType+r.CompiledCharset)
+	r.Header().Set(_CONTENT_TYPE, r.Opt.HTMLContentType+r.CompiledCharset)
 	r.WriteHeader(status)
 
 	out.WriteTo(r)
