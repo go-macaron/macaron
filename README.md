@@ -5,7 +5,7 @@ Macaron [![Build Status](https://travis-ci.org/go-macaron/macaron.svg?branch=v1)
 
 Package macaron is a high productive and modular web framework in Go.
 
-##### Current version: 0.7.0
+##### Current version: 0.8.0
 
 ## Getting Started
 
@@ -51,7 +51,7 @@ There are already many [middlewares](https://github.com/go-macaron) to simplify 
 
 - render - Go template engine
 - static - Serves static files
-- [gzip](https://github.com/go-macaron/gzip) - Gzip compression to all requests
+- [gzip](https://github.com/go-macaron/gzip) - Gzip compression to all responses
 - [binding](https://github.com/macaron-contrib/binding) - Request data binding and validation
 - [i18n](https://github.com/macaron-contrib/i18n) - Internationalization and Localization
 - [cache](https://github.com/macaron-contrib/cache) - Cache manager
@@ -79,7 +79,7 @@ There are already many [middlewares](https://github.com/go-macaron) to simplify 
 
 ## Getting Help
 
-- [API Reference](https://gowalker.org/github.com/go-macaron/macaron)
+- [API Reference](https://gowalker.org/gopkg.in/macaron.v1)
 - [Documentation](http://go-macaron.com)
 - [FAQs](http://go-macaron.com/docs/faqs)
 - [![Join the chat at https://gitter.im/Unknwon/macaron](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Unknwon/macaron?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)

@@ -1,5 +1,5 @@
 // Copyright 2013 Martini Authors
-// Copyright 2014 Unknwon
+// Copyright 2014 The Macaron Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -51,7 +51,7 @@ func Test_Render_JSON(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusMultipleChoices)
-		So(resp.Header().Get(ContentType), ShouldEqual, ContentJSON+"; charset=UTF-8")
+		So(resp.Header().Get(_CONTENT_TYPE), ShouldEqual, _CONTENT_JSON+"; charset=UTF-8")
 		So(resp.Body.String(), ShouldEqual, `{"one":"hello","two":"world"}`)
 	})
 
@@ -71,7 +71,7 @@ func Test_Render_JSON(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusMultipleChoices)
-		So(resp.Header().Get(ContentType), ShouldEqual, ContentJSON+"; charset=UTF-8")
+		So(resp.Header().Get(_CONTENT_TYPE), ShouldEqual, _CONTENT_JSON+"; charset=UTF-8")
 		So(resp.Body.String(), ShouldEqual, prefix+`{"one":"hello","two":"world"}`)
 	})
 
@@ -90,7 +90,7 @@ func Test_Render_JSON(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusMultipleChoices)
-		So(resp.Header().Get(ContentType), ShouldEqual, ContentJSON+"; charset=UTF-8")
+		So(resp.Header().Get(_CONTENT_TYPE), ShouldEqual, _CONTENT_JSON+"; charset=UTF-8")
 		So(resp.Body.String(), ShouldEqual, `{
   "one": "hello",
   "two": "world"
@@ -127,7 +127,7 @@ func Test_Render_JSON(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusMultipleChoices)
-		So(resp.Header().Get(ContentType), ShouldEqual, ContentJSON+"; charset=foobar")
+		So(resp.Header().Get(_CONTENT_TYPE), ShouldEqual, _CONTENT_JSON+"; charset=foobar")
 		So(resp.Body.String(), ShouldEqual, `{"one":"hello","two":"world"}`)
 	})
 }
@@ -146,7 +146,7 @@ func Test_Render_XML(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusMultipleChoices)
-		So(resp.Header().Get(ContentType), ShouldEqual, ContentXML+"; charset=UTF-8")
+		So(resp.Header().Get(_CONTENT_TYPE), ShouldEqual, _CONTENT_XML+"; charset=UTF-8")
 		So(resp.Body.String(), ShouldEqual, `<greeting one="hello" two="world"></greeting>`)
 	})
 
@@ -166,7 +166,7 @@ func Test_Render_XML(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusMultipleChoices)
-		So(resp.Header().Get(ContentType), ShouldEqual, ContentXML+"; charset=UTF-8")
+		So(resp.Header().Get(_CONTENT_TYPE), ShouldEqual, _CONTENT_XML+"; charset=UTF-8")
 		So(resp.Body.String(), ShouldEqual, prefix+`<greeting one="hello" two="world"></greeting>`)
 	})
 
@@ -185,7 +185,7 @@ func Test_Render_XML(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusMultipleChoices)
-		So(resp.Header().Get(ContentType), ShouldEqual, ContentXML+"; charset=UTF-8")
+		So(resp.Header().Get(_CONTENT_TYPE), ShouldEqual, _CONTENT_XML+"; charset=UTF-8")
 		So(resp.Body.String(), ShouldEqual, `<greeting one="hello" two="world"></greeting>`)
 	})
 }
@@ -197,7 +197,7 @@ func Test_Render_HTML(t *testing.T) {
 			Directory: "fixtures/basic",
 		}, "fixtures/basic2"))
 		m.Get("/foobar", func(r Render) {
-			r.SetResponseWriter(r.RW())
+			r.SetResponseWriter(r.(*TplRender).ResponseWriter)
 			r.HTML(200, "hello", "jeremy")
 			r.SetTemplatePath("", "fixtures/basic2")
 		})
@@ -213,7 +213,7 @@ func Test_Render_HTML(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusOK)
-		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
+		So(resp.Header().Get(_CONTENT_TYPE), ShouldEqual, _CONTENT_HTML+"; charset=UTF-8")
 		So(resp.Body.String(), ShouldEqual, "<h1>Hello jeremy</h1>")
 
 		resp = httptest.NewRecorder()
@@ -222,7 +222,7 @@ func Test_Render_HTML(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusOK)
-		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
+		So(resp.Header().Get(_CONTENT_TYPE), ShouldEqual, _CONTENT_HTML+"; charset=UTF-8")
 		So(resp.Body.String(), ShouldEqual, "<h1>What's up, jeremy</h1>")
 
 		Convey("Change render templates path", func() {
@@ -232,7 +232,7 @@ func Test_Render_HTML(t *testing.T) {
 			m.ServeHTTP(resp, req)
 
 			So(resp.Code, ShouldEqual, http.StatusOK)
-			So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
+			So(resp.Header().Get(_CONTENT_TYPE), ShouldEqual, _CONTENT_HTML+"; charset=UTF-8")
 			So(resp.Body.String(), ShouldEqual, "<h1>What's up, jeremy</h1>")
 		})
 	})
@@ -279,7 +279,7 @@ func Test_Render_HTML(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusOK)
-		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
+		So(resp.Header().Get(_CONTENT_TYPE), ShouldEqual, _CONTENT_HTML+"; charset=UTF-8")
 		So(resp.Body.String(), ShouldEqual, "<h1>Admin jeremy</h1>")
 	})
 
@@ -329,7 +329,7 @@ func Test_Render_XHTML(t *testing.T) {
 		m := Classic()
 		m.Use(Renderer(RenderOptions{
 			Directory:       "fixtures/basic",
-			HTMLContentType: ContentXHTML,
+			HTMLContentType: _CONTENT_XHTML,
 		}))
 		m.Get("/foobar", func(r Render) {
 			r.HTML(200, "hello", "jeremy")
@@ -341,7 +341,7 @@ func Test_Render_XHTML(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusOK)
-		So(resp.Header().Get(ContentType), ShouldEqual, ContentXHTML+"; charset=UTF-8")
+		So(resp.Header().Get(_CONTENT_TYPE), ShouldEqual, _CONTENT_XHTML+"; charset=UTF-8")
 		So(resp.Body.String(), ShouldEqual, "<h1>Hello jeremy</h1>")
 	})
 }
@@ -363,7 +363,7 @@ func Test_Render_Extensions(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusOK)
-		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
+		So(resp.Header().Get(_CONTENT_TYPE), ShouldEqual, _CONTENT_HTML+"; charset=UTF-8")
 		So(resp.Body.String(), ShouldEqual, "Hypertext!")
 	})
 }
@@ -449,7 +449,7 @@ func Test_Render_Layout(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusOK)
-		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
+		So(resp.Header().Get(_CONTENT_TYPE), ShouldEqual, _CONTENT_HTML+"; charset=UTF-8")
 		So(resp.Body.String(), ShouldEqual, "another head<h1>jeremy</h1>another foot")
 	})
 }
@@ -471,7 +471,7 @@ func Test_Render_Delimiters(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusOK)
-		So(resp.Header().Get(ContentType), ShouldEqual, ContentHTML+"; charset=UTF-8")
+		So(resp.Header().Get(_CONTENT_TYPE), ShouldEqual, _CONTENT_HTML+"; charset=UTF-8")
 		So(resp.Body.String(), ShouldEqual, "<h1>Hello jeremy</h1>")
 	})
 }
@@ -484,7 +484,7 @@ func Test_Render_BinaryData(t *testing.T) {
 			r.RawData(200, []byte("hello there"))
 		})
 		m.Get("/foobar2", func(r Render) {
-			r.RenderData(200, []byte("hello there"))
+			r.PlainText(200, []byte("hello there"))
 		})
 
 		resp := httptest.NewRecorder()
@@ -493,7 +493,7 @@ func Test_Render_BinaryData(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusOK)
-		So(resp.Header().Get(ContentType), ShouldEqual, ContentBinary)
+		So(resp.Header().Get(_CONTENT_TYPE), ShouldEqual, _CONTENT_BINARY)
 		So(resp.Body.String(), ShouldEqual, "hello there")
 
 		resp = httptest.NewRecorder()
@@ -502,7 +502,7 @@ func Test_Render_BinaryData(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusOK)
-		So(resp.Header().Get(ContentType), ShouldEqual, CONTENT_PLAIN)
+		So(resp.Header().Get(_CONTENT_TYPE), ShouldEqual, _CONTENT_PLAIN)
 		So(resp.Body.String(), ShouldEqual, "hello there")
 	})
 
@@ -510,7 +510,7 @@ func Test_Render_BinaryData(t *testing.T) {
 		m := Classic()
 		m.Use(Renderer())
 		m.Get("/foobar", func(r Render) {
-			r.RW().Header().Set(ContentType, "image/jpeg")
+			r.(*TplRender).ResponseWriter.Header().Set(_CONTENT_TYPE, "image/jpeg")
 			r.RawData(200, []byte("..jpeg data.."))
 		})
 
@@ -520,7 +520,7 @@ func Test_Render_BinaryData(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusOK)
-		So(resp.Header().Get(ContentType), ShouldEqual, "image/jpeg")
+		So(resp.Header().Get(_CONTENT_TYPE), ShouldEqual, "image/jpeg")
 		So(resp.Body.String(), ShouldEqual, "..jpeg data..")
 	})
 }
