@@ -207,7 +207,7 @@ func (m *Macaron) Run(args ...interface{}) {
 	}
 
 	addr := host + ":" + com.ToStr(port)
-	logger := m.Injector.GetVal(reflect.TypeOf(m.logger)).Interface().(*log.Logger)
+	logger := m.GetVal(reflect.TypeOf(m.logger)).Interface().(*log.Logger)
 	logger.Printf("listening on %s (%s)\n", addr, Env)
 	logger.Fatalln(http.ListenAndServe(addr, m))
 }
