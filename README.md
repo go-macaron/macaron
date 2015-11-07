@@ -82,7 +82,7 @@ There are already many [middlewares](https://github.com/go-macaron) to simplify 
 - [API Reference](https://gowalker.org/gopkg.in/macaron.v1)
 - [Documentation](http://go-macaron.com)
 - [FAQs](http://go-macaron.com/docs/faqs)
-- [![Join the chat at https://gitter.im/Unknwon/macaron](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Unknwon/macaron?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+- [![Join the chat at https://gitter.im/Unknwon/macaron](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/go-macaron/macaron?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Credits
 
@@ -91,4 +91,4 @@ There are already many [middlewares](https://github.com/go-macaron) to simplify 
 
 ## License
 
-This project is under Apache v2 License. See the [LICENSE](LICENSE) file for the full license text.
+This project is under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for the full license text.
