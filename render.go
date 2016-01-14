@@ -172,8 +172,13 @@ func NewTemplateFileSystem(opt RenderOptions, omitData bool) TplFileSystem {
 	fs := TplFileSystem{}
 	fs.files = make([]TemplateFile, 0, 10)
 
-	if err := filepath.Walk(opt.Directory, func(path string, info os.FileInfo, err error) error {
-		r, err := filepath.Rel(opt.Directory, path)
+	dir, err := filepath.EvalSymlinks(opt.Directory)
+	if err != nil {
+		return fs
+	}
+
+	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		r, err := filepath.Rel(dir, path)
 		if err != nil {
 			return err
 		}
