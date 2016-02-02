@@ -596,3 +596,84 @@ func (r *TplRender) SetTemplatePath(setName, dir string) {
 func (r *TplRender) HasTemplateSet(name string) bool {
 	return r.templateSet.Get(name) != nil
 }
+
+// dummyRender is used when user does not choose any real render to use.
+// This way, we can print out friendly message which asks them to register one,
+// instead of ugly and confusing 'nil pointer' panic.
+type dummyRender struct {
+	http.ResponseWriter
+}
+
+func renderNotRegistered() {
+	panic("middleware render hasn't been registered")
+}
+
+func (r *dummyRender) SetResponseWriter(http.ResponseWriter) {
+	renderNotRegistered()
+}
+
+func (r *dummyRender) JSON(int, interface{}) {
+	renderNotRegistered()
+}
+
+func (r *dummyRender) JSONString(interface{}) (string, error) {
+	renderNotRegistered()
+	return "", nil
+}
+
+func (r *dummyRender) RawData(int, []byte) {
+	renderNotRegistered()
+}
+
+func (r *dummyRender) PlainText(int, []byte) {
+	renderNotRegistered()
+}
+
+func (r *dummyRender) HTML(int, string, interface{}, ...HTMLOptions) {
+	renderNotRegistered()
+}
+
+func (r *dummyRender) HTMLSet(int, string, string, interface{}, ...HTMLOptions) {
+	renderNotRegistered()
+}
+
+func (r *dummyRender) HTMLSetString(string, string, interface{}, ...HTMLOptions) (string, error) {
+	renderNotRegistered()
+	return "", nil
+}
+
+func (r *dummyRender) HTMLString(string, interface{}, ...HTMLOptions) (string, error) {
+	renderNotRegistered()
+	return "", nil
+}
+
+func (r *dummyRender) HTMLSetBytes(string, string, interface{}, ...HTMLOptions) ([]byte, error) {
+	renderNotRegistered()
+	return nil, nil
+}
+
+func (r *dummyRender) HTMLBytes(string, interface{}, ...HTMLOptions) ([]byte, error) {
+	renderNotRegistered()
+	return nil, nil
+}
+
+func (r *dummyRender) XML(int, interface{}) {
+	renderNotRegistered()
+}
+
+func (r *dummyRender) Error(int, ...string) {
+	renderNotRegistered()
+}
+
+func (r *dummyRender) Status(int) {
+	renderNotRegistered()
+}
+
+func (r *dummyRender) SetTemplatePath(string, string) {
+	renderNotRegistered()
+}
+
+func (r *dummyRender) HasTemplateSet(string) bool {
+	renderNotRegistered()
+	return false
+}

@@ -599,3 +599,101 @@ func Test_GetExt(t *testing.T) {
 		So(GetExt("test.go.tmpl"), ShouldEqual, ".go.tmpl")
 	})
 }
+
+func Test_dummyRender(t *testing.T) {
+	shouldPanic := func() { So(recover(), ShouldNotBeNil) }
+
+	Convey("Use dummy render to gracefully handle panic", t, func() {
+		m := New()
+
+		performRequest := func(method, path string) {
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest(method, path, nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+		}
+
+		m.Get("/set_response_writer", func(ctx *Context) {
+			defer shouldPanic()
+			ctx.SetResponseWriter(nil)
+		})
+		m.Get("/json", func(ctx *Context) {
+			defer shouldPanic()
+			ctx.JSON(0, nil)
+		})
+		m.Get("/jsonstring", func(ctx *Context) {
+			defer shouldPanic()
+			ctx.JSONString(nil)
+		})
+		m.Get("/rawdata", func(ctx *Context) {
+			defer shouldPanic()
+			ctx.RawData(0, nil)
+		})
+		m.Get("/plaintext", func(ctx *Context) {
+			defer shouldPanic()
+			ctx.PlainText(0, nil)
+		})
+		m.Get("/html", func(ctx *Context) {
+			defer shouldPanic()
+			ctx.Render.HTML(0, "", nil)
+		})
+		m.Get("/htmlset", func(ctx *Context) {
+			defer shouldPanic()
+			ctx.Render.HTMLSet(0, "", "", nil)
+		})
+		m.Get("/htmlsetstring", func(ctx *Context) {
+			defer shouldPanic()
+			ctx.Render.HTMLSetString("", "", nil)
+		})
+		m.Get("/htmlstring", func(ctx *Context) {
+			defer shouldPanic()
+			ctx.Render.HTMLString("", nil)
+		})
+		m.Get("/htmlsetbytes", func(ctx *Context) {
+			defer shouldPanic()
+			ctx.Render.HTMLSetBytes("", "", nil)
+		})
+		m.Get("/htmlbytes", func(ctx *Context) {
+			defer shouldPanic()
+			ctx.Render.HTMLBytes("", nil)
+		})
+		m.Get("/xml", func(ctx *Context) {
+			defer shouldPanic()
+			ctx.XML(0, nil)
+		})
+		m.Get("/error", func(ctx *Context) {
+			defer shouldPanic()
+			ctx.Error(0)
+		})
+		m.Get("/status", func(ctx *Context) {
+			defer shouldPanic()
+			ctx.Status(0)
+		})
+		m.Get("/settemplatepath", func(ctx *Context) {
+			defer shouldPanic()
+			ctx.SetTemplatePath("", "")
+		})
+		m.Get("/hastemplateset", func(ctx *Context) {
+			defer shouldPanic()
+			ctx.HasTemplateSet("")
+		})
+
+		performRequest("GET", "/set_response_writer")
+		performRequest("GET", "/json")
+		performRequest("GET", "/jsonstring")
+		performRequest("GET", "/rawdata")
+		performRequest("GET", "/jsonstring")
+		performRequest("GET", "/plaintext")
+		performRequest("GET", "/html")
+		performRequest("GET", "/htmlset")
+		performRequest("GET", "/htmlsetstring")
+		performRequest("GET", "/htmlstring")
+		performRequest("GET", "/htmlsetbytes")
+		performRequest("GET", "/htmlbytes")
+		performRequest("GET", "/xml")
+		performRequest("GET", "/error")
+		performRequest("GET", "/status")
+		performRequest("GET", "/settemplatepath")
+		performRequest("GET", "/hastemplateset")
+	})
+}
