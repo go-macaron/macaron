@@ -84,7 +84,7 @@ type Context struct {
 	Req    Request
 	Resp   ResponseWriter
 	params Params
-	Render // Not nil only if you use macaran.Render middleware.
+	Render
 	Locale
 	Data map[string]interface{}
 }
@@ -145,9 +145,6 @@ func (ctx *Context) RemoteAddr() string {
 }
 
 func (ctx *Context) renderHTML(status int, setName, tplName string, data ...interface{}) {
-	if ctx.Render == nil {
-		panic("renderer middleware hasn't been registered")
-	}
 	if len(data) <= 0 {
 		ctx.Render.HTMLSet(status, setName, tplName, ctx.Data)
 	} else if len(data) == 1 {
