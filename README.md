@@ -5,7 +5,7 @@ Macaron [![Build Status](https://travis-ci.org/go-macaron/macaron.svg?branch=v1)
 
 Package macaron is a high productive and modular web framework in Go.
 
-##### Current version: 0.8.1
+##### Current version: 1.0.0
 
 ## Getting Started
 
