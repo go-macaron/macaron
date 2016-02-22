@@ -597,10 +597,10 @@ func (r *TplRender) HasTemplateSet(name string) bool {
 	return r.templateSet.Get(name) != nil
 }
 
-// dummyRender is used when user does not choose any real render to use.
+// DummyRender is used when user does not choose any real render to use.
 // This way, we can print out friendly message which asks them to register one,
 // instead of ugly and confusing 'nil pointer' panic.
-type dummyRender struct {
+type DummyRender struct {
 	http.ResponseWriter
 }
 
@@ -608,72 +608,72 @@ func renderNotRegistered() {
 	panic("middleware render hasn't been registered")
 }
 
-func (r *dummyRender) SetResponseWriter(http.ResponseWriter) {
+func (r *DummyRender) SetResponseWriter(http.ResponseWriter) {
 	renderNotRegistered()
 }
 
-func (r *dummyRender) JSON(int, interface{}) {
+func (r *DummyRender) JSON(int, interface{}) {
 	renderNotRegistered()
 }
 
-func (r *dummyRender) JSONString(interface{}) (string, error) {
-	renderNotRegistered()
-	return "", nil
-}
-
-func (r *dummyRender) RawData(int, []byte) {
-	renderNotRegistered()
-}
-
-func (r *dummyRender) PlainText(int, []byte) {
-	renderNotRegistered()
-}
-
-func (r *dummyRender) HTML(int, string, interface{}, ...HTMLOptions) {
-	renderNotRegistered()
-}
-
-func (r *dummyRender) HTMLSet(int, string, string, interface{}, ...HTMLOptions) {
-	renderNotRegistered()
-}
-
-func (r *dummyRender) HTMLSetString(string, string, interface{}, ...HTMLOptions) (string, error) {
+func (r *DummyRender) JSONString(interface{}) (string, error) {
 	renderNotRegistered()
 	return "", nil
 }
 
-func (r *dummyRender) HTMLString(string, interface{}, ...HTMLOptions) (string, error) {
+func (r *DummyRender) RawData(int, []byte) {
+	renderNotRegistered()
+}
+
+func (r *DummyRender) PlainText(int, []byte) {
+	renderNotRegistered()
+}
+
+func (r *DummyRender) HTML(int, string, interface{}, ...HTMLOptions) {
+	renderNotRegistered()
+}
+
+func (r *DummyRender) HTMLSet(int, string, string, interface{}, ...HTMLOptions) {
+	renderNotRegistered()
+}
+
+func (r *DummyRender) HTMLSetString(string, string, interface{}, ...HTMLOptions) (string, error) {
 	renderNotRegistered()
 	return "", nil
 }
 
-func (r *dummyRender) HTMLSetBytes(string, string, interface{}, ...HTMLOptions) ([]byte, error) {
+func (r *DummyRender) HTMLString(string, interface{}, ...HTMLOptions) (string, error) {
+	renderNotRegistered()
+	return "", nil
+}
+
+func (r *DummyRender) HTMLSetBytes(string, string, interface{}, ...HTMLOptions) ([]byte, error) {
 	renderNotRegistered()
 	return nil, nil
 }
 
-func (r *dummyRender) HTMLBytes(string, interface{}, ...HTMLOptions) ([]byte, error) {
+func (r *DummyRender) HTMLBytes(string, interface{}, ...HTMLOptions) ([]byte, error) {
 	renderNotRegistered()
 	return nil, nil
 }
 
-func (r *dummyRender) XML(int, interface{}) {
+func (r *DummyRender) XML(int, interface{}) {
 	renderNotRegistered()
 }
 
-func (r *dummyRender) Error(int, ...string) {
+func (r *DummyRender) Error(int, ...string) {
 	renderNotRegistered()
 }
 
-func (r *dummyRender) Status(int) {
+func (r *DummyRender) Status(int) {
 	renderNotRegistered()
 }
 
-func (r *dummyRender) SetTemplatePath(string, string) {
+func (r *DummyRender) SetTemplatePath(string, string) {
 	renderNotRegistered()
 }
 
-func (r *dummyRender) HasTemplateSet(string) bool {
+func (r *DummyRender) HasTemplateSet(string) bool {
 	renderNotRegistered()
 	return false
 }
