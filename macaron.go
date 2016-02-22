@@ -31,7 +31,7 @@ import (
 	"github.com/go-macaron/inject"
 )
 
-const _VERSION = "1.0.0.0202"
+const _VERSION = "1.0.1.0221"
 
 func Version() string {
 	return _VERSION
@@ -151,7 +151,7 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 		Router:   m.Router,
 		Req:      Request{req},
 		Resp:     NewResponseWriter(rw),
-		Render:   &dummyRender{rw},
+		Render:   &DummyRender{rw},
 		Data:     make(map[string]interface{}),
 	}
 	c.SetParent(m)
