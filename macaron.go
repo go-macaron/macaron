@@ -24,6 +24,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 
 	"github.com/Unknwon/com"
 	"gopkg.in/ini.v1"
@@ -31,7 +32,7 @@ import (
 	"github.com/go-macaron/inject"
 )
 
-const _VERSION = "1.0.1.0221"
+const _VERSION = "1.1.0.0312"
 
 func Version() string {
 	return _VERSION
@@ -209,7 +210,7 @@ func (m *Macaron) Run(args ...interface{}) {
 
 	addr := host + ":" + com.ToStr(port)
 	logger := m.GetVal(reflect.TypeOf(m.logger)).Interface().(*log.Logger)
-	logger.Printf("listening on %s (%s)\n", addr, Env)
+	logger.Printf("listening on %s (%s)\n", addr, safeEnv())
 	logger.Fatalln(http.ListenAndServe(addr, m))
 }
 
@@ -235,7 +236,8 @@ const (
 var (
 	// Env is the environment that Macaron is executing in.
 	// The MACARON_ENV is read on initialization to set this variable.
-	Env = DEV
+	Env     = DEV
+	envLock sync.Mutex
 
 	// Path of work directory.
 	Root string
@@ -248,9 +250,19 @@ var (
 )
 
 func setENV(e string) {
+	envLock.Lock()
+	defer envLock.Unlock()
+
 	if len(e) > 0 {
 		Env = e
 	}
+}
+
+func safeEnv() string {
+	envLock.Lock()
+	defer envLock.Unlock()
+
+	return Env
 }
 
 func init() {
