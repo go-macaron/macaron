@@ -195,7 +195,6 @@ func NewTemplateFileSystem(opt RenderOptions, omitData bool) TplFileSystem {
 			panic("EvalSymlinks(" + dirs[i] + "): " + err.Error())
 		}
 	}
-	fmt.Println(dirs)
 	lastDir := dirs[len(dirs)-1]
 
 	// We still walk the last (original) directory because it's non-sense we load templates not exist in original directory.
