@@ -592,6 +592,45 @@ func Test_Render_Symlink(t *testing.T) {
 	})
 }
 
+func Test_Render_AppendDirectories(t *testing.T) {
+	Convey("Render with additional templates", t, func() {
+		m := Classic()
+		m.Use(Renderer(RenderOptions{
+			Directory:         "fixtures/basic",
+			AppendDirectories: []string{"fixtures/basic/custom"},
+		}))
+
+		Convey("Request normal template", func() {
+			m.Get("/normal", func(r Render) {
+				r.HTML(200, "content", "Macaron")
+			})
+
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "/normal", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+
+			So(resp.Body.String(), ShouldEqual, "<h1>Macaron</h1>")
+			So(resp.Code, ShouldEqual, http.StatusOK)
+		})
+
+		Convey("Request overwritten template", func() {
+			m.Get("/custom", func(r Render) {
+				r.HTML(200, "hello", "world")
+			})
+
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "/custom", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp, req)
+
+			So(resp.Body.String(), ShouldEqual, "<h1>This is custom version of: Hello world</h1>")
+			So(resp.Code, ShouldEqual, http.StatusOK)
+		})
+
+	})
+}
+
 func Test_GetExt(t *testing.T) {
 	Convey("Get extension", t, func() {
 		So(GetExt("test"), ShouldBeBlank)
