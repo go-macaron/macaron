@@ -350,6 +350,13 @@ func (ctx *Context) SetCookie(name string, value string, others ...interface{}) 
 		}
 	}
 
+	if len(others) > 5 {
+		if v, ok := others[5].(time.Time); ok {
+			cookie.Expires = v
+			cookie.RawExpires = v.Format(time.UnixDate)
+		}
+	}
+
 	ctx.Resp.Header().Add("Set-Cookie", cookie.String())
 }
 
