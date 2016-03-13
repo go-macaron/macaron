@@ -180,7 +180,7 @@ func Test_Context(t *testing.T) {
 
 		Convey("Set and get cookie", func() {
 			m.Get("/set", func(ctx *Context) {
-				t, err := time.Parse(time.RFC1123, "Sun, 13 Mar 2016 01:29:26 GMT")
+				t, err := time.Parse(time.RFC1123, "Sun, 13 Mar 2016 01:29:26 UTC")
 				So(err, ShouldBeNil)
 				ctx.SetCookie("user", "Unknwon", 1, "/", "localhost", true, true, t)
 				ctx.SetCookie("user", "Unknwon", int32(1), "/", "localhost", 1)
