@@ -180,7 +180,9 @@ func Test_Context(t *testing.T) {
 
 		Convey("Set and get cookie", func() {
 			m.Get("/set", func(ctx *Context) {
-				ctx.SetCookie("user", "Unknwon", 1, "/", "localhost", true, true)
+				t, err := time.Parse(time.RFC1123, "Sun, 13 Mar 2016 01:29:26 GMT")
+				So(err, ShouldBeNil)
+				ctx.SetCookie("user", "Unknwon", 1, "/", "localhost", true, true, t)
 				ctx.SetCookie("user", "Unknwon", int32(1), "/", "localhost", 1)
 				ctx.SetCookie("user", "Unknwon", int64(1))
 			})
@@ -189,7 +191,7 @@ func Test_Context(t *testing.T) {
 			req, err := http.NewRequest("GET", "/set", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Header().Get("Set-Cookie"), ShouldEqual, "user=Unknwon; Path=/; Domain=localhost; Max-Age=1; HttpOnly; Secure")
+			So(resp.Header().Get("Set-Cookie"), ShouldEqual, "user=Unknwon; Path=/; Domain=localhost; Expires=Sun, 13 Mar 2016 01:29:26 GMT; Max-Age=1; HttpOnly; Secure")
 
 			m.Get("/get", func(ctx *Context) string {
 				ctx.GetCookie("404")
