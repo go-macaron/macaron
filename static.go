@@ -177,7 +177,7 @@ func staticHandler(ctx *Context, log *log.Logger, opt StaticOptions) bool {
 }
 
 // Static returns a middleware handler that serves static files in the given directory.
-func Static(directory string, staticOpt ...StaticOptions) Handler {
+func Static(directory string, staticOpt ...StaticOptions) LoggerHandler {
 	opt := prepareStaticOptions(directory, staticOpt)
 
 	return func(ctx *Context, log *log.Logger) {
@@ -186,7 +186,7 @@ func Static(directory string, staticOpt ...StaticOptions) Handler {
 }
 
 // Statics registers multiple static middleware handlers all at once.
-func Statics(opt StaticOptions, dirs ...string) Handler {
+func Statics(opt StaticOptions, dirs ...string) LoggerHandler {
 	if len(dirs) == 0 {
 		panic("no static directory is given")
 	}

@@ -18,10 +18,18 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+type r1Handler func() (int, string)
+
+func (l r1Handler) Invoke(p []interface{}) ([]reflect.Value, error) {
+	ret, str := l()
+	return []reflect.Value{reflect.ValueOf(ret), reflect.ValueOf(str)}, nil
+}
 
 func Test_Return_Handler(t *testing.T) {
 	Convey("Return with status and body", t, func() {
@@ -29,6 +37,21 @@ func Test_Return_Handler(t *testing.T) {
 		m.Get("/", func() (int, string) {
 			return 418, "i'm a teapot"
 		})
+
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Code, ShouldEqual, http.StatusTeapot)
+		So(resp.Body.String(), ShouldEqual, "i'm a teapot")
+	})
+
+	Convey("Return with status and body-FastInvoke", t, func() {
+		m := New()
+		m.Get("/", r1Handler(func() (int, string) {
+			return 418, "i'm a teapot"
+		}))
 
 		resp := httptest.NewRecorder()
 		req, err := http.NewRequest("GET", "/", nil)

@@ -46,7 +46,7 @@ type Handler interface{}
 // validateHandler makes sure a handler is a callable function,
 // and panics if it is not.
 func validateHandler(h Handler) {
-	if reflect.TypeOf(h).Kind() != reflect.Func {
+	if reflect.TypeOf(h).Kind() != reflect.Func && !inject.IsFastInvoker(h) {
 		panic("Macaron handler must be a callable function")
 	}
 }

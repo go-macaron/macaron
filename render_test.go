@@ -587,7 +587,6 @@ func Test_Render_Symlink(t *testing.T) {
 		req, err := http.NewRequest("GET", "/foobar", nil)
 		So(err, ShouldBeNil)
 		m.ServeHTTP(resp, req)
-
 		So(resp.Code, ShouldEqual, http.StatusOK)
 	})
 }
