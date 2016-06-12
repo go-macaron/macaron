@@ -43,7 +43,7 @@ func (l LoggerHandler) Invoke(p []interface{}) ([]reflect.Value, error) {
 }
 
 // Logger returns a middleware handler that logs the request as it goes in and the response as it goes out.
-func Logger() LoggerHandler {
+func Logger() Handler {
 	return func(ctx *Context, log *log.Logger) {
 		start := time.Now()
 
