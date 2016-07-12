@@ -43,20 +43,20 @@ func Version() string {
 // and panics if an argument could not be fullfilled via dependency injection.
 type Handler interface{}
 
-// handlerFuncHandler func(http.ResponseWriter, *http.Request) Handler
-type handlerFuncHandler func(http.ResponseWriter, *http.Request)
+// handlerFuncInvoker func(http.ResponseWriter, *http.Request) Invoker Handler
+type handlerFuncInvoker func(http.ResponseWriter, *http.Request)
 
-// Invoke handlerFuncHandler
-func (l handlerFuncHandler) Invoke(p []interface{}) ([]reflect.Value, error) {
+// Invoke handlerFuncInvoker
+func (l handlerFuncInvoker) Invoke(p []interface{}) ([]reflect.Value, error) {
 	l(p[0].(http.ResponseWriter), p[1].(*http.Request))
 	return nil, nil
 }
 
-// internalServerErrorHandler internalServerError Handler
-type internalServerErrorHandler func(rw http.ResponseWriter, err error)
+// internalServerErrorInvoker internalServerError Invoker Handler
+type internalServerErrorInvoker func(rw http.ResponseWriter, err error)
 
-// Invoke internalServerErrorHandler
-func (l internalServerErrorHandler) Invoke(p []interface{}) ([]reflect.Value, error) {
+// Invoke internalServerErrorInvoker
+func (l internalServerErrorInvoker) Invoke(p []interface{}) ([]reflect.Value, error) {
 	l(p[0].(http.ResponseWriter), p[1].(error))
 	return nil, nil
 }
@@ -71,13 +71,13 @@ func validateWrapHandler(h Handler) Handler {
 	if !inject.IsFastInvoker(h) {
 		switch v := h.(type) {
 		case func(*Context):
-			return ContextHandler(v)
+			return ContextInvoker(v)
 		case func(*Context, *log.Logger):
-			return LoggerHandler(v)
+			return LoggerInvoker(v)
 		case func(http.ResponseWriter, *http.Request):
-			return handlerFuncHandler(v)
+			return handlerFuncInvoker(v)
 		case func(http.ResponseWriter, error):
-			return internalServerErrorHandler(v)
+			return internalServerErrorInvoker(v)
 		}
 	}
 	return h

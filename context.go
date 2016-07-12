@@ -72,11 +72,11 @@ func (r *Request) Body() *RequestBody {
 	return &RequestBody{r.Request.Body}
 }
 
-// ContextHandler Context Handler
-type ContextHandler func(ctx *Context)
+// ContextInvoker Context Invoker Handler
+type ContextInvoker func(ctx *Context)
 
-// Invoke ContextHandler
-func (l ContextHandler) Invoke(p []interface{}) ([]reflect.Value, error) {
+// Invoke ContextInvoker
+func (l ContextInvoker) Invoke(p []interface{}) ([]reflect.Value, error) {
 	l(p[0].(*Context))
 	return nil, nil
 }

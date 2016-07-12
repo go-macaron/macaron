@@ -52,7 +52,7 @@ func Test_Context(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(data, ShouldEqual, "This is my request body")
 			})
-			m.Get("/body4", ContextHandler(func(ctx *Context) {
+			m.Get("/body4", ContextInvoker(func(ctx *Context) {
 				data, err := ctx.Req.Body().String()
 				So(err, ShouldBeNil)
 				So(data, ShouldEqual, "This is my request body")
@@ -336,7 +336,7 @@ func Test_Context_Render(t *testing.T) {
 		So(err, ShouldBeNil)
 		m.ServeHTTP(resp, req)
 
-		m.Get("/f", ContextHandler(func(ctx *Context) {
+		m.Get("/f", ContextInvoker(func(ctx *Context) {
 			ctx.HTML(200, "hey")
 		}))
 		req, err = http.NewRequest("GET", "/f", nil)

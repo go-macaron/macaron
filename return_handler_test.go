@@ -24,9 +24,9 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-type r1Handler func() (int, string)
+type r1Invoker func() (int, string)
 
-func (l r1Handler) Invoke(p []interface{}) ([]reflect.Value, error) {
+func (l r1Invoker) Invoke(p []interface{}) ([]reflect.Value, error) {
 	ret, str := l()
 	return []reflect.Value{reflect.ValueOf(ret), reflect.ValueOf(str)}, nil
 }
@@ -49,7 +49,7 @@ func Test_Return_Handler(t *testing.T) {
 
 	Convey("Return with status and body-FastInvoke", t, func() {
 		m := New()
-		m.Get("/", r1Handler(func() (int, string) {
+		m.Get("/", r1Invoker(func() (int, string) {
 			return 418, "i'm a teapot"
 		}))
 

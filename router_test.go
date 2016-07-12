@@ -18,14 +18,43 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func Test_Router_Handle(t *testing.T) {
+	test_Router_Handle(t, false)
+}
+func Test_Router_FastInvoker_Handle(t *testing.T) {
+	test_Router_Handle(t, true)
+}
+
+// handlerFunc0Invoker func()string Invoker Handler
+type handlerFunc0Invoker func() string
+
+// Invoke handlerFunc0Invoker
+func (l handlerFunc0Invoker) Invoke(p []interface{}) ([]reflect.Value, error) {
+	ret := l()
+	return []reflect.Value{reflect.ValueOf(ret)}, nil
+}
+
+func test_Router_Handle(t *testing.T, isFast bool) {
 	Convey("Register all HTTP methods routes", t, func() {
 		m := New()
+
+		if isFast {
+			// FastInvoker Handler Wrap Action
+			m.Router.HandlerWrapAction(func(h Handler) Handler {
+				switch v := h.(type) {
+				case func() string:
+					return handlerFunc0Invoker(v)
+				}
+				return h
+			})
+		}
+
 		m.Get("/get", func() string {
 			return "GET"
 		})
@@ -106,6 +135,11 @@ func Test_Router_Handle(t *testing.T) {
 		So(err, ShouldBeNil)
 		m.ServeHTTP(resp, req)
 		So(resp.Body.String(), ShouldEqual, "ROUTE")
+
+		if isFast {
+			//remove Handler Wrap Action
+			m.Router.HandlerWrapAction(nil)
+		}
 	})
 
 	Convey("Register with or without auto head", t, func() {

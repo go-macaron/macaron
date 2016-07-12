@@ -83,6 +83,7 @@ type Router struct {
 	notFound            http.HandlerFunc
 	internalServerError func(*Context, error)
 
+	//wrap function Handler to FastInvoker Handler
 	handlerWrapAction func(Handler) Handler
 }
 
@@ -279,6 +280,7 @@ func (r *Router) InternalServerError(handlers ...Handler) {
 }
 
 // HandlerWrapAction Set HandlerWrap Action
+// 	f func try wrap function Handler to FastInvoker Handler
 func (r *Router) HandlerWrapAction(f func(Handler) Handler) {
 	r.handlerWrapAction = f
 }
