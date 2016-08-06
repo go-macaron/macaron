@@ -218,6 +218,12 @@ func (ctx *Context) QueryEscape(name string) string {
 	return template.HTMLEscapeString(ctx.Query(name))
 }
 
+// QueryBool returns query result in bool type.
+func (ctx *Context) QueryBool(name string) bool {
+	v, _ := strconv.ParseBool(ctx.Query(name))
+	return v
+}
+
 // QueryInt returns query result in int type.
 func (ctx *Context) QueryInt(name string) int {
 	return com.StrTo(ctx.Query(name)).MustInt()
