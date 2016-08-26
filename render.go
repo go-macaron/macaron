@@ -561,7 +561,9 @@ func (r *TplRender) renderHTML(status int, setName, tplName string, data interfa
 	r.Header().Set(_CONTENT_TYPE, r.Opt.HTMLContentType+r.CompiledCharset)
 	r.WriteHeader(status)
 
-	out.WriteTo(r)
+	if _, err := out.WriteTo(r); err != nil {
+		out.Reset()
+	}
 	bufpool.Put(out)
 }
 
