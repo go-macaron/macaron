@@ -499,6 +499,15 @@ func (ctx *Context) ServeFile(file string, names ...string) {
 	ctx.Resp.Header().Set("Expires", "0")
 	ctx.Resp.Header().Set("Cache-Control", "must-revalidate")
 	ctx.Resp.Header().Set("Pragma", "public")
+
+	if ctx.Resp.Header().Get("Content-Encoding") != "" {
+		data, _ := os.Open(name)
+		header := make([]byte, 512)
+		data.Read(header)
+		stat, _ := data.Stat()
+		ctx.Resp.Header().Set("Content-Length", strconv.FormatInt(stat.Size(), 10))
+	}
+
 	http.ServeFile(ctx.Resp, ctx.Req.Request, file)
 }
 
