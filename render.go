@@ -285,24 +285,25 @@ func compile(opt RenderOptions) *template.Template {
 }
 
 const (
-	_DEFAULT_TPL_SET_NAME = "DEFAULT"
+	DEFAULT_TPL_SET_NAME = "DEFAULT"
 )
 
-// templateSet represents a template set of type *template.Template.
-type templateSet struct {
+// TemplateSet represents a template set of type *template.Template.
+type TemplateSet struct {
 	lock sync.RWMutex
 	sets map[string]*template.Template
 	dirs map[string]string
 }
 
-func newTemplateSet() *templateSet {
-	return &templateSet{
+// NewTemplateSet initializes a new empty template set.
+func NewTemplateSet() *TemplateSet {
+	return &TemplateSet{
 		sets: make(map[string]*template.Template),
 		dirs: make(map[string]string),
 	}
 }
 
-func (ts *templateSet) Set(name string, opt *RenderOptions) *template.Template {
+func (ts *TemplateSet) Set(name string, opt *RenderOptions) *template.Template {
 	t := compile(*opt)
 
 	ts.lock.Lock()
@@ -313,14 +314,14 @@ func (ts *templateSet) Set(name string, opt *RenderOptions) *template.Template {
 	return t
 }
 
-func (ts *templateSet) Get(name string) *template.Template {
+func (ts *TemplateSet) Get(name string) *template.Template {
 	ts.lock.RLock()
 	defer ts.lock.RUnlock()
 
 	return ts.sets[name]
 }
 
-func (ts *templateSet) GetDir(name string) string {
+func (ts *TemplateSet) GetDir(name string) string {
 	ts.lock.RLock()
 	defer ts.lock.RUnlock()
 
@@ -369,8 +370,8 @@ func ParseTplSet(tplSet string) (tplName string, tplDir string) {
 
 func renderHandler(opt RenderOptions, tplSets []string) Handler {
 	cs := PrepareCharset(opt.Charset)
-	ts := newTemplateSet()
-	ts.Set(_DEFAULT_TPL_SET_NAME, &opt)
+	ts := NewTemplateSet()
+	ts.Set(DEFAULT_TPL_SET_NAME, &opt)
 
 	var tmpOpt RenderOptions
 	for _, tplSet := range tplSets {
@@ -383,7 +384,7 @@ func renderHandler(opt RenderOptions, tplSets []string) Handler {
 	return func(ctx *Context) {
 		r := &TplRender{
 			ResponseWriter:  ctx.Resp,
-			templateSet:     ts,
+			TemplateSet:     ts,
 			Opt:             &opt,
 			CompiledCharset: cs,
 		}
@@ -416,7 +417,7 @@ func Renderers(options RenderOptions, tplSets ...string) Handler {
 
 type TplRender struct {
 	http.ResponseWriter
-	*templateSet
+	*TemplateSet
 	Opt             *RenderOptions
 	CompiledCharset string
 
@@ -523,11 +524,11 @@ func (r *TplRender) addYield(t *template.Template, tplName string, data interfac
 }
 
 func (r *TplRender) renderBytes(setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) (*bytes.Buffer, error) {
-	t := r.templateSet.Get(setName)
+	t := r.TemplateSet.Get(setName)
 	if Env == DEV {
 		opt := *r.Opt
-		opt.Directory = r.templateSet.GetDir(setName)
-		t = r.templateSet.Set(setName, &opt)
+		opt.Directory = r.TemplateSet.GetDir(setName)
+		t = r.TemplateSet.Set(setName, &opt)
 	}
 	if t == nil {
 		return nil, fmt.Errorf("html/template: template \"%s\" is undefined", tplName)
@@ -560,12 +561,14 @@ func (r *TplRender) renderHTML(status int, setName, tplName string, data interfa
 	r.Header().Set(_CONTENT_TYPE, r.Opt.HTMLContentType+r.CompiledCharset)
 	r.WriteHeader(status)
 
-	out.WriteTo(r)
+	if _, err := out.WriteTo(r); err != nil {
+		out.Reset()
+	}
 	bufpool.Put(out)
 }
 
 func (r *TplRender) HTML(status int, name string, data interface{}, htmlOpt ...HTMLOptions) {
-	r.renderHTML(status, _DEFAULT_TPL_SET_NAME, name, data, htmlOpt...)
+	r.renderHTML(status, DEFAULT_TPL_SET_NAME, name, data, htmlOpt...)
 }
 
 func (r *TplRender) HTMLSet(status int, setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) {
@@ -581,7 +584,7 @@ func (r *TplRender) HTMLSetBytes(setName, tplName string, data interface{}, html
 }
 
 func (r *TplRender) HTMLBytes(name string, data interface{}, htmlOpt ...HTMLOptions) ([]byte, error) {
-	return r.HTMLSetBytes(_DEFAULT_TPL_SET_NAME, name, data, htmlOpt...)
+	return r.HTMLSetBytes(DEFAULT_TPL_SET_NAME, name, data, htmlOpt...)
 }
 
 func (r *TplRender) HTMLSetString(setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) (string, error) {
@@ -618,15 +621,15 @@ func (r *TplRender) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {
 
 func (r *TplRender) SetTemplatePath(setName, dir string) {
 	if len(setName) == 0 {
-		setName = _DEFAULT_TPL_SET_NAME
+		setName = DEFAULT_TPL_SET_NAME
 	}
 	opt := *r.Opt
 	opt.Directory = dir
-	r.templateSet.Set(setName, &opt)
+	r.TemplateSet.Set(setName, &opt)
 }
 
 func (r *TplRender) HasTemplateSet(name string) bool {
-	return r.templateSet.Get(name) != nil
+	return r.TemplateSet.Get(name) != nil
 }
 
 // DummyRender is used when user does not choose any real render to use.

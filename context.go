@@ -165,7 +165,7 @@ func (ctx *Context) renderHTML(status int, setName, tplName string, data ...inte
 
 // HTML calls Render.HTML but allows less arguments.
 func (ctx *Context) HTML(status int, name string, data ...interface{}) {
-	ctx.renderHTML(status, _DEFAULT_TPL_SET_NAME, name, data...)
+	ctx.renderHTML(status, DEFAULT_TPL_SET_NAME, name, data...)
 }
 
 // HTML calls Render.HTMLSet but allows less arguments.
@@ -225,6 +225,12 @@ func (ctx *Context) QueryStrings(name string) []string {
 // QueryEscape returns escapred query result.
 func (ctx *Context) QueryEscape(name string) string {
 	return template.HTMLEscapeString(ctx.Query(name))
+}
+
+// QueryBool returns query result in bool type.
+func (ctx *Context) QueryBool(name string) bool {
+	v, _ := strconv.ParseBool(ctx.Query(name))
+	return v
 }
 
 // QueryInt returns query result in int type.

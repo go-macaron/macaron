@@ -125,6 +125,7 @@ func Test_Context(t *testing.T) {
 				var buf bytes.Buffer
 				buf.WriteString(ctx.QueryTrim("name") + " ")
 				buf.WriteString(ctx.QueryEscape("name") + " ")
+				buf.WriteString(com.ToStr(ctx.QueryBool("bool")) + " ")
 				buf.WriteString(com.ToStr(ctx.QueryInt("int")) + " ")
 				buf.WriteString(com.ToStr(ctx.QueryInt64("int64")) + " ")
 				buf.WriteString(com.ToStr(ctx.QueryFloat64("float64")) + " ")
@@ -138,10 +139,10 @@ func Test_Context(t *testing.T) {
 			})
 
 			resp := httptest.NewRecorder()
-			req, err := http.NewRequest("GET", "/query?name=Unknwon&int=12&int64=123&float64=1.25", nil)
+			req, err := http.NewRequest("GET", "/query?name=Unknwon&bool=t&int=12&int64=123&float64=1.25", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, "Unknwon Unknwon 12 123 1.25 ")
+			So(resp.Body.String(), ShouldEqual, "Unknwon Unknwon true 12 123 1.25 ")
 
 			resp = httptest.NewRecorder()
 			req, err = http.NewRequest("GET", "/query2?list=item1&list=item2", nil)
@@ -292,7 +293,7 @@ func Test_Context(t *testing.T) {
 			req, err = http.NewRequest("GET", "/file3", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldStartWith, "open 404.tmpl:")
+			So(resp.Body.String(), ShouldEqual, "open 404.tmpl: no such file or directory\n")
 			So(resp.Code, ShouldEqual, 500)
 		})
 

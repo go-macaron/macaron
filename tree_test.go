@@ -27,13 +27,13 @@ func Test_getWildcards(t *testing.T) {
 		wildcards string
 	}
 	cases := map[string]result{
-		"admin":                         result{"admin", ""},
-		":id":                           result{"(.+)", ":id"},
-		":id:int":                       result{"([0-9]+)", ":id"},
-		":id([0-9]+)":                   result{"([0-9]+)", ":id"},
-		":id([0-9]+)_:name":             result{"([0-9]+)_(.+)", ":id :name"},
-		"cms_:id_:page.html":            result{"cms_(.+)_(.+).html", ":id :page"},
-		"cms_:id:int_:page:string.html": result{"cms_([0-9]+)_([\\w]+).html", ":id :page"},
+		"admin":                             result{"admin", ""},
+		":id":                               result{"(.+)", ":id"},
+		":id:int":                           result{"([0-9]+)", ":id"},
+		":id([0-9]+)":                       result{"([0-9]+)", ":id"},
+		":id([0-9]+)_:name":                 result{"([0-9]+)_(.+)", ":id :name"},
+		"article_:id_:page.html":            result{"article_(.+)_(.+).html", ":id :page"},
+		"article_:id:int_:page:string.html": result{"article_([0-9]+)_([\\w]+).html", ":id :page"},
 		"*":   result{"*", ""},
 		"*.*": result{"*.*", ""},
 	}
@@ -48,14 +48,14 @@ func Test_getWildcards(t *testing.T) {
 
 func Test_getRawPattern(t *testing.T) {
 	cases := map[string]string{
-		"admin":                              "admin",
-		":id":                                ":id",
-		":id:int":                            ":id",
-		":id([0-9]+)":                        ":id",
-		":id([0-9]+)_:name":                  ":id_:name",
-		"cms_:id_:page.html":                 "cms_:id_:page.html",
-		"cms_:id:int_:page:string.html":      "cms_:id_:page.html",
-		"cms_:id([0-9]+)_:page([\\w]+).html": "cms_:id_:page.html",
+		"admin":                                  "admin",
+		":id":                                    ":id",
+		":id:int":                                ":id",
+		":id([0-9]+)":                            ":id",
+		":id([0-9]+)_:name":                      ":id_:name",
+		"article_:id_:page.html":                 "article_:id_:page.html",
+		"article_:id:int_:page:string.html":      "article_:id_:page.html",
+		"article_:id([0-9]+)_:page([\\w]+).html": "article_:id_:page.html",
 		"*":   "*",
 		"*.*": "*.*",
 	}

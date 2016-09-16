@@ -528,21 +528,21 @@ func Test_Render_BinaryData(t *testing.T) {
 func Test_Render_Status(t *testing.T) {
 	Convey("Render with status 204", t, func() {
 		resp := httptest.NewRecorder()
-		r := TplRender{resp, newTemplateSet(), &RenderOptions{}, "", time.Now()}
+		r := TplRender{resp, NewTemplateSet(), &RenderOptions{}, "", time.Now()}
 		r.Status(204)
 		So(resp.Code, ShouldEqual, http.StatusNoContent)
 	})
 
 	Convey("Render with status 404", t, func() {
 		resp := httptest.NewRecorder()
-		r := TplRender{resp, newTemplateSet(), &RenderOptions{}, "", time.Now()}
+		r := TplRender{resp, NewTemplateSet(), &RenderOptions{}, "", time.Now()}
 		r.Error(404)
 		So(resp.Code, ShouldEqual, http.StatusNotFound)
 	})
 
 	Convey("Render with status 500", t, func() {
 		resp := httptest.NewRecorder()
-		r := TplRender{resp, newTemplateSet(), &RenderOptions{}, "", time.Now()}
+		r := TplRender{resp, NewTemplateSet(), &RenderOptions{}, "", time.Now()}
 		r.Error(500)
 		So(resp.Code, ShouldEqual, http.StatusInternalServerError)
 	})
