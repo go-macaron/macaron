@@ -52,8 +52,13 @@ func Test_Context(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(data, ShouldEqual, "This is my request body")
 			})
+			m.Get("/body4", ContextInvoker(func(ctx *Context) {
+				data, err := ctx.Req.Body().String()
+				So(err, ShouldBeNil)
+				So(data, ShouldEqual, "This is my request body")
+			}))
 
-			for i := 1; i <= 3; i++ {
+			for i := 1; i <= 4; i++ {
 				resp := httptest.NewRecorder()
 				req, err := http.NewRequest("GET", "/body"+com.ToStr(i), nil)
 				req.Body = ioutil.NopCloser(bytes.NewBufferString("This is my request body"))
@@ -323,12 +328,19 @@ func Test_Context_Render(t *testing.T) {
 		}()
 
 		m := New()
+
 		m.Get("/", func(ctx *Context) {
 			ctx.HTML(200, "hey")
 		})
-
 		resp := httptest.NewRecorder()
 		req, err := http.NewRequest("GET", "/", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		m.Get("/f", ContextInvoker(func(ctx *Context) {
+			ctx.HTML(200, "hey")
+		}))
+		req, err = http.NewRequest("GET", "/f", nil)
 		So(err, ShouldBeNil)
 		m.ServeHTTP(resp, req)
 	})

@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"reflect"
 	"runtime"
 	"time"
 )
@@ -30,6 +31,15 @@ var (
 
 func init() {
 	ColorLog = runtime.GOOS != "windows"
+}
+
+// LoggerInvoker Context Logger Invoker Handler
+type LoggerInvoker func(ctx *Context, log *log.Logger)
+
+// Invoke LoggerInvoker
+func (l LoggerInvoker) Invoke(p []interface{}) ([]reflect.Value, error) {
+	l(p[0].(*Context), p[1].(*log.Logger))
+	return nil, nil
 }
 
 // Logger returns a middleware handler that logs the request as it goes in and the response as it goes out.

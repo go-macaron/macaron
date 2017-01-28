@@ -72,6 +72,15 @@ func (r *Request) Body() *RequestBody {
 	return &RequestBody{r.Request.Body}
 }
 
+// ContextInvoker Context Invoker Handler
+type ContextInvoker func(ctx *Context)
+
+// Invoke ContextInvoker
+func (l ContextInvoker) Invoke(p []interface{}) ([]reflect.Value, error) {
+	l(p[0].(*Context))
+	return nil, nil
+}
+
 // Context represents the runtime context of current request of Macaron instance.
 // It is the integration of most frequently used middlewares and helper methods.
 type Context struct {
