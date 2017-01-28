@@ -33,12 +33,11 @@ func init() {
 	ColorLog = runtime.GOOS != "windows"
 }
 
-// LoggerInvoker Context Logger Invoker Handler
+// LoggerInvoker is an inject.FastInvoker wrapper of func(ctx *Context, log *log.Logger).
 type LoggerInvoker func(ctx *Context, log *log.Logger)
 
-// Invoke LoggerInvoker
-func (l LoggerInvoker) Invoke(p []interface{}) ([]reflect.Value, error) {
-	l(p[0].(*Context), p[1].(*log.Logger))
+func (invoke LoggerInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
+	invoke(params[0].(*Context), params[1].(*log.Logger))
 	return nil, nil
 }
 

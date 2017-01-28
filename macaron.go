@@ -32,8 +32,7 @@ import (
 	"github.com/go-macaron/inject"
 )
 
-const _VERSION = "1.1.12.0122"
-
+const _VERSION = "1.2.0.0128"
 
 func Version() string {
 	return _VERSION
@@ -44,27 +43,26 @@ func Version() string {
 // and panics if an argument could not be fullfilled via dependency injection.
 type Handler interface{}
 
-// handlerFuncInvoker func(http.ResponseWriter, *http.Request) Invoker Handler
+// handlerFuncInvoker is an inject.FastInvoker wrapper of func(http.ResponseWriter, *http.Request).
 type handlerFuncInvoker func(http.ResponseWriter, *http.Request)
 
-// Invoke handlerFuncInvoker
-func (l handlerFuncInvoker) Invoke(p []interface{}) ([]reflect.Value, error) {
-	l(p[0].(http.ResponseWriter), p[1].(*http.Request))
+func (invoke handlerFuncInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
+	invoke(params[0].(http.ResponseWriter), params[1].(*http.Request))
 	return nil, nil
 }
 
-// internalServerErrorInvoker internalServerError Invoker Handler
+// internalServerErrorInvoker is an inject.FastInvoker wrapper of func(rw http.ResponseWriter, err error).
 type internalServerErrorInvoker func(rw http.ResponseWriter, err error)
 
-// Invoke internalServerErrorInvoker
-func (l internalServerErrorInvoker) Invoke(p []interface{}) ([]reflect.Value, error) {
-	l(p[0].(http.ResponseWriter), p[1].(error))
+func (invoke internalServerErrorInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
+	invoke(params[0].(http.ResponseWriter), params[1].(error))
 	return nil, nil
 }
 
-// validateWrapHandler makes sure a handler is a callable function,
-// and panics if it is not.
-func validateWrapHandler(h Handler) Handler {
+// validateAndWrapHandler makes sure a handler is a callable function, it panics if not.
+// When the handler is also potential to be any built-in inject.FastInvoker,
+// it wraps the handler automatically to have some performance gain.
+func validateAndWrapHandler(h Handler) Handler {
 	if reflect.TypeOf(h).Kind() != reflect.Func {
 		panic("Macaron handler must be a callable function")
 	}
@@ -84,25 +82,24 @@ func validateWrapHandler(h Handler) Handler {
 	return h
 }
 
-// validateWrapHandlers makes sure handlers are callable functions,
-// and panics if any of them is not.
-func validateWrapHandlers(handlers []Handler, wrapActions ...func(Handler) Handler) []Handler {
-	rHandlers := make([]Handler, 0, len(handlers))
-
-	var wrapAction func(Handler) Handler
-	if len(wrapActions) > 0 {
-		wrapAction = wrapActions[0]
+// validateAndWrapHandlers preforms validation and wrapping for each input handler.
+// It accepts an optional wrapper function to perform custom wrapping on handlers.
+func validateAndWrapHandlers(handlers []Handler, wrappers ...func(Handler) Handler) []Handler {
+	var wrapper func(Handler) Handler
+	if len(wrappers) > 0 {
+		wrapper = wrappers[0]
 	}
 
-	for _, h := range handlers {
-		h = validateWrapHandler(h)
-		if wrapAction != nil && !inject.IsFastInvoker(h) {
-			h = wrapAction(h)
+	wrappedHandlers := make([]Handler, len(handlers))
+	for i, h := range handlers {
+		h = validateAndWrapHandler(h)
+		if wrapper != nil && !inject.IsFastInvoker(h) {
+			h = wrapper(h)
 		}
-		rHandlers = append(rHandlers, h)
+		wrappedHandlers[i] = h
 	}
 
-	return rHandlers
+	return wrappedHandlers
 }
 
 // Macaron represents the top level web application.
@@ -169,7 +166,7 @@ func (m *Macaron) Handlers(handlers ...Handler) {
 // Action sets the handler that will be called after all the middleware has been invoked.
 // This is set to macaron.Router in a macaron.Classic().
 func (m *Macaron) Action(handler Handler) {
-	handler = validateWrapHandler(handler)
+	handler = validateAndWrapHandler(handler)
 	m.action = handler
 }
 
@@ -185,7 +182,7 @@ func (m *Macaron) Before(handler BeforeHandler) {
 // and panics if the handler is not a callable func.
 // Middleware Handlers are invoked in the order that they are added.
 func (m *Macaron) Use(handler Handler) {
-	handler = validateWrapHandler(handler)
+	handler = validateAndWrapHandler(handler)
 	m.handlers = append(m.handlers, handler)
 }
 

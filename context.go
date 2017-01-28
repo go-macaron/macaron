@@ -72,12 +72,11 @@ func (r *Request) Body() *RequestBody {
 	return &RequestBody{r.Request.Body}
 }
 
-// ContextInvoker Context Invoker Handler
+// ContextInvoker is an inject.FastInvoker wrapper of func(ctx *Context).
 type ContextInvoker func(ctx *Context)
 
-// Invoke ContextInvoker
-func (l ContextInvoker) Invoke(p []interface{}) ([]reflect.Value, error) {
-	l(p[0].(*Context))
+func (invoke ContextInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
+	invoke(params[0].(*Context))
 	return nil, nil
 }
 

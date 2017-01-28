@@ -83,8 +83,8 @@ type Router struct {
 	notFound            http.HandlerFunc
 	internalServerError func(*Context, error)
 
-	//wrap function Handler to FastInvoker Handler
-	handlerWrapAction func(Handler) Handler
+	// handlerWrapper is used to wrap arbitrary function from Handler to inject.FastInvoker.
+	handlerWrapper func(Handler) Handler
 }
 
 func NewRouter() *Router {
@@ -176,7 +176,7 @@ func (r *Router) Handle(method string, pattern string, handlers []Handler) *Rout
 		h = append(h, handlers...)
 		handlers = h
 	}
-	handlers = validateWrapHandlers(handlers, r.handlerWrapAction)
+	handlers = validateAndWrapHandlers(handlers, r.handlerWrapper)
 
 	return r.handle(method, pattern, func(resp http.ResponseWriter, req *http.Request, params Params) {
 		c := r.m.createContext(resp, req)
@@ -254,11 +254,11 @@ func (r *Router) Combo(pattern string, h ...Handler) *ComboRouter {
 	return &ComboRouter{r, pattern, h, map[string]bool{}, nil}
 }
 
-// NotFound Configurable http.HandlerFunc which is called when no matching route is
+// NotFound configurates http.HandlerFunc which is called when no matching route is
 // found. If it is not set, http.NotFound is used.
 // Be sure to set 404 response code in your handler.
 func (r *Router) NotFound(handlers ...Handler) {
-	handlers = validateWrapHandlers(handlers)
+	handlers = validateAndWrapHandlers(handlers)
 	r.notFound = func(rw http.ResponseWriter, req *http.Request) {
 		c := r.m.createContext(rw, req)
 		c.handlers = make([]Handler, 0, len(r.m.handlers)+len(handlers))
@@ -268,11 +268,11 @@ func (r *Router) NotFound(handlers ...Handler) {
 	}
 }
 
-// InternalServerError Configurable handler which is called when route handler returns
+// InternalServerError configurates handler which is called when route handler returns
 // error. If it is not set, default handler is used.
 // Be sure to set 500 response code in your handler.
 func (r *Router) InternalServerError(handlers ...Handler) {
-	handlers = validateWrapHandlers(handlers)
+	handlers = validateAndWrapHandlers(handlers)
 	r.internalServerError = func(c *Context, err error) {
 		c.index = 0
 		c.handlers = handlers
@@ -281,10 +281,9 @@ func (r *Router) InternalServerError(handlers ...Handler) {
 	}
 }
 
-// HandlerWrapAction Set HandlerWrap Action
-// 	f func try wrap function Handler to FastInvoker Handler
-func (r *Router) HandlerWrapAction(f func(Handler) Handler) {
-	r.handlerWrapAction = f
+// SetHandlerWrapper sets handlerWrapper for the router.
+func (r *Router) SetHandlerWrapper(f func(Handler) Handler) {
+	r.handlerWrapper = f
 }
 
 func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
