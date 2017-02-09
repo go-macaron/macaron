@@ -144,7 +144,7 @@ func New() *Macaron {
 }
 
 // Classic creates a classic Macaron with some basic default middleware:
-// mocaron.Logger, mocaron.Recovery and mocaron.Static.
+// macaron.Logger, macaron.Recovery and macaron.Static.
 func Classic() *Macaron {
 	m := New()
 	m.Use(Logger())
