@@ -15,7 +15,8 @@
 package macaron
 
 import (
-	"crypto/md5"
+	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"html/template"
 	"io"
@@ -32,8 +33,8 @@ import (
 	"time"
 
 	"github.com/Unknwon/com"
-
 	"github.com/go-macaron/inject"
+	"golang.org/x/crypto/pbkdf2"
 )
 
 // Locale reprents a localization interface.
@@ -414,35 +415,36 @@ func (ctx *Context) SetSecureCookie(name, value string, others ...interface{}) {
 
 // GetSecureCookie returns given cookie value from request header with default secret string.
 func (ctx *Context) GetSecureCookie(key string) (string, bool) {
-	return ctx.GetSuperSecureCookie(defaultCookieSecret, key)
+	return ctx.GetSuperSecureCookie([]byte(defaultCookieSecret), key)
 }
 
 // SetSuperSecureCookie sets given cookie value to response header with secret string.
-func (ctx *Context) SetSuperSecureCookie(secret, name, value string, others ...interface{}) {
-	m := md5.Sum([]byte(secret))
-	secret = hex.EncodeToString(m[:])
-	text, err := com.AESEncrypt([]byte(secret), []byte(value))
+func (ctx *Context) SetSuperSecureCookie(secret, name, value string, others ...interface{}) []byte {
+	salt := make([]byte, 16)
+	if _, err := rand.Read(salt); err != nil {
+		panic("error generating 128-bit salt")
+	}
+
+	key := pbkdf2.Key([]byte(secret), salt, 10000, 32, sha256.New)
+	text, err := com.AESGCMEncrypt(key, []byte(value))
 	if err != nil {
 		panic("error encrypting cookie: " + err.Error())
 	}
+
 	ctx.SetCookie(name, hex.EncodeToString(text), others...)
+
+	return key
 }
 
 // GetSuperSecureCookie returns given cookie value from request header with secret string.
-func (ctx *Context) GetSuperSecureCookie(secret, key string) (string, bool) {
-	val := ctx.GetCookie(key)
+func (ctx *Context) GetSuperSecureCookie(key []byte, name string) (string, bool) {
+	val := ctx.GetCookie(name)
 	if val == "" {
 		return "", false
 	}
 
-	data, err := hex.DecodeString(val)
-	if err != nil {
-		return "", false
-	}
+	text, err := com.AESGCMDecrypt(key, []byte(val))
 
-	m := md5.Sum([]byte(secret))
-	secret = hex.EncodeToString(m[:])
-	text, err := com.AESDecrypt([]byte(secret), data)
 	return string(text), err == nil
 }
 
