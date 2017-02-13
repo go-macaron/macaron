@@ -15,7 +15,6 @@
 package macaron
 
 import (
-	"crypto/md5"
 	"encoding/hex"
 	"html/template"
 	"io"
@@ -34,6 +33,7 @@ import (
 	"github.com/Unknwon/com"
 	"golang.org/x/crypto/pbkdf2"
 
+	"crypto/rand"
 	"crypto/sha256"
 	"github.com/go-macaron/inject"
 )
@@ -411,16 +411,21 @@ func (m *Macaron) SetDefaultCookieSecret(secret string) {
 
 // SetSecureCookie sets given cookie value to response header with default secret string.
 func (ctx *Context) SetSecureCookie(name, value string, others ...interface{}) {
-	ctx.SetSuperSecureCookie(defaultCookieSecret, name, value, others...)
+	ctx.SetSuperSecureCookie([]byte(defaultCookieSecret), name, value, others...)
 }
 
 // GetSecureCookie returns given cookie value from request header with default secret string.
 func (ctx *Context) GetSecureCookie(key string) (string, bool) {
-	return ctx.GetSuperSecureCookie(defaultCookieSecret, key)
+	return ctx.GetSuperSecureCookie([]byte(defaultCookieSecret), key)
 }
 
 // SetSuperSecureCookie sets given cookie value to response header with secret string.
-func (ctx *Context) SetSuperSecureCookie(password, salt []byte, name, value string, others ...interface{}) []byte {
+func (ctx *Context) SetSuperSecureCookie(password []byte, name, value string, others ...interface{}) []byte {
+	salt := make([]byte, 128)
+	if _, err := rand.Read(salt); err != nil {
+		panic("Error generating 128-bit salt")
+	}
+
 	key := pbkdf2.Key(password, salt, 10000, 32, sha256.New)
 	text, err := com.AESGCMEncrypt(key, []byte(value))
 	if err != nil {
@@ -439,7 +444,7 @@ func (ctx *Context) GetSuperSecureCookie(key []byte, name string) (string, bool)
 		return "", false
 	}
 
-	text, err := com.AESGCMDecrypt(key, val)
+	text, err := com.AESGCMDecrypt(key, []byte(val))
 
 	return string(text), err == nil
 }
