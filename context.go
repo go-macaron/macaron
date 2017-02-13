@@ -15,7 +15,6 @@
 package macaron
 
 import (
-	"crypto/md5"
 	"encoding/hex"
 	"html/template"
 	"io"
