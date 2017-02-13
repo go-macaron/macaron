@@ -410,7 +410,7 @@ func (m *Macaron) SetDefaultCookieSecret(secret string) {
 
 // SetSecureCookie sets given cookie value to response header with default secret string.
 func (ctx *Context) SetSecureCookie(name, value string, others ...interface{}) {
-	ctx.SetSuperSecureCookie([]byte(defaultCookieSecret), name, value, others...)
+	ctx.SetSuperSecureCookie(defaultCookieSecret, name, value, others...)
 }
 
 // GetSecureCookie returns given cookie value from request header with default secret string.
@@ -419,13 +419,13 @@ func (ctx *Context) GetSecureCookie(key string) (string, bool) {
 }
 
 // SetSuperSecureCookie sets given cookie value to response header with secret string.
-func (ctx *Context) SetSuperSecureCookie(password []byte, name, value string, others ...interface{}) []byte {
+func (ctx *Context) SetSuperSecureCookie(password string, name, value string, others ...interface{}) []byte {
 	salt := make([]byte, 16)
 	if _, err := rand.Read(salt); err != nil {
 		panic("error generating 128-bit salt")
 	}
 
-	key := pbkdf2.Key(password, salt, 10000, 32, sha256.New)
+	key := pbkdf2.Key([]byte(password), salt, 10000, 32, sha256.New)
 	text, err := com.AESGCMEncrypt(key, []byte(value))
 	if err != nil {
 		panic("error encrypting cookie: " + err.Error())
