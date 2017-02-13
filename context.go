@@ -32,7 +32,9 @@ import (
 	"time"
 
 	"github.com/Unknwon/com"
+	"golang.org/x/crypto/pbkdf2"
 
+	"crypto/sha256"
 	"github.com/go-macaron/inject"
 )
 
@@ -418,31 +420,27 @@ func (ctx *Context) GetSecureCookie(key string) (string, bool) {
 }
 
 // SetSuperSecureCookie sets given cookie value to response header with secret string.
-func (ctx *Context) SetSuperSecureCookie(secret, name, value string, others ...interface{}) {
-	m := md5.Sum([]byte(secret))
-	secret = hex.EncodeToString(m[:])
-	text, err := com.AESEncrypt([]byte(secret), []byte(value))
+func (ctx *Context) SetSuperSecureCookie(password, salt []byte, name, value string, others ...interface{}) []byte {
+	key := pbkdf2.Key(password, salt, 10000, 32, sha256.New)
+	text, err := com.AESGCMEncrypt(key, []byte(value))
 	if err != nil {
 		panic("error encrypting cookie: " + err.Error())
 	}
+
 	ctx.SetCookie(name, hex.EncodeToString(text), others...)
+
+	return key
 }
 
 // GetSuperSecureCookie returns given cookie value from request header with secret string.
-func (ctx *Context) GetSuperSecureCookie(secret, key string) (string, bool) {
-	val := ctx.GetCookie(key)
+func (ctx *Context) GetSuperSecureCookie(key []byte, name string) (string, bool) {
+	val := ctx.GetCookie(name)
 	if val == "" {
 		return "", false
 	}
 
-	data, err := hex.DecodeString(val)
-	if err != nil {
-		return "", false
-	}
+	text, err := com.AESGCMDecrypt(key, val)
 
-	m := md5.Sum([]byte(secret))
-	secret = hex.EncodeToString(m[:])
-	text, err := com.AESDecrypt([]byte(secret), data)
 	return string(text), err == nil
 }
 
