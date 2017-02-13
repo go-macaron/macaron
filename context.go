@@ -419,7 +419,7 @@ func (ctx *Context) GetSecureCookie(key string) (string, bool) {
 }
 
 // SetSuperSecureCookie sets given cookie value to response header with secret string.
-func (ctx *Context) SetSuperSecureCookie(secret string, name, value string, others ...interface{}) []byte {
+func (ctx *Context) SetSuperSecureCookie(secret, name, value string, others ...interface{}) []byte {
 	salt := make([]byte, 16)
 	if _, err := rand.Read(salt); err != nil {
 		panic("error generating 128-bit salt")
