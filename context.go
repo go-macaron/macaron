@@ -15,6 +15,8 @@
 package macaron
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"html/template"
 	"io"
@@ -31,11 +33,8 @@ import (
 	"time"
 
 	"github.com/Unknwon/com"
-	"golang.org/x/crypto/pbkdf2"
-
-	"crypto/rand"
-	"crypto/sha256"
 	"github.com/go-macaron/inject"
+	"golang.org/x/crypto/pbkdf2"
 )
 
 // Locale reprents a localization interface.
@@ -423,7 +422,7 @@ func (ctx *Context) GetSecureCookie(key string) (string, bool) {
 func (ctx *Context) SetSuperSecureCookie(password []byte, name, value string, others ...interface{}) []byte {
 	salt := make([]byte, 128)
 	if _, err := rand.Read(salt); err != nil {
-		panic("Error generating 128-bit salt")
+		panic("error generating 128-bit salt")
 	}
 
 	key := pbkdf2.Key(password, salt, 10000, 32, sha256.New)
