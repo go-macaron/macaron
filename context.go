@@ -15,7 +15,6 @@
 package macaron
 
 import (
-	"crypto/md5"
 	"encoding/hex"
 	"html/template"
 	"io"
@@ -33,6 +32,8 @@ import (
 
 	"github.com/Unknwon/com"
 
+	"crypto/rand"
+	"crypto/sha256"
 	"github.com/go-macaron/inject"
 )
 
@@ -94,7 +95,8 @@ type Context struct {
 	params Params
 	Render
 	Locale
-	Data map[string]interface{}
+	Data  map[string]interface{}
+	nonce []byte
 }
 
 func (c *Context) handler() Handler {
@@ -417,11 +419,22 @@ func (ctx *Context) GetSecureCookie(key string) (string, bool) {
 	return ctx.GetSuperSecureCookie(defaultCookieSecret, key)
 }
 
+// generateNonce generates random bytes from a secure source.
+func (ctx *Context) generateNonce() error {
+	_, err := rand.Read(ctx.nonce)
+
+	return err
+}
+
 // SetSuperSecureCookie sets given cookie value to response header with secret string.
 func (ctx *Context) SetSuperSecureCookie(secret, name, value string, others ...interface{}) {
-	m := md5.Sum([]byte(secret))
-	secret = hex.EncodeToString(m[:])
-	text, err := com.AESEncrypt([]byte(secret), []byte(value))
+
+	// Ideally we'd want to use PBKDF2 here.
+	// Stick with SHA256 for now so we don't break the API.
+	// This method would need to take in a salt and pass it to PBKDF2 if we want to switch to PBKDF2.
+	hash := sha256.Sum256([]byte(secret))
+	secret = hex.EncodeToString(hash[:])
+	text, err := com.AESEncrypt([]byte(secret), ctx.nonce, []byte(value)) // The nonce should really be unique per cookie.
 	if err != nil {
 		panic("error encrypting cookie: " + err.Error())
 	}
@@ -440,9 +453,12 @@ func (ctx *Context) GetSuperSecureCookie(secret, key string) (string, bool) {
 		return "", false
 	}
 
-	m := md5.Sum([]byte(secret))
-	secret = hex.EncodeToString(m[:])
-	text, err := com.AESDecrypt([]byte(secret), data)
+	// Ideally we'd want to use PBKDF2 here.
+	// Stick with SHA256 for now so we don't break the API.
+	// This method would need to take in a salt and pass it to PBKDF2 if we want to switch to PBKDF2.
+	hash := sha256.Sum256([]byte(secret))
+	secret = hex.EncodeToString(hash[:])
+	text, err := com.AESDecrypt([]byte(secret), ctx.nonce, data) // The nonce should really be unique per cookie.
 	return string(text), err == nil
 }
 

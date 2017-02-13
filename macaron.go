@@ -197,7 +197,11 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 		Resp:     NewResponseWriter(rw),
 		Render:   &DummyRender{rw},
 		Data:     make(map[string]interface{}),
+		nonce:    make([]byte, 12),
 	}
+	// Ideally we'd have a new nonce for each new cookie.
+	// Set the nonce once here so we don't break the API for SetSuperSecureCookie and GetSuperSecureCookie.
+	c.generateNonce()
 	c.SetParent(m)
 	c.Map(c)
 	c.MapTo(c.Resp, (*http.ResponseWriter)(nil))
