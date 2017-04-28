@@ -235,6 +235,7 @@ func GetDefaultListenInfo() (string, int) {
 // Run the http server. Listening on os.GetEnv("PORT") or 4000 by default.
 func (m *Macaron) Run(args ...interface{}) {
 	host, port := GetDefaultListenInfo()
+	var fullchain, privateKey string
 	if len(args) == 1 {
 		switch arg := args[0].(type) {
 		case string:
@@ -242,18 +243,28 @@ func (m *Macaron) Run(args ...interface{}) {
 		case int:
 			port = arg
 		}
-	} else if len(args) >= 2 {
+	} else if len(args) == 4 {
 		if arg, ok := args[0].(string); ok {
 			host = arg
 		}
 		if arg, ok := args[1].(int); ok {
 			port = arg
 		}
+		if arg, ok := args[2].(string); ok {
+			fullchain = arg
+		}
+		if arg, ok := args[3].(string); ok {
+			privateKey = arg
+		}
 	}
 
 	addr := host + ":" + com.ToStr(port)
 	logger := m.GetVal(reflect.TypeOf(m.logger)).Interface().(*log.Logger)
 	logger.Printf("listening on %s (%s)\n", addr, safeEnv())
+	if len(fullchain) > 5 {
+		logger.Fatalln(http.ListenAndServeTLS(addr, fullchain, privateKey, m))
+		return
+	}
 	logger.Fatalln(http.ListenAndServe(addr, m))
 }
 
