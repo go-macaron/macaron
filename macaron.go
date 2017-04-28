@@ -243,7 +243,7 @@ func (m *Macaron) Run(args ...interface{}) {
 		case int:
 			port = arg
 		}
-	} else if len(args) >= 2 {
+	} else if len(args) == 4 {
 		if arg, ok := args[0].(string); ok {
 			host = arg
 		}
