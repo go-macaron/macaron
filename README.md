@@ -61,6 +61,7 @@ There are already many [middlewares](https://github.com/go-macaron) to simplify 
 - [bindata](https://github.com/go-macaron/bindata) - Embed binary data as static and template files
 - [toolbox](https://github.com/go-macaron/toolbox) - Health check, pprof, profile and statistic services
 - [oauth2](https://github.com/go-macaron/oauth2) - OAuth 2.0 backend
+- [authz](https://github.com/go-macaron/authz) - ACL/RBAC/ABAC authorization based on Casbin
 - [switcher](https://github.com/go-macaron/switcher) - Multiple-site support
 - [method](https://github.com/go-macaron/method) - HTTP method override
 - [permissions2](https://github.com/xyproto/permissions2) - Cookies, users and permissions
