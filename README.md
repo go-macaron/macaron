@@ -1,4 +1,4 @@
-Macaron [![Build Status](https://travis-ci.org/go-macaron/macaron.svg?branch=v1)](https://travis-ci.org/go-macaron/macaron)
+Macaron [![Build Status](https://travis-ci.org/go-macaron/macaron.svg?branch=v1)](https://travis-ci.org/go-macaron/macaron) [![Coverage Status](https://coveralls.io/repos/github/go-macaron/macaron/badge.svg?branch=master)](https://coveralls.io/github/go-macaron/macaron?branch=master)
 =======================
 
 ![Macaron Logo](https://raw.githubusercontent.com/go-macaron/macaron/v1/macaronlogo.png)
