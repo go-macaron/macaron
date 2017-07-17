@@ -36,6 +36,8 @@ type ResponseWriter interface {
 	// Before allows for a function to be called before the ResponseWriter has been written to. This is
 	// useful for setting headers or any other operations that must happen before a response has been written.
 	Before(BeforeFunc)
+	// Push is support for http2 push
+	Push() (http.Pusher, error)
 }
 
 // BeforeFunc is a function that is called before the ResponseWriter has been written to.
@@ -91,6 +93,14 @@ func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 		return nil, nil, fmt.Errorf("the ResponseWriter doesn't support the Hijacker interface")
 	}
 	return hijacker.Hijack()
+}
+
+func (rw *responseWriter) Push() (http.Pusher, error) {
+	pusher, ok := rw.ResponseWriter.(http.Pusher)
+	if !ok {
+		return nil, fmt.Errorf("the ResponseWriter doesn't support the Pusher interface")
+	}
+	return pusher, nil
 }
 
 func (rw *responseWriter) CloseNotify() <-chan bool {
