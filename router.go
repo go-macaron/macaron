@@ -288,6 +288,13 @@ func (r *Router) SetHandlerWrapper(f func(Handler) Handler) {
 
 func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if t, ok := r.routers[req.Method]; ok {
+		// Fast match for static routes
+		leaf := r.getLeaf(req.Method, req.URL.Path)
+		if leaf != nil {
+			leaf.handle(rw, req, nil)
+			return
+		}
+
 		h, p, ok := t.Match(req.URL.Path)
 		if ok {
 			if splat, ok := p["*0"]; ok {
