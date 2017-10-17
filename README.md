@@ -70,11 +70,10 @@ There are already many [middlewares](https://github.com/go-macaron) to simplify 
 ## Use Cases
 
 - [Gogs](https://gogs.io): A painless self-hosted Git Service
-- [Grafana](http://grafana.org/): The tool for beautiful monitoring and metric analytics & dashboards
+- [Grafana](http://grafana.org/): The open platform for beautiful analytics and monitoring
 - [Peach](https://peachdocs.org): A modern web documentation server
 - [Go Walker](https://gowalker.org): Go online API documentation
 - [Switch](https://gopm.io): Gopm registry
-- [YouGam](http://yougam.com): Online Forum
 - [Critical Stack Intel](https://intel.criticalstack.com/): A 100% free intel marketplace from Critical Stack, Inc.
 
 ## Getting Help
@@ -82,7 +81,6 @@ There are already many [middlewares](https://github.com/go-macaron) to simplify 
 - [API Reference](https://gowalker.org/gopkg.in/macaron.v1)
 - [Documentation](https://go-macaron.com)
 - [FAQs](https://go-macaron.com/docs/faqs)
-- [![Join the chat at https://gitter.im/Unknwon/macaron](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/go-macaron/macaron?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Credits
 
