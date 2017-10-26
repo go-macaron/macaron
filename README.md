@@ -66,6 +66,7 @@ There are already many [middlewares](https://github.com/go-macaron) to simplify 
 - [method](https://github.com/go-macaron/method) - HTTP method override
 - [permissions2](https://github.com/xyproto/permissions2) - Cookies, users and permissions
 - [renders](https://github.com/go-macaron/renders) - Beego-like render engine(Macaron has built-in template engine, this is another option)
+- [piwik](https://github.com/veecue/piwik-middleware) - Server-side piwik analytics
 
 ## Use Cases
 
