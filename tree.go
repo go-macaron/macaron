@@ -15,7 +15,6 @@
 package macaron
 
 import (
-	neturl "net/url"
 	"regexp"
 	"strings"
 
@@ -262,7 +261,7 @@ func (t *Tree) Add(pattern string, handle Handle) *Leaf {
 }
 
 func (t *Tree) matchLeaf(globLevel int, url string, params Params) (Handle, bool) {
-	url, err := neturl.PathUnescape(url)
+	url, err := PathUnescape(url)
 	if err != nil {
 		return nil, false
 	}
@@ -305,7 +304,7 @@ func (t *Tree) matchLeaf(globLevel int, url string, params Params) (Handle, bool
 }
 
 func (t *Tree) matchSubtree(globLevel int, segment, url string, params Params) (Handle, bool) {
-	unescapedSegment, err := neturl.PathUnescape(segment)
+	unescapedSegment, err := PathUnescape(segment)
 	if err != nil {
 		return nil, false
 	}
@@ -344,7 +343,7 @@ func (t *Tree) matchSubtree(globLevel int, segment, url string, params Params) (
 
 	if len(t.leaves) > 0 {
 		leaf := t.leaves[len(t.leaves)-1]
-		unescapedURL, err := neturl.PathUnescape(segment + "/" + url)
+		unescapedURL, err := PathUnescape(segment + "/" + url)
 		if err != nil {
 			return nil, false
 		}
