@@ -118,7 +118,7 @@ func (r *Route) Name(name string) {
 	if len(name) == 0 {
 		panic("route name cannot be empty")
 	} else if r.router.namedRoutes[name] != nil {
-		panic("route with given name already exists")
+		panic("route with given name already exists: " + name)
 	}
 	r.router.namedRoutes[name] = r.leaf
 }
