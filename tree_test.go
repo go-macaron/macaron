@@ -102,6 +102,9 @@ func Test_Tree_Match(t *testing.T) {
 			_, params, ok = t.Match("/unknwon")
 			So(ok, ShouldBeTrue)
 			So(params[":user"], ShouldEqual, "unknwon")
+			_, params, ok = t.Match("/hello%2Fworld")
+			So(ok, ShouldBeTrue)
+			So(params[":user"], ShouldEqual, "hello/world")
 
 			_, params, ok = t.Match("/user")
 			So(ok, ShouldBeTrue)
@@ -109,6 +112,9 @@ func Test_Tree_Match(t *testing.T) {
 			_, params, ok = t.Match("/user/unknwon")
 			So(ok, ShouldBeTrue)
 			So(params[":name"], ShouldEqual, "unknwon")
+			_, params, ok = t.Match("/hello%20world")
+			So(ok, ShouldBeTrue)
+			So(params[":user"], ShouldEqual, "hello world")
 
 			_, params, ok = t.Match("/user/list/")
 			So(ok, ShouldBeTrue)

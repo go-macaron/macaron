@@ -295,7 +295,7 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		h, p, ok := t.Match(req.URL.Path)
+		h, p, ok := t.Match(req.URL.EscapedPath())
 		if ok {
 			if splat, ok := p["*0"]; ok {
 				p["*"] = splat // Easy name.
