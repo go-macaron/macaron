@@ -67,7 +67,7 @@ func (h *hijackableResponse) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 func Test_ResponseWriter(t *testing.T) {
 	Convey("Write string to response writer", t, func() {
 		resp := httptest.NewRecorder()
-		rw := NewResponseWriter(resp)
+		rw := NewResponseWriter("GET", resp)
 		rw.Write([]byte("Hello world"))
 
 		So(resp.Code, ShouldEqual, rw.Status())
@@ -79,7 +79,7 @@ func Test_ResponseWriter(t *testing.T) {
 
 	Convey("Write strings to response writer", t, func() {
 		resp := httptest.NewRecorder()
-		rw := NewResponseWriter(resp)
+		rw := NewResponseWriter("GET", resp)
 		rw.Write([]byte("Hello world"))
 		rw.Write([]byte("foo bar bat baz"))
 
@@ -92,7 +92,7 @@ func Test_ResponseWriter(t *testing.T) {
 
 	Convey("Write header to response writer", t, func() {
 		resp := httptest.NewRecorder()
-		rw := NewResponseWriter(resp)
+		rw := NewResponseWriter("GET", resp)
 		rw.WriteHeader(http.StatusNotFound)
 
 		So(resp.Code, ShouldEqual, rw.Status())
@@ -104,7 +104,7 @@ func Test_ResponseWriter(t *testing.T) {
 	Convey("Write before response write", t, func() {
 		result := ""
 		resp := httptest.NewRecorder()
-		rw := NewResponseWriter(resp)
+		rw := NewResponseWriter("GET", resp)
 		rw.Before(func(ResponseWriter) {
 			result += "foo"
 		})
@@ -122,7 +122,7 @@ func Test_ResponseWriter(t *testing.T) {
 
 	Convey("Response writer with Hijack", t, func() {
 		hijackable := newHijackableResponse()
-		rw := NewResponseWriter(hijackable)
+		rw := NewResponseWriter("GET", hijackable)
 		hijacker, ok := rw.(http.Hijacker)
 		So(ok, ShouldBeTrue)
 		_, _, err := hijacker.Hijack()
@@ -132,7 +132,7 @@ func Test_ResponseWriter(t *testing.T) {
 
 	Convey("Response writer with bad Hijack", t, func() {
 		hijackable := new(http.ResponseWriter)
-		rw := NewResponseWriter(*hijackable)
+		rw := NewResponseWriter("GET", *hijackable)
 		hijacker, ok := rw.(http.Hijacker)
 		So(ok, ShouldBeTrue)
 		_, _, err := hijacker.Hijack()
@@ -141,7 +141,7 @@ func Test_ResponseWriter(t *testing.T) {
 
 	Convey("Response writer with close notify", t, func() {
 		resp := newCloseNotifyingRecorder()
-		rw := NewResponseWriter(resp)
+		rw := NewResponseWriter("GET", resp)
 		closed := false
 		notifier := rw.(http.CloseNotifier).CloseNotify()
 		resp.close()
@@ -155,7 +155,7 @@ func Test_ResponseWriter(t *testing.T) {
 
 	Convey("Response writer with flusher", t, func() {
 		resp := httptest.NewRecorder()
-		rw := NewResponseWriter(resp)
+		rw := NewResponseWriter("GET", resp)
 		_, ok := rw.(http.Flusher)
 		So(ok, ShouldBeTrue)
 	})

@@ -116,7 +116,7 @@ func test_Router_Handle(t *testing.T, isFast bool) {
 		req, err = http.NewRequest("HEAD", "/head", nil)
 		So(err, ShouldBeNil)
 		m.ServeHTTP(resp, req)
-		So(resp.Body.String(), ShouldEqual, "HEAD")
+		So(resp.Body.String(), ShouldHaveLength, 0)
 
 		m.Any("/any", func() string {
 			return "ANY"
@@ -189,7 +189,11 @@ func test_Router_Handle(t *testing.T, isFast bool) {
 			req, err := http.NewRequest(name, "/", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, "Prefix_"+name)
+			if name == "HEAD" {
+				So(resp.Body.String(), ShouldHaveLength, 0)
+			} else {
+				So(resp.Body.String(), ShouldEqual, "Prefix_"+name)
+			}
 		}
 
 		defer func() {
