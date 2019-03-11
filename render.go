@@ -32,6 +32,8 @@ import (
 	"time"
 
 	"github.com/Unknwon/com"
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
 )
 
 const (
@@ -444,10 +446,22 @@ func (r *TplRender) JSON(status int, v interface{}) {
 		result []byte
 		err    error
 	)
-	if r.Opt.IndentJSON {
-		result, err = json.MarshalIndent(v, "", "  ")
+	if pb, ok := v.(proto.Message); ok {
+		m := jsonpb.Marshaler{}
+		if r.Opt.IndentJSON {
+			m.Indent = "  "
+		}
+		var buf bytes.Buffer
+		err = m.Marshal(&buf, pb)
+		if err == nil {
+			result = buf.Bytes()
+		}
 	} else {
-		result, err = json.Marshal(v)
+		if r.Opt.IndentJSON {
+			result, err = json.MarshalIndent(v, "", "  ")
+		} else {
+			result, err = json.Marshal(v)
+		}
 	}
 	if err != nil {
 		http.Error(r, err.Error(), 500)
@@ -466,10 +480,22 @@ func (r *TplRender) JSON(status int, v interface{}) {
 func (r *TplRender) JSONString(v interface{}) (string, error) {
 	var result []byte
 	var err error
-	if r.Opt.IndentJSON {
-		result, err = json.MarshalIndent(v, "", "  ")
+	if pb, ok := v.(proto.Message); ok {
+		m := jsonpb.Marshaler{}
+		if r.Opt.IndentJSON {
+			m.Indent = "  "
+		}
+		var buf bytes.Buffer
+		err = m.Marshal(&buf, pb)
+		if err == nil {
+			result = buf.Bytes()
+		}
 	} else {
-		result, err = json.Marshal(v)
+		if r.Opt.IndentJSON {
+			result, err = json.MarshalIndent(v, "", "  ")
+		} else {
+			result, err = json.Marshal(v)
+		}
 	}
 	if err != nil {
 		return "", err
