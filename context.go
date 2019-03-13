@@ -167,7 +167,7 @@ func (ctx *Context) HTML(status int, name string, data ...interface{}) {
 	ctx.renderHTML(status, DEFAULT_TPL_SET_NAME, name, data...)
 }
 
-// HTML calls Render.HTMLSet but allows less arguments.
+// HTMLSet calls Render.HTMLSet but allows less arguments.
 func (ctx *Context) HTMLSet(status int, setName, tplName string, data ...interface{}) {
 	ctx.renderHTML(status, setName, tplName, data...)
 }
