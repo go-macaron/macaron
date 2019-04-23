@@ -285,6 +285,10 @@ var (
 	// Path of work directory.
 	Root string
 
+	// GetwdErr is error generated when trying to set the Root in init
+	// You must check this error yourself
+	GetwdErr error
+
 	// Flash applies to current request.
 	FlashNow bool
 
@@ -311,11 +315,7 @@ func safeEnv() string {
 func init() {
 	setENV(os.Getenv("MACARON_ENV"))
 
-	var err error
-	Root, err = os.Getwd()
-	if err != nil {
-		panic("error getting work directory: " + err.Error())
-	}
+	Root, GetwdErr = os.Getwd()
 }
 
 // SetConfig sets data sources for configuration.
