@@ -74,7 +74,6 @@ There are already many [middlewares](https://github.com/go-macaron) to simplify 
 - [Grafana](http://grafana.org/): The open platform for beautiful analytics and monitoring
 - [Peach](https://peachdocs.org): A modern web documentation server
 - [Go Walker](https://gowalker.org): Go online API documentation
-- [Switch](https://gopm.io): Gopm registry
 - [Critical Stack Intel](https://intel.criticalstack.com/): A 100% free intel marketplace from Critical Stack, Inc.
 
 ## Getting Help
