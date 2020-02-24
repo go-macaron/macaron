@@ -260,6 +260,11 @@ func (ctx *Context) Params(name string) string {
 	return ctx.params[name]
 }
 
+// AllParams returns all params.
+func (ctx *Context) AllParams() Params {
+	return ctx.params
+}
+
 // SetParams sets value of param with given name.
 func (ctx *Context) SetParams(name, val string) {
 	if name != "*" && !strings.HasPrefix(name, ":") {
