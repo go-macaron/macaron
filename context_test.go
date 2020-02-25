@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -169,6 +170,23 @@ func Test_Context(t *testing.T) {
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
 			So(resp.Body.String(), ShouldEqual, "user user 1 13 1.24 ")
+		})
+
+		Convey("Get all URL paramaters", func() {
+			m.Get("/:arg/:param/:flag", func(ctx *Context) string {
+				kvs := make([]string, 0, len(ctx.AllParams()))
+				for k, v := range ctx.AllParams() {
+					kvs = append(kvs, k + "=" + v)
+				}
+				sort.Strings(kvs)
+				return strings.Join(kvs, ",")
+			})
+			
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "/1/2/3", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp,req)
+			So(resp.Body.String(), ShouldEqual, ":arg=1,:flag=3,:param=2")
 		})
 
 		Convey("Get file", func() {
