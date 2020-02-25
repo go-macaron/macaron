@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -177,7 +178,7 @@ func Test_Context(t *testing.T) {
 				for k, v := range ctx.AllParams() {
 					kvs = append(kvs, k + "=" + v)
 				}
-				return strings.Join(kvs, ",")
+				return strings.Join(sort.Strings(kvs), ",")
 			})
 			
 			resp := httptest.NewRecorder()
