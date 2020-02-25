@@ -178,14 +178,15 @@ func Test_Context(t *testing.T) {
 				for k, v := range ctx.AllParams() {
 					kvs = append(kvs, k + "=" + v)
 				}
-				return strings.Join(sort.Strings(kvs), ",")
+				sort.Strings(kvs)
+				return strings.Join(kvs, ",")
 			})
 			
 			resp := httptest.NewRecorder()
 			req, err := http.NewRequest("GET", "/1/2/3", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp,req)
-			So(resp.Body.String(), ShouldEqual, ":arg=1,:param=2,:flag=3")
+			So(resp.Body.String(), ShouldEqual, ":arg=1,:flag=3,:param=2")
 		})
 
 		Convey("Get file", func() {
