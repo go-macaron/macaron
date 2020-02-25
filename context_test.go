@@ -171,6 +171,18 @@ func Test_Context(t *testing.T) {
 			So(resp.Body.String(), ShouldEqual, "user user 1 13 1.24 ")
 		})
 
+		Convey("All Parameter", func() {
+			m.Get("/:arg/:param/:flag", func(ctx *Context) string {
+				return com.ToStr(len(ctx.AllParams()))
+			})
+			
+			resp := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "/arg/param/flag", nil)
+			So(err, ShouldBeNil)
+			m.ServeHTTP(resp,req)
+			So(resp.Body.String(), ShouldEqual, "3")
+		})
+
 		Convey("Get file", func() {
 			m.Post("/getfile", func(ctx *Context) {
 				ctx.Query("")
