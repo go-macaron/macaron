@@ -171,16 +171,20 @@ func Test_Context(t *testing.T) {
 			So(resp.Body.String(), ShouldEqual, "user user 1 13 1.24 ")
 		})
 
-		Convey("All Parameter", func() {
+		Convey("Get all URL paramaters", func() {
 			m.Get("/:arg/:param/:flag", func(ctx *Context) string {
-				return com.ToStr(len(ctx.AllParams()))
+				kvs := make([]string, len(ctx.AllParams()))
+				for k, v := range ctx.AllParams() {
+					kvs = append(kvs, k + "=" + v)
+				}
+				return strings.Join(kvs, ",")
 			})
 			
 			resp := httptest.NewRecorder()
-			req, err := http.NewRequest("GET", "/arg/param/flag", nil)
+			req, err := http.NewRequest("GET", "/1/2/3", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp,req)
-			So(resp.Body.String(), ShouldEqual, "3")
+			So(resp.Body.String(), ShouldEqual, ":arg=1,:param=2,:flag=3")
 		})
 
 		Convey("Get file", func() {
