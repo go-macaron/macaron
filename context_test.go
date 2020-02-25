@@ -174,7 +174,7 @@ func Test_Context(t *testing.T) {
 
 		Convey("Get all URL paramaters", func() {
 			m.Get("/:arg/:param/:flag", func(ctx *Context) string {
-				kvs := make([]string, len(ctx.AllParams()))
+				kvs := make([]string, 0, len(ctx.AllParams()))
 				for k, v := range ctx.AllParams() {
 					kvs = append(kvs, k + "=" + v)
 				}
