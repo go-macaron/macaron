@@ -185,4 +185,11 @@ func Test_ResponseWriter(t *testing.T) {
 		So(resp.Code, ShouldEqual, http.StatusOK)
 		So(resp.Body.String(), ShouldEqual, "data: Hello\n\ndata: Hello\n\n")
 	})
+
+	Convey("Response writer with http/2 push", t, func() {
+		resp := httptest.NewRecorder()
+		rw := NewResponseWriter("GET", resp)
+		_, ok := rw.(http.Pusher)
+		So(ok, ShouldBeTrue)
+	})
 }

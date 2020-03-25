@@ -27,6 +27,7 @@ import (
 type ResponseWriter interface {
 	http.ResponseWriter
 	http.Flusher
+	http.Pusher
 	// Status returns the status code of the response or 0 if the response has not been written.
 	Status() int
 	// Written returns whether or not the ResponseWriter has been written.
@@ -111,4 +112,13 @@ func (rw *responseWriter) Flush() {
 	if ok {
 		flusher.Flush()
 	}
+}
+
+func (rw *responseWriter) Push(target string, opts *http.PushOptions) error {
+	pusher, ok := rw.ResponseWriter.(http.Pusher)
+	if !ok {
+		return fmt.Errorf("the ResponseWriter doesn't support the Pusher interface")
+	}
+	pusher.Push(target, opts)
+	return nil
 }
