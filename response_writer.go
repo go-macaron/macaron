@@ -16,6 +16,7 @@ package macaron
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -117,7 +118,7 @@ func (rw *responseWriter) Flush() {
 func (rw *responseWriter) Push(target string, opts *http.PushOptions) error {
 	pusher, ok := rw.ResponseWriter.(http.Pusher)
 	if !ok {
-		return fmt.Errorf("the ResponseWriter doesn't support the Pusher interface")
+		return errors.New("the ResponseWriter doesn't support the Pusher interface")
 	}
 	return pusher.Push(target, opts)
 }
