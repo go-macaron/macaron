@@ -119,6 +119,5 @@ func (rw *responseWriter) Push(target string, opts *http.PushOptions) error {
 	if !ok {
 		return fmt.Errorf("the ResponseWriter doesn't support the Pusher interface")
 	}
-	pusher.Push(target, opts)
-	return nil
+	return pusher.Push(target, opts)
 }
