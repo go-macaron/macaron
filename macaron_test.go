@@ -138,7 +138,7 @@ func Test_Macaron_EarlyWrite(t *testing.T) {
 		m := New()
 		m.Use(func(res http.ResponseWriter) {
 			result += "foobar"
-			res.Write([]byte("Hello world"))
+			_, _ = res.Write([]byte("Hello world"))
 		})
 		m.Use(func() {
 			result += "bat"

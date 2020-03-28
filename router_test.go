@@ -321,7 +321,7 @@ func Test_Router_InternalServerError(t *testing.T) {
 		})
 		m.InternalServerError(func(rw http.ResponseWriter, err error) {
 			rw.WriteHeader(500)
-			rw.Write([]byte(err.Error()))
+			_, _ = rw.Write([]byte(err.Error()))
 		})
 		resp := httptest.NewRecorder()
 		req, err := http.NewRequest("GET", "/", nil)

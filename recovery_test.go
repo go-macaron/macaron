@@ -46,7 +46,7 @@ func Test_Recovery(t *testing.T) {
 		So(err, ShouldBeNil)
 		m.ServeHTTP(resp, req)
 		So(resp.Code, ShouldEqual, http.StatusInternalServerError)
-		So(resp.HeaderMap.Get("Content-Type"), ShouldEqual, "text/html")
+		So(resp.Header().Get("Content-Type"), ShouldEqual, "text/html")
 		So(buf.String(), ShouldNotBeEmpty)
 	})
 
@@ -68,7 +68,7 @@ func Test_Recovery(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp2.Code, ShouldEqual, http.StatusInternalServerError)
-		So(resp2.HeaderMap.Get("Content-Type"), ShouldEqual, "text/html")
+		So(resp2.Header().Get("Content-Type"), ShouldEqual, "text/html")
 		So(resp2.Body.Len(), ShouldBeGreaterThan, 0)
 	})
 }

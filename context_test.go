@@ -176,23 +176,23 @@ func Test_Context(t *testing.T) {
 			m.Get("/:arg/:param/:flag", func(ctx *Context) string {
 				kvs := make([]string, 0, len(ctx.AllParams()))
 				for k, v := range ctx.AllParams() {
-					kvs = append(kvs, k + "=" + v)
+					kvs = append(kvs, k+"="+v)
 				}
 				sort.Strings(kvs)
 				return strings.Join(kvs, ",")
 			})
-			
+
 			resp := httptest.NewRecorder()
 			req, err := http.NewRequest("GET", "/1/2/3", nil)
 			So(err, ShouldBeNil)
-			m.ServeHTTP(resp,req)
+			m.ServeHTTP(resp, req)
 			So(resp.Body.String(), ShouldEqual, ":arg=1,:flag=3,:param=2")
 		})
 
 		Convey("Get file", func() {
 			m.Post("/getfile", func(ctx *Context) {
 				ctx.Query("")
-				ctx.GetFile("hi")
+				_, _, _ = ctx.GetFile("hi")
 			})
 
 			resp := httptest.NewRecorder()
@@ -381,7 +381,7 @@ func Test_Context_Redirect(t *testing.T) {
 		ctx.Redirect("two")
 
 		So(resp.Code, ShouldEqual, http.StatusFound)
-		So(resp.HeaderMap["Location"][0], ShouldEqual, "/path/two")
+		So(resp.Result().Header["Location"][0], ShouldEqual, "/path/two")
 	})
 
 	Convey("Context with custom redirect", t, func() {
@@ -400,6 +400,6 @@ func Test_Context_Redirect(t *testing.T) {
 		ctx.Redirect("two", 307)
 
 		So(resp.Code, ShouldEqual, http.StatusTemporaryRedirect)
-		So(resp.HeaderMap["Location"][0], ShouldEqual, "/path/two")
+		So(resp.Result().Header["Location"][0], ShouldEqual, "/path/two")
 	})
 }

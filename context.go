@@ -31,8 +31,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/unknwon/com"
 	"github.com/go-macaron/inject"
+	"github.com/unknwon/com"
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -193,9 +193,9 @@ func (ctx *Context) parseForm() {
 	contentType := ctx.Req.Header.Get(_CONTENT_TYPE)
 	if (ctx.Req.Method == "POST" || ctx.Req.Method == "PUT") &&
 		len(contentType) > 0 && strings.Contains(contentType, "multipart/form-data") {
-		ctx.Req.ParseMultipartForm(MaxMemory)
+		_ = ctx.Req.ParseMultipartForm(MaxMemory)
 	} else {
-		ctx.Req.ParseForm()
+		_ = ctx.Req.ParseForm()
 	}
 }
 
