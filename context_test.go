@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -311,7 +312,12 @@ func Test_Context(t *testing.T) {
 			req, err = http.NewRequest("GET", "/file3", nil)
 			So(err, ShouldBeNil)
 			m.ServeHTTP(resp, req)
-			So(resp.Body.String(), ShouldEqual, "open 404.tmpl: no such file or directory\n")
+
+			if runtime.GOOS == "windows" {
+				So(resp.Body.String(), ShouldEqual, "open 404.tmpl: The system cannot find the file specified.\n")
+			} else {
+				So(resp.Body.String(), ShouldEqual, "open 404.tmpl: no such file or directory\n")
+			}
 			So(resp.Code, ShouldEqual, 500)
 		})
 
