@@ -20,6 +20,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"testing"
 	"time"
 
@@ -574,6 +575,10 @@ func Test_Render_NoRace(t *testing.T) {
 }
 
 func Test_Render_Symlink(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping testing on Windows")
+	}
+
 	Convey("Render can follow symlinks", t, func() {
 		m := Classic()
 		m.Use(Renderer(RenderOptions{
