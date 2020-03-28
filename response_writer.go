@@ -17,7 +17,6 @@ package macaron
 import (
 	"bufio"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
 )
@@ -98,6 +97,7 @@ func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return hijacker.Hijack()
 }
 
+//nolint
 func (rw *responseWriter) CloseNotify() <-chan bool {
 	return rw.ResponseWriter.(http.CloseNotifier).CloseNotify()
 }

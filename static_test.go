@@ -69,7 +69,7 @@ func Test_Static(t *testing.T) {
 		Root = os.TempDir()
 		f, err := ioutil.TempFile(Root, "static_content")
 		So(err, ShouldBeNil)
-		f.WriteString("Expected Content")
+		_, _ = f.WriteString("Expected Content")
 		f.Close()
 
 		m := New()

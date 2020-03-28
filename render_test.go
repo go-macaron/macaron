@@ -20,6 +20,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"testing"
 	"time"
 
@@ -574,6 +575,10 @@ func Test_Render_NoRace(t *testing.T) {
 }
 
 func Test_Render_Symlink(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping testing on Windows")
+	}
+
 	Convey("Render can follow symlinks", t, func() {
 		m := Classic()
 		m.Use(Renderer(RenderOptions{
@@ -661,7 +666,7 @@ func Test_dummyRender(t *testing.T) {
 		})
 		m.Get("/jsonstring", func(ctx *Context) {
 			defer shouldPanic()
-			ctx.JSONString(nil)
+			_, _ = ctx.JSONString(nil)
 		})
 		m.Get("/rawdata", func(ctx *Context) {
 			defer shouldPanic()
@@ -681,19 +686,19 @@ func Test_dummyRender(t *testing.T) {
 		})
 		m.Get("/htmlsetstring", func(ctx *Context) {
 			defer shouldPanic()
-			ctx.Render.HTMLSetString("", "", nil)
+			_, _ = ctx.Render.HTMLSetString("", "", nil)
 		})
 		m.Get("/htmlstring", func(ctx *Context) {
 			defer shouldPanic()
-			ctx.Render.HTMLString("", nil)
+			_, _ = ctx.Render.HTMLString("", nil)
 		})
 		m.Get("/htmlsetbytes", func(ctx *Context) {
 			defer shouldPanic()
-			ctx.Render.HTMLSetBytes("", "", nil)
+			_, _ = ctx.Render.HTMLSetBytes("", "", nil)
 		})
 		m.Get("/htmlbytes", func(ctx *Context) {
 			defer shouldPanic()
-			ctx.Render.HTMLBytes("", nil)
+			_, _ = ctx.Render.HTMLBytes("", nil)
 		})
 		m.Get("/xml", func(ctx *Context) {
 			defer shouldPanic()

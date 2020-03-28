@@ -68,7 +68,7 @@ func Test_ResponseWriter(t *testing.T) {
 	Convey("Write string to response writer", t, func() {
 		resp := httptest.NewRecorder()
 		rw := NewResponseWriter("GET", resp)
-		rw.Write([]byte("Hello world"))
+		_, _ = rw.Write([]byte("Hello world"))
 
 		So(resp.Code, ShouldEqual, rw.Status())
 		So(resp.Body.String(), ShouldEqual, "Hello world")
@@ -80,8 +80,8 @@ func Test_ResponseWriter(t *testing.T) {
 	Convey("Write strings to response writer", t, func() {
 		resp := httptest.NewRecorder()
 		rw := NewResponseWriter("GET", resp)
-		rw.Write([]byte("Hello world"))
-		rw.Write([]byte("foo bar bat baz"))
+		_, _ = rw.Write([]byte("Hello world"))
+		_, _ = rw.Write([]byte("foo bar bat baz"))
 
 		So(resp.Code, ShouldEqual, rw.Status())
 		So(resp.Body.String(), ShouldEqual, "Hello worldfoo bar bat baz")
@@ -143,7 +143,7 @@ func Test_ResponseWriter(t *testing.T) {
 		resp := newCloseNotifyingRecorder()
 		rw := NewResponseWriter("GET", resp)
 		closed := false
-		notifier := rw.(http.CloseNotifier).CloseNotify()
+		notifier := rw.(http.CloseNotifier).CloseNotify() //nolint
 		resp.close()
 		select {
 		case <-notifier:
@@ -172,7 +172,7 @@ func Test_ResponseWriter(t *testing.T) {
 
 			for i := 0; i < 2; i++ {
 				time.Sleep(10 * time.Millisecond)
-				io.WriteString(w, "data: Hello\n\n")
+				_, _ = io.WriteString(w, "data: Hello\n\n")
 				f.Flush()
 			}
 		})
