@@ -178,7 +178,7 @@ func staticHandler(ctx *Context, log *log.Logger, opt StaticOptions) bool {
 
 	if opt.ETag {
 		tag := GenerateETag(string(fi.Size()), fi.Name(), fi.ModTime().UTC().Format(http.TimeFormat))
-		ctx.Resp.Header().Set("ETag", tag)
+		ctx.Resp.Header().Set("ETag", `"`+tag+`"`)
 	}
 
 	http.ServeContent(ctx.Resp, ctx.Req.Request, file, fi.ModTime(), f)

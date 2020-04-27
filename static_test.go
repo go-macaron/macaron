@@ -201,7 +201,7 @@ func Test_Static_Options(t *testing.T) {
 		m.ServeHTTP(resp, req)
 		tag := GenerateETag(string(resp.Body.Len()), "macaron.go", resp.Header().Get("last-modified"))
 
-		So(resp.Header().Get("ETag"), ShouldEqual, tag)
+		So(resp.Header().Get("ETag"), ShouldEqual, `"`+tag+`"`)
 	})
 }
 
