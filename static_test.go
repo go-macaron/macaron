@@ -176,8 +176,7 @@ func Test_Static_Options(t *testing.T) {
 	})
 
 	Convey("Serve static files with options expires", t, func() {
-		var buf bytes.Buffer
-		m := NewWithLogger(&buf)
+		m := New()
 		opt := StaticOptions{Expires: func() string { return "46" }}
 		m.Use(Static(currentRoot, opt))
 
@@ -190,8 +189,7 @@ func Test_Static_Options(t *testing.T) {
 	})
 
 	Convey("Serve static files with options ETag", t, func() {
-		var buf bytes.Buffer
-		m := NewWithLogger(&buf)
+		m := New()
 		opt := StaticOptions{ETag: true}
 		m.Use(Static(currentRoot, opt))
 
@@ -202,6 +200,26 @@ func Test_Static_Options(t *testing.T) {
 		tag := GenerateETag(string(resp.Body.Len()), "macaron.go", resp.Header().Get("last-modified"))
 
 		So(resp.Header().Get("ETag"), ShouldEqual, `"`+tag+`"`)
+	})
+
+	Convey("Serve static files with ETag in If-None-Match", t, func() {
+		m := New()
+		opt := StaticOptions{ETag: true}
+		m.Use(Static(currentRoot, opt))
+
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "http://localhost:4000/macaron.go", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+		tag := GenerateETag(string(resp.Body.Len()), "macaron.go", resp.Header().Get("last-modified"))
+
+		// Second request with ETag in If-None-Match
+		resp = httptest.NewRecorder()
+		req.Header.Add("If-None-Match", `"`+tag+`"`)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Code, ShouldEqual, http.StatusNotModified)
+		So(len(resp.Body.Bytes()), ShouldEqual, 0)
 	})
 }
 

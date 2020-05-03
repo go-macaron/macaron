@@ -178,8 +178,12 @@ func staticHandler(ctx *Context, log *log.Logger, opt StaticOptions) bool {
 	}
 
 	if opt.ETag {
-		tag := GenerateETag(string(fi.Size()), fi.Name(), fi.ModTime().UTC().Format(http.TimeFormat))
-		ctx.Resp.Header().Set("ETag", `"`+tag+`"`)
+		tag := `"` + GenerateETag(string(fi.Size()), fi.Name(), fi.ModTime().UTC().Format(http.TimeFormat)) + `"`
+		ctx.Resp.Header().Set("ETag", tag)
+		if ctx.Req.Header.Get("If-None-Match") == tag {
+			ctx.Resp.WriteHeader(http.StatusNotModified)
+			return true
+		}
 	}
 
 	http.ServeContent(ctx.Resp, ctx.Req.Request, file, fi.ModTime(), f)
