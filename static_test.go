@@ -218,6 +218,18 @@ func Test_Static_Redirect(t *testing.T) {
 		So(resp.Code, ShouldEqual, http.StatusFound)
 		So(resp.Header().Get("Location"), ShouldEqual, "/public/")
 	})
+
+	Convey("Serve static files with improper request", t, func() {
+		m := New()
+		m.Use(Static(currentRoot))
+
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", `http://localhost:4000//example.com%2f..`, nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Code, ShouldEqual, http.StatusNotFound)
+	})
 }
 
 func Test_Statics(t *testing.T) {
