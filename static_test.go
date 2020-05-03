@@ -229,6 +229,7 @@ func Test_Static_Redirect(t *testing.T) {
 		m.ServeHTTP(resp, req)
 
 		So(resp.Code, ShouldEqual, http.StatusNotFound)
+		So(resp.Header().Get("Location"), ShouldEqual, "/example.com%2f..")
 	})
 }
 
