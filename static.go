@@ -123,7 +123,7 @@ func staticHandler(ctx *Context, log *log.Logger, opt StaticOptions) bool {
 		return false
 	}
 
-	file := path.Clean(ctx.Req.URL.Path)
+	file := ctx.Req.URL.Path
 	// if we have a prefix, filter requests by stripping the prefix
 	if opt.Prefix != "" {
 		if !strings.HasPrefix(file, opt.Prefix) {
