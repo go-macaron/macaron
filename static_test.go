@@ -224,6 +224,19 @@ func Test_Static_Options(t *testing.T) {
 }
 
 func Test_Static_Redirect(t *testing.T) {
+	Convey("Serve static files with prefix without redirect", t, func() {
+		m := New()
+		opt := StaticOptions{Prefix: "/public"}
+		m.Use(Static(currentRoot, opt))
+
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "http://localhost:4000/public/", nil)
+		So(err, ShouldBeNil)
+		m.ServeHTTP(resp, req)
+
+		So(resp.Code, ShouldEqual, http.StatusNotFound)
+	})
+
 	Convey("Serve static files with redirect", t, func() {
 		m := New()
 		m.Use(Static(currentRoot, StaticOptions{Prefix: "/public"}))

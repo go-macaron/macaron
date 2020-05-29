@@ -150,6 +150,9 @@ func staticHandler(ctx *Context, log *log.Logger, opt StaticOptions) bool {
 	if fi.IsDir() {
 		// Redirect if missing trailing slash.
 		redirPath := path.Clean(ctx.Req.URL.Path)
+		if strings.HasSuffix(ctx.Req.URL.Path, "/") {
+			redirPath = redirPath + "/"
+		}
 		if !strings.HasSuffix(redirPath, "/") {
 			http.Redirect(ctx.Resp, ctx.Req.Request, redirPath+"/", http.StatusFound)
 			return true
