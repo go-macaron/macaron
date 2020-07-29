@@ -17,6 +17,7 @@ package macaron
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -197,7 +198,7 @@ func Test_Static_Options(t *testing.T) {
 		req, err := http.NewRequest("GET", "http://localhost:4000/macaron.go", nil)
 		So(err, ShouldBeNil)
 		m.ServeHTTP(resp, req)
-		tag := GenerateETag(string(resp.Body.Len()), "macaron.go", resp.Header().Get("last-modified"))
+		tag := GenerateETag(fmt.Sprintf("%d", resp.Body.Len()), "macaron.go", resp.Header().Get("last-modified"))
 
 		So(resp.Header().Get("ETag"), ShouldEqual, `"`+tag+`"`)
 	})
@@ -211,7 +212,7 @@ func Test_Static_Options(t *testing.T) {
 		req, err := http.NewRequest("GET", "http://localhost:4000/macaron.go", nil)
 		So(err, ShouldBeNil)
 		m.ServeHTTP(resp, req)
-		tag := GenerateETag(string(resp.Body.Len()), "macaron.go", resp.Header().Get("last-modified"))
+		tag := GenerateETag(fmt.Sprintf("%d", resp.Body.Len()), "macaron.go", resp.Header().Get("last-modified"))
 
 		// Second request with ETag in If-None-Match
 		resp = httptest.NewRecorder()
