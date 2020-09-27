@@ -389,7 +389,6 @@ func (ctx *Context) SetCookie(name string, value string, others ...interface{}) 
 			} else {
 				cookie.SameSite = http.SameSiteLaxMode
 			}
-			break
 		default:
 			if others[6] != nil {
 				cookie.SameSite = http.SameSiteLaxMode
