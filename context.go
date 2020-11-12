@@ -1,5 +1,4 @@
 // Copyright 2014 The Macaron Authors
-// Copyright 2020 The Gitea Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -77,7 +76,7 @@ func (r *Request) Body() *RequestBody {
 // ContextInvoker is an inject.FastInvoker wrapper of func(ctx *Context).
 type ContextInvoker func(ctx *Context)
 
-// Invoke implements inject.FastInvoker - in the context of a func(ctx *Context) this simply calls the function
+// Invoke implements inject.FastInvoker which simplifies calls of `func(ctx *Context)` function.
 func (invoke ContextInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
 	invoke(params[0].(*Context))
 	return nil, nil

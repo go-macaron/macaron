@@ -1,5 +1,4 @@
 // Copyright 2020 The Macaron Authors
-// Copyright 2020 The Gitea Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -13,14 +12,13 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
+// Package cookie contains helper functions for setting cookie values.
 package cookie
 
 import (
 	"net/http"
 	"time"
 )
-
-// cookie contains helper functions for setting cookie values
 
 // MaxAge sets the maximum age for a provided cookie
 func MaxAge(maxAge int) func(*http.Cookie) {
