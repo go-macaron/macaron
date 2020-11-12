@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/unknwon/com"
+	"gopkg.in/macaron.v1/cookie"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -209,7 +210,18 @@ func Test_Context(t *testing.T) {
 				So(err, ShouldBeNil)
 				ctx.SetCookie("user", "Unknwon", 1, "/", "localhost", true, true, t)
 				ctx.SetCookie("user", "Unknwon", int32(1), "/", "localhost", 1)
-				ctx.SetCookie("user", "Unknwon", int64(1))
+				called := false
+				ctx.SetCookie("user", "Unknwon", int64(1), func(c *http.Cookie) {
+					called = false
+				})
+				So(called, ShouldBeTrue)
+				ctx.SetCookie("user", "Unknown",
+					cookie.Secure(true),
+					cookie.HttpOnly(true),
+					cookie.Path("/"),
+					cookie.MaxAge(1),
+					cookie.Domain("localhost"),
+				)
 			})
 
 			resp := httptest.NewRecorder()
