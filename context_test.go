@@ -212,7 +212,7 @@ func Test_Context(t *testing.T) {
 				ctx.SetCookie("user", "Unknwon", int32(1), "/", "localhost", 1)
 				called := false
 				ctx.SetCookie("user", "Unknwon", int64(1), func(c *http.Cookie) {
-					called = false
+					called = true
 				})
 				So(called, ShouldBeTrue)
 				ctx.SetCookie("user", "Unknown",
