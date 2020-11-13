@@ -34,8 +34,8 @@ func Test_getWildcards(t *testing.T) {
 		":id([0-9]+)_:name":                 result{"([0-9]+)_(.+)", ":id :name"},
 		"article_:id_:page.html":            result{"article_(.+)_(.+).html", ":id :page"},
 		"article_:id:int_:page:string.html": result{"article_([0-9]+)_([\\w]+).html", ":id :page"},
-		"*":   result{"*", ""},
-		"*.*": result{"*.*", ""},
+		"*":                                 result{"*", ""},
+		"*.*":                               result{"*.*", ""},
 	}
 	Convey("Get wildcards", t, func() {
 		for key, result := range cases {
@@ -56,8 +56,8 @@ func Test_getRawPattern(t *testing.T) {
 		"article_:id_:page.html":                 "article_:id_:page.html",
 		"article_:id:int_:page:string.html":      "article_:id_:page.html",
 		"article_:id([0-9]+)_:page([\\w]+).html": "article_:id_:page.html",
-		"*":   "*",
-		"*.*": "*.*",
+		"*":                                      "*",
+		"*.*":                                    "*.*",
 	}
 	Convey("Get raw pattern", t, func() {
 		for k, v := range cases {
