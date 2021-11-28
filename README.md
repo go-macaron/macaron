@@ -9,6 +9,11 @@
 
 Package macaron is a high productive and modular web framework in Go.
 
+## 📣 Announcement
+
+- If you're considering using Macaron, you may want to take a look at [Flamego](https://flamego.dev/) first, which is [the successor of the Macaron](https://flamego.dev/faqs.html#what-is-the-idea-behind-this-other-than-macaron-martini).
+- That means Macaron is officially in the maintenance mode, and no major features will be added to Macaron.
+
 ## Getting Started
 
 The minimum requirement of Go is **1.6**.
