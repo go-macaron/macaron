@@ -16,7 +16,7 @@ Package macaron is a high productive and modular web framework in Go.
 
 ## Getting Started
 
-The minimum requirement of Go is **1.6**.
+The minimum requirement of Go is **1.12**.
 
 To install Macaron:
 
