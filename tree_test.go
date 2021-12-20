@@ -27,15 +27,15 @@ func Test_getWildcards(t *testing.T) {
 		wildcards string
 	}
 	cases := map[string]result{
-		"admin":                             result{"admin", ""},
-		":id":                               result{"(.+)", ":id"},
-		":id:int":                           result{"([0-9]+)", ":id"},
-		":id([0-9]+)":                       result{"([0-9]+)", ":id"},
-		":id([0-9]+)_:name":                 result{"([0-9]+)_(.+)", ":id :name"},
-		"article_:id_:page.html":            result{"article_(.+)_(.+).html", ":id :page"},
-		"article_:id:int_:page:string.html": result{"article_([0-9]+)_([\\w]+).html", ":id :page"},
-		"*":                                 result{"*", ""},
-		"*.*":                               result{"*.*", ""},
+		"admin":                             {"admin", ""},
+		":id":                               {"(.+)", ":id"},
+		":id:int":                           {"([0-9]+)", ":id"},
+		":id([0-9]+)":                       {"([0-9]+)", ":id"},
+		":id([0-9]+)_:name":                 {"([0-9]+)_(.+)", ":id :name"},
+		"article_:id_:page.html":            {"article_(.+)_(.+).html", ":id :page"},
+		"article_:id:int_:page:string.html": {"article_([0-9]+)_([\\w]+).html", ":id :page"},
+		"*":                                 {"*", ""},
+		"*.*":                               {"*.*", ""},
 	}
 	Convey("Get wildcards", t, func() {
 		for key, result := range cases {
