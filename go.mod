@@ -10,5 +10,5 @@ require (
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/unknwon/com v0.0.0-20190804042917-757f69c95f3e
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
-	gopkg.in/ini.v1 v1.66.6
+	gopkg.in/ini.v1 v1.67.0
 )
