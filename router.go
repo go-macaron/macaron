@@ -241,7 +241,8 @@ func (r *Router) Any(pattern string, h ...Handler) *Route {
 // Route is a shortcut for same handlers but different HTTP methods.
 //
 // Example:
-// 		m.Route("/", "GET,POST", h)
+//
+//	m.Route("/", "GET,POST", h)
 func (r *Router) Route(pattern, methods string, h ...Handler) (route *Route) {
 	for _, m := range strings.Split(methods, ",") {
 		route = r.Handle(strings.TrimSpace(m), pattern, h)

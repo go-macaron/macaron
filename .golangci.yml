@@ -4,18 +4,16 @@ linters-settings:
 
 linters:
   enable:
-    - deadcode
+    - unused
     - errcheck
     - gosimple
     - govet
     - ineffassign
     - staticcheck
-    - structcheck
     - typecheck
-    - unused
-    - varcheck
     - nakedret
     - gofmt
     - rowserrcheck
     - unconvert
     - goimports
+    - unparam
