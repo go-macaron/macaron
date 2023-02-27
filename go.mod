@@ -6,7 +6,7 @@ require (
 	github.com/go-macaron/inject v0.0.0-20160627170012-d8a0b8677191
 	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337
 	github.com/unknwon/com v0.0.0-20190804042917-757f69c95f3e
-	golang.org/x/crypto v0.1.0
+	golang.org/x/crypto v0.6.0
 	gopkg.in/ini.v1 v1.66.6
 )
 
