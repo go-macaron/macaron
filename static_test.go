@@ -18,7 +18,6 @@ package macaron
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -68,7 +67,7 @@ func Test_Static(t *testing.T) {
 
 	Convey("Serve static files with local path", t, func() {
 		Root = os.TempDir()
-		f, err := ioutil.TempFile(Root, "static_content")
+		f, err := os.CreateTemp(Root, "static_content")
 		So(err, ShouldBeNil)
 		_, _ = f.WriteString("Expected Content")
 		f.Close()
