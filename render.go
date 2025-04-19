@@ -281,7 +281,7 @@ func compile(opt RenderOptions) *template.Template {
 		opt.TemplateFileSystem = NewTemplateFileSystem(opt, false)
 	}
 
-	for _, f := range opt.TemplateFileSystem.ListFiles() {
+	for _, f := range opt.ListFiles() {
 		tmpl := t.New(f.Name())
 		for _, funcs := range opt.Funcs {
 			tmpl.Funcs(funcs)
@@ -533,11 +533,11 @@ func (r *TplRender) addYield(t *template.Template, tplName string, data interfac
 }
 
 func (r *TplRender) renderBytes(setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) (*bytes.Buffer, error) {
-	t := r.TemplateSet.Get(setName)
+	t := r.Get(setName)
 	if Env == DEV {
 		opt := *r.Opt
-		opt.Directory = r.TemplateSet.GetDir(setName)
-		t = r.TemplateSet.Set(setName, &opt)
+		opt.Directory = r.GetDir(setName)
+		t = r.Set(setName, &opt)
 	}
 	if t == nil {
 		return nil, fmt.Errorf("html/template: template \"%s\" is undefined", tplName)
@@ -634,11 +634,11 @@ func (r *TplRender) SetTemplatePath(setName, dir string) {
 	}
 	opt := *r.Opt
 	opt.Directory = dir
-	r.TemplateSet.Set(setName, &opt)
+	r.Set(setName, &opt)
 }
 
 func (r *TplRender) HasTemplateSet(name string) bool {
-	return r.TemplateSet.Get(name) != nil
+	return r.Get(name) != nil
 }
 
 // DummyRender is used when user does not choose any real render to use.

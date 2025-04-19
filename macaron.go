@@ -125,7 +125,7 @@ func NewWithLogger(out io.Writer) *Macaron {
 		Router:   NewRouter(),
 		logger:   log.New(out, "[Macaron] ", 0),
 	}
-	m.Router.m = m
+	m.m = m
 	m.Map(m.logger)
 	m.Map(defaultReturnHandler())
 	m.NotFound(http.NotFound)

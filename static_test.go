@@ -77,7 +77,7 @@ func Test_Static(t *testing.T) {
 
 		resp := httptest.NewRecorder()
 		resp.Body = new(bytes.Buffer)
-		req, err := http.NewRequest("GET", "http://localhost:4000/"+path.Base(strings.Replace(f.Name(), "\\", "/", -1)), nil)
+		req, err := http.NewRequest("GET", "http://localhost:4000/"+path.Base(strings.ReplaceAll(f.Name(), "\\", "/")), nil)
 		So(err, ShouldBeNil)
 		m.ServeHTTP(resp, req)
 		So(resp.Code, ShouldEqual, http.StatusOK)

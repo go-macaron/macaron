@@ -97,8 +97,8 @@ func getWildcards(pattern string) (string, []string) {
 
 // getRawPattern removes all regexp but keeps wildcards for building URL path.
 func getRawPattern(rawPattern string) string {
-	rawPattern = strings.Replace(rawPattern, ":int", "", -1)
-	rawPattern = strings.Replace(rawPattern, ":string", "", -1)
+	rawPattern = strings.ReplaceAll(rawPattern, ":int", "")
+	rawPattern = strings.ReplaceAll(rawPattern, ":string", "")
 
 	for {
 		startIdx := strings.Index(rawPattern, "(")
@@ -136,10 +136,7 @@ func checkPattern(pattern string) (typ patternType, rawPattern string, wildcards
 
 func NewLeaf(parent *Tree, pattern string, handle Handle) *Leaf {
 	typ, rawPattern, wildcards, reg := checkPattern(pattern)
-	optional := false
-	if len(pattern) > 0 && pattern[0] == '?' {
-		optional = true
-	}
+	optional := len(pattern) > 0 && pattern[0] == '?'
 	return &Leaf{parent, typ, pattern, rawPattern, wildcards, reg, optional, handle}
 }
 
@@ -348,7 +345,8 @@ func (t *Tree) matchSubtree(globLevel int, segment, url string, params Params) (
 		if err != nil {
 			return nil, false
 		}
-		if leaf.typ == _PATTERN_PATH_EXT {
+		switch leaf.typ {
+		case _PATTERN_PATH_EXT:
 			j := strings.LastIndex(unescapedURL, ".")
 			if j > -1 {
 				params[":path"] = unescapedURL[:j]
@@ -357,7 +355,7 @@ func (t *Tree) matchSubtree(globLevel int, segment, url string, params Params) (
 				params[":path"] = unescapedURL
 			}
 			return leaf.handle, true
-		} else if leaf.typ == _PATTERN_MATCH_ALL {
+		case _PATTERN_MATCH_ALL:
 			params["*"] = unescapedURL
 			params["*"+com.ToStr(globLevel)] = unescapedURL
 			return leaf.handle, true
