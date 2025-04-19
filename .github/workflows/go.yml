@@ -24,7 +24,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v2
+        uses: golangci/golangci-lint-action@v7
         with:
           version: latest
           args: --timeout=30m

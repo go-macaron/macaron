@@ -46,7 +46,7 @@ func test_Router_Handle(t *testing.T, isFast bool) {
 
 		if isFast {
 			// FastInvoker Handler Wrap Action
-			m.Router.SetHandlerWrapper(func(h Handler) Handler {
+			m.SetHandlerWrapper(func(h Handler) Handler {
 				switch v := h.(type) {
 				case func() string:
 					return handlerFunc0Invoker(v)
@@ -138,7 +138,7 @@ func test_Router_Handle(t *testing.T, isFast bool) {
 
 		if isFast {
 			//remove Handler Wrap Action
-			m.Router.SetHandlerWrapper(nil)
+			m.SetHandlerWrapper(nil)
 		}
 	})
 

@@ -686,19 +686,19 @@ func Test_dummyRender(t *testing.T) {
 		})
 		m.Get("/htmlsetstring", func(ctx *Context) {
 			defer shouldPanic()
-			_, _ = ctx.Render.HTMLSetString("", "", nil)
+			_, _ = ctx.HTMLSetString("", "", nil)
 		})
 		m.Get("/htmlstring", func(ctx *Context) {
 			defer shouldPanic()
-			_, _ = ctx.Render.HTMLString("", nil)
+			_, _ = ctx.HTMLString("", nil)
 		})
 		m.Get("/htmlsetbytes", func(ctx *Context) {
 			defer shouldPanic()
-			_, _ = ctx.Render.HTMLSetBytes("", "", nil)
+			_, _ = ctx.HTMLSetBytes("", "", nil)
 		})
 		m.Get("/htmlbytes", func(ctx *Context) {
 			defer shouldPanic()
-			_, _ = ctx.Render.HTMLBytes("", nil)
+			_, _ = ctx.HTMLBytes("", nil)
 		})
 		m.Get("/xml", func(ctx *Context) {
 			defer shouldPanic()
