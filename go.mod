@@ -7,12 +7,11 @@ require (
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/unknwon/com v0.0.0-20190804042917-757f69c95f3e
 	golang.org/x/crypto v0.40.0
-	gopkg.in/ini.v1 v1.66.6
+	gopkg.in/ini.v1 v1.67.1
 )
 
 require (
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/smarty/assertions v1.15.0 // indirect
-	github.com/stretchr/testify v1.7.0 // indirect
 )
