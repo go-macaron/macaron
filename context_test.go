@@ -394,7 +394,7 @@ func Test_Context_Redirect(t *testing.T) {
 		ctx := &Context{
 			Req:  Request{&req},
 			Resp: NewResponseWriter(req.Method, resp),
-			Data: make(map[string]interface{}),
+			Data: make(map[string]any),
 		}
 		ctx.Redirect("two")
 
@@ -413,7 +413,7 @@ func Test_Context_Redirect(t *testing.T) {
 		ctx := &Context{
 			Req:  Request{&req},
 			Resp: NewResponseWriter(req.Method, resp),
-			Data: make(map[string]interface{}),
+			Data: make(map[string]any),
 		}
 		ctx.Redirect("two", 307)
 

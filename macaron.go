@@ -39,12 +39,12 @@ func Version() string {
 // Handler can be any callable function.
 // Macaron attempts to inject services into the handler's argument list,
 // and panics if an argument could not be fullfilled via dependency injection.
-type Handler interface{}
+type Handler any
 
 // handlerFuncInvoker is an inject.FastInvoker wrapper of func(http.ResponseWriter, *http.Request).
 type handlerFuncInvoker func(http.ResponseWriter, *http.Request)
 
-func (invoke handlerFuncInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
+func (invoke handlerFuncInvoker) Invoke(params []any) ([]reflect.Value, error) {
 	invoke(params[0].(http.ResponseWriter), params[1].(*http.Request))
 	return nil, nil
 }
@@ -52,7 +52,7 @@ func (invoke handlerFuncInvoker) Invoke(params []interface{}) ([]reflect.Value, 
 // internalServerErrorInvoker is an inject.FastInvoker wrapper of func(rw http.ResponseWriter, err error).
 type internalServerErrorInvoker func(rw http.ResponseWriter, err error)
 
-func (invoke internalServerErrorInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
+func (invoke internalServerErrorInvoker) Invoke(params []any) ([]reflect.Value, error) {
 	invoke(params[0].(http.ResponseWriter), params[1].(error))
 	return nil, nil
 }
@@ -194,7 +194,7 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 		Req:      Request{req},
 		Resp:     NewResponseWriter(req.Method, rw),
 		Render:   &DummyRender{rw},
-		Data:     make(map[string]interface{}),
+		Data:     make(map[string]any),
 	}
 	c.SetParent(m)
 	c.Map(c)
@@ -231,7 +231,7 @@ func GetDefaultListenInfo() (string, int) {
 }
 
 // Run the http server. Listening on os.GetEnv("PORT") or 4000 by default.
-func (m *Macaron) Run(args ...interface{}) {
+func (m *Macaron) Run(args ...any) {
 	host, port := GetDefaultListenInfo()
 	if len(args) == 1 {
 		switch arg := args[0].(type) {
@@ -317,7 +317,7 @@ func init() {
 }
 
 // SetConfig sets data sources for configuration.
-func SetConfig(source interface{}, others ...interface{}) (_ *ini.File, err error) {
+func SetConfig(source any, others ...any) (_ *ini.File, err error) {
 	cfg, err = ini.Load(source, others...)
 	return Config(), err
 }

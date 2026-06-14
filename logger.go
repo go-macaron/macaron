@@ -36,7 +36,7 @@ func init() {
 // LoggerInvoker is an inject.FastInvoker wrapper of func(ctx *Context, log *log.Logger).
 type LoggerInvoker func(ctx *Context, log *log.Logger)
 
-func (invoke LoggerInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
+func (invoke LoggerInvoker) Invoke(params []any) ([]reflect.Value, error) {
 	invoke(params[0].(*Context), params[1].(*log.Logger))
 	return nil, nil
 }

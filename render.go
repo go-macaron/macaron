@@ -47,7 +47,7 @@ const (
 var (
 	// Provides a temporary buffer to execute templates into and catch errors.
 	bufpool = sync.Pool{
-		New: func() interface{} { return new(bytes.Buffer) },
+		New: func() any { return new(bytes.Buffer) },
 	}
 
 	// Included helper functions for use when rendering html
@@ -122,17 +122,17 @@ type (
 		http.ResponseWriter
 		SetResponseWriter(http.ResponseWriter)
 
-		JSON(int, interface{})
-		JSONString(interface{}) (string, error)
+		JSON(int, any)
+		JSONString(any) (string, error)
 		RawData(int, []byte)   // Serve content as binary
 		PlainText(int, []byte) // Serve content as plain text
-		HTML(int, string, interface{}, ...HTMLOptions)
-		HTMLSet(int, string, string, interface{}, ...HTMLOptions)
-		HTMLSetString(string, string, interface{}, ...HTMLOptions) (string, error)
-		HTMLString(string, interface{}, ...HTMLOptions) (string, error)
-		HTMLSetBytes(string, string, interface{}, ...HTMLOptions) ([]byte, error)
-		HTMLBytes(string, interface{}, ...HTMLOptions) ([]byte, error)
-		XML(int, interface{})
+		HTML(int, string, any, ...HTMLOptions)
+		HTMLSet(int, string, string, any, ...HTMLOptions)
+		HTMLSetString(string, string, any, ...HTMLOptions) (string, error)
+		HTMLString(string, any, ...HTMLOptions) (string, error)
+		HTMLSetBytes(string, string, any, ...HTMLOptions) ([]byte, error)
+		HTMLBytes(string, any, ...HTMLOptions) ([]byte, error)
+		XML(int, any)
 		Error(int, ...string)
 		Status(int)
 		SetTemplatePath(string, string)
@@ -437,7 +437,7 @@ func (r *TplRender) SetResponseWriter(rw http.ResponseWriter) {
 	r.ResponseWriter = rw
 }
 
-func (r *TplRender) JSON(status int, v interface{}) {
+func (r *TplRender) JSON(status int, v any) {
 	var (
 		result []byte
 		err    error
@@ -461,7 +461,7 @@ func (r *TplRender) JSON(status int, v interface{}) {
 	_, _ = r.Write(result)
 }
 
-func (r *TplRender) JSONString(v interface{}) (string, error) {
+func (r *TplRender) JSONString(v any) (string, error) {
 	var result []byte
 	var err error
 	if r.Opt.IndentJSON {
@@ -475,7 +475,7 @@ func (r *TplRender) JSONString(v interface{}) (string, error) {
 	return string(result), nil
 }
 
-func (r *TplRender) XML(status int, v interface{}) {
+func (r *TplRender) XML(status int, v any) {
 	var result []byte
 	var err error
 	if r.Opt.IndentXML {
@@ -513,12 +513,12 @@ func (r *TplRender) PlainText(status int, v []byte) {
 	r.data(status, _CONTENT_PLAIN, v)
 }
 
-func (r *TplRender) execute(t *template.Template, name string, data interface{}) (*bytes.Buffer, error) {
+func (r *TplRender) execute(t *template.Template, name string, data any) (*bytes.Buffer, error) {
 	buf := bufpool.Get().(*bytes.Buffer)
 	return buf, t.ExecuteTemplate(buf, name, data)
 }
 
-func (r *TplRender) addYield(t *template.Template, tplName string, data interface{}) {
+func (r *TplRender) addYield(t *template.Template, tplName string, data any) {
 	funcs := template.FuncMap{
 		"yield": func() (template.HTML, error) {
 			buf, err := r.execute(t, tplName, data)
@@ -532,7 +532,7 @@ func (r *TplRender) addYield(t *template.Template, tplName string, data interfac
 	t.Funcs(funcs)
 }
 
-func (r *TplRender) renderBytes(setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) (*bytes.Buffer, error) {
+func (r *TplRender) renderBytes(setName, tplName string, data any, htmlOpt ...HTMLOptions) (*bytes.Buffer, error) {
 	t := r.Get(setName)
 	if Env == DEV {
 		opt := *r.Opt
@@ -558,7 +558,7 @@ func (r *TplRender) renderBytes(setName, tplName string, data interface{}, htmlO
 	return out, nil
 }
 
-func (r *TplRender) renderHTML(status int, setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) {
+func (r *TplRender) renderHTML(status int, setName, tplName string, data any, htmlOpt ...HTMLOptions) {
 	r.startTime = time.Now()
 
 	out, err := r.renderBytes(setName, tplName, data, htmlOpt...)
@@ -576,15 +576,15 @@ func (r *TplRender) renderHTML(status int, setName, tplName string, data interfa
 	bufpool.Put(out)
 }
 
-func (r *TplRender) HTML(status int, name string, data interface{}, htmlOpt ...HTMLOptions) {
+func (r *TplRender) HTML(status int, name string, data any, htmlOpt ...HTMLOptions) {
 	r.renderHTML(status, DEFAULT_TPL_SET_NAME, name, data, htmlOpt...)
 }
 
-func (r *TplRender) HTMLSet(status int, setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) {
+func (r *TplRender) HTMLSet(status int, setName, tplName string, data any, htmlOpt ...HTMLOptions) {
 	r.renderHTML(status, setName, tplName, data, htmlOpt...)
 }
 
-func (r *TplRender) HTMLSetBytes(setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) ([]byte, error) {
+func (r *TplRender) HTMLSetBytes(setName, tplName string, data any, htmlOpt ...HTMLOptions) ([]byte, error) {
 	out, err := r.renderBytes(setName, tplName, data, htmlOpt...)
 	if err != nil {
 		return []byte(""), err
@@ -592,16 +592,16 @@ func (r *TplRender) HTMLSetBytes(setName, tplName string, data interface{}, html
 	return out.Bytes(), nil
 }
 
-func (r *TplRender) HTMLBytes(name string, data interface{}, htmlOpt ...HTMLOptions) ([]byte, error) {
+func (r *TplRender) HTMLBytes(name string, data any, htmlOpt ...HTMLOptions) ([]byte, error) {
 	return r.HTMLSetBytes(DEFAULT_TPL_SET_NAME, name, data, htmlOpt...)
 }
 
-func (r *TplRender) HTMLSetString(setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) (string, error) {
+func (r *TplRender) HTMLSetString(setName, tplName string, data any, htmlOpt ...HTMLOptions) (string, error) {
 	p, err := r.HTMLSetBytes(setName, tplName, data, htmlOpt...)
 	return string(p), err
 }
 
-func (r *TplRender) HTMLString(name string, data interface{}, htmlOpt ...HTMLOptions) (string, error) {
+func (r *TplRender) HTMLString(name string, data any, htmlOpt ...HTMLOptions) (string, error) {
 	p, err := r.HTMLBytes(name, data, htmlOpt...)
 	return string(p), err
 }
@@ -656,11 +656,11 @@ func (r *DummyRender) SetResponseWriter(http.ResponseWriter) {
 	renderNotRegistered()
 }
 
-func (r *DummyRender) JSON(int, interface{}) {
+func (r *DummyRender) JSON(int, any) {
 	renderNotRegistered()
 }
 
-func (r *DummyRender) JSONString(interface{}) (string, error) {
+func (r *DummyRender) JSONString(any) (string, error) {
 	renderNotRegistered()
 	return "", nil
 }
@@ -673,35 +673,35 @@ func (r *DummyRender) PlainText(int, []byte) {
 	renderNotRegistered()
 }
 
-func (r *DummyRender) HTML(int, string, interface{}, ...HTMLOptions) {
+func (r *DummyRender) HTML(int, string, any, ...HTMLOptions) {
 	renderNotRegistered()
 }
 
-func (r *DummyRender) HTMLSet(int, string, string, interface{}, ...HTMLOptions) {
+func (r *DummyRender) HTMLSet(int, string, string, any, ...HTMLOptions) {
 	renderNotRegistered()
 }
 
-func (r *DummyRender) HTMLSetString(string, string, interface{}, ...HTMLOptions) (string, error) {
-	renderNotRegistered()
-	return "", nil
-}
-
-func (r *DummyRender) HTMLString(string, interface{}, ...HTMLOptions) (string, error) {
+func (r *DummyRender) HTMLSetString(string, string, any, ...HTMLOptions) (string, error) {
 	renderNotRegistered()
 	return "", nil
 }
 
-func (r *DummyRender) HTMLSetBytes(string, string, interface{}, ...HTMLOptions) ([]byte, error) {
+func (r *DummyRender) HTMLString(string, any, ...HTMLOptions) (string, error) {
+	renderNotRegistered()
+	return "", nil
+}
+
+func (r *DummyRender) HTMLSetBytes(string, string, any, ...HTMLOptions) ([]byte, error) {
 	renderNotRegistered()
 	return nil, nil
 }
 
-func (r *DummyRender) HTMLBytes(string, interface{}, ...HTMLOptions) ([]byte, error) {
+func (r *DummyRender) HTMLBytes(string, any, ...HTMLOptions) ([]byte, error) {
 	renderNotRegistered()
 	return nil, nil
 }
 
-func (r *DummyRender) XML(int, interface{}) {
+func (r *DummyRender) XML(int, any) {
 	renderNotRegistered()
 }
 

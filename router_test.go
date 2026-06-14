@@ -35,7 +35,7 @@ func Test_Router_FastInvoker_Handle(t *testing.T) {
 type handlerFunc0Invoker func() string
 
 // Invoke handlerFunc0Invoker
-func (l handlerFunc0Invoker) Invoke(p []interface{}) ([]reflect.Value, error) {
+func (l handlerFunc0Invoker) Invoke(p []any) ([]reflect.Value, error) {
 	ret := l()
 	return []reflect.Value{reflect.ValueOf(ret)}, nil
 }

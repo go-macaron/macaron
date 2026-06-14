@@ -38,7 +38,7 @@ import (
 // Locale reprents a localization interface.
 type Locale interface {
 	Language() string
-	Tr(string, ...interface{}) string
+	Tr(string, ...any) string
 }
 
 // RequestBody represents a request body.
@@ -76,7 +76,7 @@ func (r *Request) Body() *RequestBody {
 type ContextInvoker func(ctx *Context)
 
 // Invoke implements inject.FastInvoker which simplifies calls of `func(ctx *Context)` function.
-func (invoke ContextInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
+func (invoke ContextInvoker) Invoke(params []any) ([]reflect.Value, error) {
 	invoke(params[0].(*Context))
 	return nil, nil
 }
@@ -95,7 +95,7 @@ type Context struct {
 	params Params
 	Render
 	Locale
-	Data map[string]interface{}
+	Data map[string]any
 }
 
 func (ctx *Context) handler() Handler {
@@ -155,7 +155,7 @@ func (ctx *Context) RemoteAddr() string {
 	return addr
 }
 
-func (ctx *Context) renderHTML(status int, setName, tplName string, data ...interface{}) {
+func (ctx *Context) renderHTML(status int, setName, tplName string, data ...any) {
 	if len(data) <= 0 {
 		ctx.Render.HTMLSet(status, setName, tplName, ctx.Data)
 	} else if len(data) == 1 {
@@ -166,12 +166,12 @@ func (ctx *Context) renderHTML(status int, setName, tplName string, data ...inte
 }
 
 // HTML renders the HTML with default template set.
-func (ctx *Context) HTML(status int, name string, data ...interface{}) {
+func (ctx *Context) HTML(status int, name string, data ...any) {
 	ctx.renderHTML(status, DEFAULT_TPL_SET_NAME, name, data...)
 }
 
 // HTMLSet renders the HTML with given template set name.
-func (ctx *Context) HTMLSet(status int, setName, tplName string, data ...interface{}) {
+func (ctx *Context) HTMLSet(status int, setName, tplName string, data ...any) {
 	ctx.renderHTML(status, setName, tplName, data...)
 }
 
@@ -332,7 +332,7 @@ func (ctx *Context) SaveToFile(name, savePath string) error {
 
 // SetCookie sets given cookie value to response header.
 // FIXME: IE support? http://golanghome.com/post/620#reply2
-func (ctx *Context) SetCookie(name string, value string, others ...interface{}) {
+func (ctx *Context) SetCookie(name string, value string, others ...any) {
 	cookie := http.Cookie{}
 	cookie.Name = name
 	cookie.Value = url.QueryEscape(value)
@@ -442,7 +442,7 @@ func (m *Macaron) SetDefaultCookieSecret(secret string) {
 }
 
 // SetSecureCookie sets given cookie value to response header with default secret string.
-func (ctx *Context) SetSecureCookie(name, value string, others ...interface{}) {
+func (ctx *Context) SetSecureCookie(name, value string, others ...any) {
 	ctx.SetSuperSecureCookie(defaultCookieSecret, name, value, others...)
 }
 
@@ -452,7 +452,7 @@ func (ctx *Context) GetSecureCookie(key string) (string, bool) {
 }
 
 // SetSuperSecureCookie sets given cookie value to response header with secret string.
-func (ctx *Context) SetSuperSecureCookie(secret, name, value string, others ...interface{}) {
+func (ctx *Context) SetSuperSecureCookie(secret, name, value string, others ...any) {
 	key := pbkdf2.Key([]byte(secret), []byte(secret), 1000, 16, sha256.New)
 	text, err := com.AESGCMEncrypt(key, []byte(value))
 	if err != nil {
@@ -488,7 +488,7 @@ func (ctx *Context) setRawContentHeader() {
 }
 
 // ServeContent serves given content to response.
-func (ctx *Context) ServeContent(name string, r io.ReadSeeker, params ...interface{}) {
+func (ctx *Context) ServeContent(name string, r io.ReadSeeker, params ...any) {
 	modtime := time.Now()
 	for _, p := range params {
 		switch v := p.(type) {

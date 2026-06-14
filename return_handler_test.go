@@ -26,7 +26,7 @@ import (
 
 type r1Invoker func() (int, string)
 
-func (l r1Invoker) Invoke(p []interface{}) ([]reflect.Value, error) {
+func (l r1Invoker) Invoke(p []any) ([]reflect.Value, error) {
 	ret, str := l()
 	return []reflect.Value{reflect.ValueOf(ret), reflect.ValueOf(str)}, nil
 }
