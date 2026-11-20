@@ -280,7 +280,8 @@ var (
 	Env     = DEV
 	envLock sync.Mutex
 
-	// Path of work directory.
+	// Root is the working directory at startup. It is empty if the directory
+	// could not be determined.
 	Root string
 
 	// Flash applies to current request.
@@ -309,11 +310,7 @@ func safeEnv() string {
 func init() {
 	setENV(os.Getenv("MACARON_ENV"))
 
-	var err error
-	Root, err = os.Getwd()
-	if err != nil {
-		panic("error getting work directory: " + err.Error())
-	}
+	Root, _ = os.Getwd()
 }
 
 // SetConfig sets data sources for configuration.
