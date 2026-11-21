@@ -19,11 +19,42 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
+	"runtime"
 	"testing"
 	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+func TestInitWithDeletedWorkingDirectory(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("requires removing the working directory of a running process")
+	}
+	const childEnv = "MACARON_TEST_DELETED_CWD"
+	if os.Getenv(childEnv) == "1" {
+		if _, err := os.Getwd(); err == nil {
+			t.Fatal("expected os.Getwd to fail in the deleted directory")
+		}
+		if Root != "" {
+			t.Fatalf("Root = %q; want empty when os.Getwd fails", Root)
+		}
+		return
+	}
+
+	exe, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	// Delete the directory after the shell enters it, then run package initialization again.
+	cmd := exec.Command("sh", "-c", `rmdir "$1" && exec "$2" -test.run '^TestInitWithDeletedWorkingDirectory$'`, "sh", dir, exe)
+	cmd.Dir = dir
+	cmd.Env = append(cmd.Environ(), childEnv+"=1")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("test process failed to start from a deleted working directory: %v\n%s", err, out)
+	}
+}
 
 func Test_Version(t *testing.T) {
 	Convey("Get version", t, func() {
